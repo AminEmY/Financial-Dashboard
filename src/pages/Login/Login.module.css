@@ -1,0 +1,65 @@
+.container {
+    height: calc(100vh - 64px); /* ارتفاع navbar */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #cad1ee;
+}
+.wrapper{
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ccc;
+    border-radius: 1rem;
+    height: 30vh; /* بیشتر برای راحتی */
+    width: 100%;
+    max-width: 400px; /* محدود کردن عرض */
+    background-color: #f0f0f0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* سایه برای عمق */
+    padding: 20px;
+    place-items: center;
+}
+
+.wrapper h1 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.wrapper input {
+    width: 50%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 0.5rem;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    background-color: #fff;
+}
+.wrapper input:focus {
+    outline: none;
+    border-color: #007BFF; /* رنگ حاشیه هنگام فوکوس */
+}
+
+.wrapper button {
+    width: 50%;
+    padding: 12px;
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 0.8rem; /* فاصله منطقی */
+
+}
+
+.wrapper button:hover {
+    background-color: #0056b3; /* رنگ دکمه در هنگام هاور */
+}
+
+.login_error{
+    display: flex;
+    color: red;
+    direction: ltr;
+    place-items: center;
+}
