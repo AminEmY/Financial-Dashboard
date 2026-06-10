@@ -3,7 +3,8 @@ import { Route, Routes } from 'react-router-dom';
 import './App.css';
 import Login from './pages/Login/Login'
 import Dashboard from './pages/Dashboard/Dashboard'
-import VouchersList from './pages/Financial/VouchersList'
+import VouchersList from './pages/Financial/Vouchers/VouchersList'
+import VoucherDetail from './pages/Financial/Vouchers/VoucherDetail'
 import Notfound from './pages/Notfound/Notfound'
 import Authentication from './pages/Authentication/Authentication'
 import MainLayout from './layout/MainLayout/MainLayout'
@@ -20,9 +21,11 @@ function App() {
       <Route path='/login' element={<Login/>} />
       <Route  element={<ProtectedRoutes><MainLayout/></ProtectedRoutes>} >
 
-      <Route path='/dashboard' element={<ProtectedRoutes><Dashboard/></ProtectedRoutes>} />
-      <Route path='/VouchersList' element={<ProtectedRoutes><VouchersList/></ProtectedRoutes>} />
-      <Route path='/authentication' element={<ProtectedRoutes><Authentication/></ProtectedRoutes>} />
+      <Route path='/dashboard' element={<Dashboard/>} />
+      <Route path='/Vouchers' element={<VouchersList/>} />
+      <Route path='/Voucher/:id' element={<VoucherDetail/>} />
+
+      <Route path='/authentication' element={<Authentication/>} />
 
       </Route>
       
