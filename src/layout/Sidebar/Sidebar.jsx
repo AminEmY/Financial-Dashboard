@@ -13,10 +13,10 @@ const Sidebar = () => {
           Dashboard
         </NavLink>
 
-        <NavLink to="/transaction" className={({ isActive }) =>
+        <NavLink to="/VouchersList" className={({ isActive }) =>
           isActive ? styles.active : styles.link
         }>
-          Transactions
+          Vouchers List
         </NavLink>
       </nav>
     </div>

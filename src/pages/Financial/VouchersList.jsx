@@ -1,10 +1,11 @@
 import React from 'react';
 import { useEffect, useState } from "react";
 import axios from "axios";
+import styles from "./vouchersList.module.css"
 
 
 
-const Transaction = () => {
+const VouchersList = () => {
 
     const [vouchers, setVouchers] = useState([]);
 
@@ -29,7 +30,7 @@ const Transaction = () => {
   }, []);
 
   return (
-    <div>
+    <div className={styles.VList}>
       <h2>Issued Vouchers</h2>
 
       {vouchers.map((voucher) => (
@@ -44,4 +45,4 @@ const Transaction = () => {
 };
 
  
-export default Transaction;
+export default VouchersList;
