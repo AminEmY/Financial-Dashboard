@@ -16,18 +16,21 @@ const VouchersList = () => {
     number: "1001",
     date: "1405/03/20",
     amount: 1500000,
+    description: "سند دریافت از مشتری"
   },
   {
     id: 1002,
     number: "1002",
     date: "1405/03/21",
     amount: 800000,
+    description: "سند پرداخت حقوق"
   },
   {
     id: 1003,
     number: "1003",
     date: "1405/03/22",
     amount: 2500000,
+    description: "سند خرید تجهیزات"
   },
 ];
 
@@ -58,17 +61,22 @@ const VouchersList = () => {
       <h2>لیست اسناد</h2>
       {vouchers.map((vch)=>(<div key={vch.id}
       onClick={() => navigate(`/Voucher/${vch.id}`)}
-          style={{
-            padding: "10px",
-            border: "1px solid #ddd",
-            marginBottom: "10px",
-            cursor: "pointer",
-          }}
+      style={{
+      display: "flex",
+      direction: "rtl",
+      gap: "60px",
+      padding: "12px",
+      borderBottom: "1px solid #ddd",
+      cursor: "pointer",
+    }}
        >
-        {vch.title}
+            <span>{vch.number}</span>
+            <span>{vch.date}</span>
+            <span>{vch.description}</span>
+            <span>{vch.amount.toLocaleString()}</span>
         </div>
         
-        ))};
+        ))}
       
         
         
