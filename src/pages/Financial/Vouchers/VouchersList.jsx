@@ -129,11 +129,21 @@ const rows = vouchers.map((v) => ({
             
             ))} */}
       
-      <input placeholder="جستجو..."  value={search} onChange={(e) => setSearch(e.target.value)} style={{ marginTop: 10, padding: 8 }} />
+      <input 
+        placeholder="جستجو..."  value={search} onChange={(e) => setSearch(e.target.value)} style={{ direction: "rtl", textAlign: "right", padding: "6px 10px", width: "200px", fontSize: "14px", marginTop: 10  }} />
      <div style={{ height: 700, width: "100%" }}>
         <DataGrid
           rows={filteredRows}
           columns={columns}
+          sx={{
+          direction: "rtl",
+          "& .MuiDataGrid-columnHeaders": {
+          direction: "rtl",
+                         },
+          "& .MuiDataGrid-cell": {
+           textAlign: "right",
+           },
+              }}
           getRowClassName={(params) => params.row.isBalanced ? "" : "row-error" }
           pageSizeOptions={[5, 10, 25]}
           initialState={{
