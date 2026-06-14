@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 // import { useEffect, useState } from "react";
 // import axios from "axios";
 import styles from "./vouchersList.module.css"
 import { useNavigate } from 'react-router-dom';
+import { DataGrid } from "@mui/x-data-grid";
+
 
 
 
 const VouchersList = () => {
 
+  const [search, setSearch] = useState("");
 
   const navigate = useNavigate();
+
   const vouchers = [
   {
     id: 1001,
@@ -32,7 +36,52 @@ const VouchersList = () => {
     amount: 2500000,
     description: "سند خرید تجهیزات"
   },
-];
+                  ];
+
+
+const rows = vouchers.map((v) => ({
+    id: v.id,
+    number: v.number,
+    date: v.date,
+    description: v.description,
+    amount: v.amount,
+    isBalanced: v.amount > 0 // فعلاً فرضی
+  }));
+
+  const filteredRows = rows.filter((r) =>
+  r.number.includes(search) ||
+  r.description.includes(search) ||
+  r.date.includes(search) ||
+  r.amount.toString().includes(search)
+  );//برای اینکه سرچ شده ها اگه بود بیاره
+
+  // 🔥 ستون‌ها
+  const columns = [
+    {
+      field: "number",
+      headerName: "شماره سند",
+      flex: 1,
+    },
+    {
+      field: "date",
+      headerName: "تاریخ",
+      flex: 1,
+    },
+    {
+      field: "description",
+      headerName: "شرح",
+      flex: 2,
+    },
+    {
+      field: "amount",
+      headerName: "مبلغ",
+      flex: 1,
+      valueFormatter: (params) =>
+        params.value?.toLocaleString(),
+    },
+  ];
+
+  const totalAmount = rows.reduce((sum, r) => sum + (r.amount || 0), 0 );
 
   //   const [vouchers, setVouchers] = useState([]);
 
@@ -57,9 +106,11 @@ const VouchersList = () => {
   // }, []);
 
    return (
+
     <div className={styles.VList}>
       <h2>لیست اسناد</h2>
-      {vouchers.map((vch)=>(<div key={vch.id}
+
+      {/* {vouchers.map((vch)=>(<div key={vch.id}
       onClick={() => navigate(`/Voucher/${vch.id}`)}
       style={{
       display: "flex",
@@ -68,21 +119,43 @@ const VouchersList = () => {
       padding: "12px",
       borderBottom: "1px solid #ddd",
       cursor: "pointer",
-    }}
+     }}
        >
             <span>{vch.number}</span>
             <span>{vch.date}</span>
             <span>{vch.description}</span>
             <span>{vch.amount.toLocaleString()}</span>
-        </div>
-        
-        ))}
+            </div>
+            
+            ))} */}
       
+      <input placeholder="جستجو..."  value={search} onChange={(e) => setSearch(e.target.value)} style={{ marginTop: 10, padding: 8 }} />
+     <div style={{ height: 700, width: "100%" }}>
+        <DataGrid
+          rows={filteredRows}
+          columns={columns}
+          getRowClassName={(params) => params.row.isBalanced ? "" : "row-error" }
+          pageSizeOptions={[5, 10, 25]}
+          initialState={{
+            pagination: {
+              paginationModel: { pageSize: 50, page: 1 },
+            },
+          }}
+          onRowClick={(params) => {
+            navigate(`/Voucher/${params.row.id}`);
+          }}
+        />
+      </div>
+
+         <div style={{ marginTop: 10, marginRight :150 , textAlign: "right" }}>
+           <strong>
+             جمع کل: {totalAmount.toLocaleString()}
+           </strong>
+          </div>
+
         
         
-        
-    
-        </div>);
+    </div>);
   };
   
 export default VouchersList;

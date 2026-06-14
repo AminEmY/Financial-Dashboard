@@ -10,3 +10,8 @@
     color: rgb(60, 0, 116);
     text-align: center;
 }
+
+
+.row-error {
+  background-color: #ffe5e5;
+}
