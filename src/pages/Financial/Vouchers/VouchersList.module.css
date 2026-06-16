@@ -1,17 +1,52 @@
 .VList {
-   display: grid;
-   text-align: center;
-   /* background-color: aqua; */
+  padding: 10px;
 }
-
 
 .VList h2 {
-
-    color: rgb(60, 0, 116);
-    text-align: center;
+  color: rgb(60, 0, 116);
+  text-align: center;
+  margin-top: 1px;
 }
 
 
-.row-error {
+.GridHeight {
+  height: 650px;
+  width: 100%;
+}
+
+.Toolbar {
+  
+  display: flex;
+  justify-content:space-around;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.Toolbar input {
+  width: 200px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  direction: rtl;
+  text-align: right;
+  font-size: 19px;
+  margin-left: 10px;
+  margin-bottom: 5px;
+}
+.Toolbar button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 5px;
+  margin-left:auto ;
+}
+
+.Total {
+  margin-top: 15px;
+  margin-left: 200px;
+  text-align: left;
+}
+
+:global(.row-error) {
   background-color: #ffe5e5;
 }

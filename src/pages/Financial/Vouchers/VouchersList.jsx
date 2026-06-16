@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import styles from "./vouchersList.module.css"
 import { useNavigate } from 'react-router-dom';
 import { DataGrid } from "@mui/x-data-grid";
+import {formatNumber,toPersianDigits} from "../../../utils/formatter";//جهت تبدیل اعداد و تاریخ به فارسی
 
 
 
@@ -61,11 +62,13 @@ const rows = vouchers.map((v) => ({
       field: "number",
       headerName: "شماره سند",
       flex: 1,
+      valueFormatter: toPersianDigits,
     },
     {
       field: "date",
       headerName: "تاریخ",
       flex: 1,
+      valueFormatter: toPersianDigits,
     },
     {
       field: "description",
@@ -76,13 +79,93 @@ const rows = vouchers.map((v) => ({
       field: "amount",
       headerName: "مبلغ",
       flex: 1,
-      valueFormatter: (params) =>
-        params.value?.toLocaleString(),
+      valueFormatter: formatNumber,
     },
   ];
 
   const totalAmount = rows.reduce((sum, r) => sum + (r.amount || 0), 0 );
 
+
+   return (
+
+    <div className={styles.VList}>
+
+
+      <h2>لیست اسناد</h2>
+
+
+      
+        <div className={styles.Toolbar}>
+
+             <button onClick={()=>{navigate("/Vouchers/VoucherNew")}}> + <span>     </span>   سند جدید   </button>       
+             <input    placeholder="جستجو  ..."  value={search} onChange={(e) => setSearch(e.target.value)} />
+
+        </div>
+
+       <div className={styles.GridHeight} >
+          <DataGrid
+              rows={filteredRows}
+              columns={columns}
+              sx={{
+                    direction: "rtl",
+                    "& .MuiDataGrid-columnHeaders": {
+                    direction: "rtl",
+                    // borderLeft: "1px solid #ddd",
+                                                    },
+                                                    
+                    "& .MuiDataGrid-cell": {
+                    textAlign: "right",
+                    borderLeft: "1px solid #ddd",
+                                         },
+                    // "& .MuiDataGrid-row": {
+                    // borderBottom: "1px solid #eee",
+                    //                       },
+                  }}                         
+                 
+             getRowClassName={(params) => params.row.isBalanced ? "" : "row-error" }
+              pageSizeOptions={[5, 10, 25]}
+              initialState={{
+               pagination: {
+                 paginationModel: { pageSize: 50, page: 1 }, 
+               },
+              }}
+              onRowClick={(params) => {
+              navigate(`/Vouchers/${params.row.id}`);
+              }}
+           />
+
+       </div>
+
+          <div className={styles.Total} >
+           <strong>
+             جمع کل: {formatNumber(totalAmount)}
+           </strong>
+          </div>
+
+        
+        
+    </div>);
+  };
+  
+export default VouchersList;
+
+
+
+
+// ----------------------------------------------------------------------------- قبل از استفاده از گرید
+    //   <div className={styles.VList}>
+  //     <h2>Issued Vouchers</h2>
+
+  //     {vouchers.map((voucher) => (
+  //       <div key={voucher.id} style={{ border: "1px solid #ccc", marginBottom: "10px", padding: "10px" }}>
+  //         <p><strong>Number:</strong> {voucher.number}</p>
+  //         <p><strong>Date:</strong> {voucher.date}</p>
+  //         <p><strong>Amount:</strong> {voucher.amount}</p>
+  //       </div>
+  //     ))}
+  //   </div>
+  //  --------------------------------------------------------------------------------- قبل تر
+  
   //   const [vouchers, setVouchers] = useState([]);
 
   // useEffect(() => {
@@ -105,82 +188,31 @@ const rows = vouchers.map((v) => ({
   //   });
   // }, []);
 
-   return (
 
-    <div className={styles.VList}>
-      <h2>لیست اسناد</h2>
-
-      {/* {vouchers.map((vch)=>(<div key={vch.id}
+  // return (
+  
+        {/* {vouchers.map((vch)=>(<div key={vch.id}
       onClick={() => navigate(`/Voucher/${vch.id}`)}
       style={{
-      display: "flex",
-      direction: "rtl",
-      gap: "60px",
-      padding: "12px",
-      borderBottom: "1px solid #ddd",
-      cursor: "pointer",
-     }}
-       >
-            <span>{vch.number}</span>
-            <span>{vch.date}</span>
-            <span>{vch.description}</span>
-            <span>{vch.amount.toLocaleString()}</span>
-            </div>
-            
-            ))} */}
-      
-      <input 
-        placeholder="جستجو..."  value={search} onChange={(e) => setSearch(e.target.value)} style={{ direction: "rtl", textAlign: "right", padding: "6px 10px", width: "200px", fontSize: "14px", marginTop: 10  }} />
-     <div style={{ height: 700, width: "100%" }}>
-        <DataGrid
-          rows={filteredRows}
-          columns={columns}
-          sx={{
-          direction: "rtl",
-          "& .MuiDataGrid-columnHeaders": {
-          direction: "rtl",
-                         },
-          "& .MuiDataGrid-cell": {
-           textAlign: "right",
-           },
-              }}
-          getRowClassName={(params) => params.row.isBalanced ? "" : "row-error" }
-          pageSizeOptions={[5, 10, 25]}
-          initialState={{
-            pagination: {
-              paginationModel: { pageSize: 50, page: 1 },
-            },
-          }}
-          onRowClick={(params) => {
-            navigate(`/Voucher/${params.row.id}`);
-          }}
-        />
-      </div>
-
-         <div style={{ marginTop: 10, marginRight :150 , textAlign: "right" }}>
-           <strong>
-             جمع کل: {totalAmount.toLocaleString()}
-           </strong>
-          </div>
-
+        display: "flex",
+        direction: "rtl",
+        gap: "60px",
+        padding: "12px",
+        borderBottom: "1px solid #ddd",
+        cursor: "pointer",
+        }}
+        >
+        <span>{vch.number}</span>
+        <span>{vch.date}</span>
+        <span>{vch.description}</span>
+        <span>{vch.amount.toLocaleString()}</span>
+        </div>
         
-        
-    </div>);
-  };
-  
-export default VouchersList;
-    //   <div className={styles.VList}>
-  //     <h2>Issued Vouchers</h2>
+        ))} */}
 
-  //     {vouchers.map((voucher) => (
-  //       <div key={voucher.id} style={{ border: "1px solid #ccc", marginBottom: "10px", padding: "10px" }}>
-  //         <p><strong>Number:</strong> {voucher.number}</p>
-  //         <p><strong>Date:</strong> {voucher.date}</p>
-  //         <p><strong>Amount:</strong> {voucher.amount}</p>
-  //       </div>
-  //     ))}
-  //   </div>
-   
+
+              //  )
+
 
 
  
