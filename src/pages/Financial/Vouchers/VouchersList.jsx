@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 // import axios from "axios";
 import styles from "./vouchersList.module.css"
 import { useNavigate } from 'react-router-dom';
-import { DataGrid } from "@mui/x-data-grid";
+import { DataGridPro } from '@mui/x-data-grid-pro';
 import {formatNumber,toPersianDigits} from "../../../utils/formatter";//جهت تبدیل اعداد و تاریخ به فارسی
 
 
@@ -103,7 +103,7 @@ const rows = vouchers.map((v) => ({
         </div>
 
        <div className={styles.GridHeight} >
-          <DataGrid
+          <DataGridPro
               rows={filteredRows}
               columns={columns}
               sx={{
