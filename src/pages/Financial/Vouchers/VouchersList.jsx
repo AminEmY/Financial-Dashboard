@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-// import { useEffect, useState } from "react";
-// import axios from "axios";
+import{ React,useState,useEffect } from 'react';
+import axios from "axios";
 import styles from "./vouchersList.module.css"
 import { useNavigate } from 'react-router-dom';
 import { DataGridPro } from '@mui/x-data-grid-pro';
@@ -12,78 +11,100 @@ import {formatNumber,toPersianDigits} from "../../../utils/formatter";//جهت �
 const VouchersList = () => {
 
   const [search, setSearch] = useState("");
-
+  const [vouchers, setVouchers] = useState([]);
   const navigate = useNavigate();
 
-  const vouchers = [
-  {
-    id: 1001,
-    number: "1001",
-    date: "1405/03/20",
-    amount: 1500000,
-    description: "سند دریافت از مشتری"
-  },
-  {
-    id: 1002,
-    number: "1002",
-    date: "1405/03/21",
-    amount: 800000,
-    description: "سند پرداخت حقوق"
-  },
-  {
-    id: 1003,
-    number: "1003",
-    date: "1405/03/22",
-    amount: 2500000,
-    description: "سند خرید تجهیزات"
-  },
-                  ];
+ useEffect(() => {
+  axios
+    .post("http://localhost:8049/api/Voucher/Search")
+    .then((res) => {
+      // console.log(res.data);
+      setVouchers(res.data);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+}, []);
+
 
 
 const rows = vouchers.map((v) => ({
     id: v.id,
     number: v.number,
-    date: v.date,
-    description: v.description,
-    amount: v.amount,
+    date: v.date_Shamsi,
+    description: v.sharh ?? "",
+    countOfLines: v.countOfLines,
+    amount: v.amount ?? 0,
     isBalanced: v.amount > 0 // فعلاً فرضی
   }));
 
   const filteredRows = rows.filter((r) =>
-  r.number.includes(search) ||
-  r.description.includes(search) ||
-  r.date.includes(search) ||
-  r.amount.toString().includes(search)
+  String(r.number).includes(search) ||
+  (r.description ?? "").includes(search) ||
+  String(r.date).includes(search) ||
+  String(r.countOfLines).includes(search) ||
+  String(r.amount).includes(search)
   );//برای اینکه سرچ شده ها اگه بود بیاره
 
   // 🔥 ستون‌ها
   const columns = [
     {
-      field: "number",
-      headerName: "شماره سند",
-      flex: 1,
-      valueFormatter: toPersianDigits,
-    },
+    field: "number",
+    headerName: "شماره سند",
+    flex: 1,
+    align: "right",
+    renderCell: (params) => (
+    <div
+      style={{
+        width: "100%",
+        textAlign: "right",
+        direction: "ltr",
+        paddingRight: 8,
+      }}
+    >
+      {toPersianDigits(params.value)}
+    </div>
+      ),
+    },//کامل اعداد نمیفتاد
     {
       field: "date",
       headerName: "تاریخ",
       flex: 1,
+      align: "right",
       valueFormatter: toPersianDigits,
     },
     {
       field: "description",
       headerName: "شرح",
       flex: 2,
+      align: "right",
+    },
+    {
+    field: "countOfLines",
+    headerName: "تعداد ردیف سند",
+    flex: 1,
+    align: "right",
+    // type: "number"
+    valueFormatter: formatNumber,
     },
     {
       field: "amount",
       headerName: "مبلغ",
-      flex: 1,
+      minWidth: 170,
+      headerAlign: "right",
       valueFormatter: formatNumber,
     },
   ];
 
   const totalAmount = rows.reduce((sum, r) => sum + (r.amount || 0), 0 );
+
+  function CustomFooter() {
+    return (
+    <strong className={styles.Total} >
+      جمع کل: {formatNumber(totalAmount)}
+    </strong>
+  );
+}
 
 
    return (
@@ -102,33 +123,53 @@ const rows = vouchers.map((v) => ({
 
         </div>
 
-       <div className={styles.GridHeight} >
+       <div className={styles.GridHeight}  >
           <DataGridPro
               rows={filteredRows}
               columns={columns}
-              sx={{
-                    direction: "rtl",
-                    "& .MuiDataGrid-columnHeaders": {
-                    direction: "rtl",
-                    // borderLeft: "1px solid #ddd",
-                                                    },
-                                                    
-                    "& .MuiDataGrid-cell": {
-                    textAlign: "right",
-                    borderLeft: "1px solid #ddd",
-                                         },
-                    // "& .MuiDataGrid-row": {
-                    // borderBottom: "1px solid #eee",
-                    //                       },
-                  }}                         
-                 
-             getRowClassName={(params) => params.row.isBalanced ? "" : "row-error" }
+              scrollbarSize={0}
+              showToolbar
+
+
+                slots={{footer: CustomFooter,}}
+
+      sx={{
+            direction : 'rtl' ,
+            
+                "& .MuiDataGrid-scrollbarFiller": {
+                display: "none",
+                                                  },
+            
+
+           "& .MuiDataGrid-columnHeader:not(:last-child)": {
+            borderLeft: "1px solid #ddd"},
+                                          
+            "& .MuiDataGrid-cell:not(:last-child)": {
+            borderLeft: "1px solid #ddd"},
+              "& .MuiDataGrid-main": {
+            overflowX: "hidden",
+                                      },
+                                            
+          }}  
+                                  
+              getRowClassName={(params) =>params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd"}  
+              
+              // pagination
+              // paginationMode="server"
+              // sortingMode="server"
+              // filterMode="server"
+
               pageSizeOptions={[5, 10, 25]}
-              initialState={{
-               pagination: {
-                 paginationModel: { pageSize: 50, page: 1 }, 
-               },
-              }}
+
+              // initialState={{
+              //  pagination: {
+              //    paginationModel: { pageSize: 50, page: 1 }, 
+              //  },
+              //   pinnedColumns: {
+              //   left: ["number"],
+              //                   },
+              // }}
+              
               onRowClick={(params) => {
               navigate(`/Vouchers/${params.row.id}`);
               }}
@@ -136,11 +177,11 @@ const rows = vouchers.map((v) => ({
 
        </div>
 
-          <div className={styles.Total} >
+          {/* <div className={styles.Total} >
            <strong>
              جمع کل: {formatNumber(totalAmount)}
            </strong>
-          </div>
+          </div> */}
 
         
         
@@ -150,8 +191,30 @@ const rows = vouchers.map((v) => ({
 export default VouchersList;
 
 
-
-
+//----------------------------------------------------------------------------قبل استفاده از سند واقعی و ای پی آی
+  // const vouchers = [
+  // {
+  //   id: 1001,
+  //   number: "1001",
+  //   date: "1405/03/20",
+  //   amount: 1500000,
+  //   description: "سند دریافت از مشتری"
+  // },
+  // {
+  //   id: 1002,
+  //   number: "1002",
+  //   date: "1405/03/21",
+  //   amount: 800000,
+  //   description: "سند پرداخت حقوق"
+  // },
+  // {
+  //   id: 1003,
+  //   number: "1003",
+  //   date: "1405/03/22",
+  //   amount: 2500000,
+  //   description: "سند خرید تجهیزات"
+  // },
+  //                 ];
 // ----------------------------------------------------------------------------- قبل از استفاده از گرید
     //   <div className={styles.VList}>
   //     <h2>Issued Vouchers</h2>

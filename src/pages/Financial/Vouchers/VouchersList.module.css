@@ -42,11 +42,19 @@
 }
 
 .Total {
-  margin-top: 15px;
-  margin-left: 200px;
+  margin-bottom: 7px;
+  margin-left: 55px;
   text-align: left;
+  padding: 12px; 
 }
 
-:global(.row-error) {
-  background-color: #ffe5e5;
+:global(.even) {
+  background-color: #fafafa;
 }
+
+:global(.odd) {
+  background-color: white;
+}
+/* :global(.row-error) {
+  background-color: #ffe5e5;
+} */
