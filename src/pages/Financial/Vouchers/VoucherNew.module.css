@@ -1,9 +1,52 @@
 .Header {
     text-align: center;
+
+  }
+
+.HeaderForm{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    margin-bottom:12px;
+    direction:rtl;
 }
 
+.HeaderForm :global(.MuiTextField-root){
+    flex:1;
+}
+  
 .GHeight {
 
     height: 650px;
     margin-bottom: 5px;
+}
+
+.Footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-top: 5px;
+  margin-bottom: 5px;
+  padding: 10px 10px;
+
+  border: 1px solid #ddd;
+  border-radius: 6px;
+
+  background-color: #fafafa;
+
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.Footer span {
+  min-width: 180px;
+}
+
+.Balanced {
+  color: #2e7d32;
+}
+
+.NotBalanced {
+  color: #d32f2f;
 }

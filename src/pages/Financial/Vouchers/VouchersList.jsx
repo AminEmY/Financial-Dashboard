@@ -2,7 +2,7 @@ import{ React,useState,useEffect } from 'react';
 import axios from "axios";
 import styles from "./vouchersList.module.css"
 import { useNavigate } from 'react-router-dom';
-import { DataGridPro } from '@mui/x-data-grid-pro';
+import CustomDataGrid  from '../../../components/common/CustomizedDataGrid'
 import {formatNumber,toPersianDigits} from "../../../utils/formatter";//جهت تبدیل اعداد و تاریخ به فارسی
 
 
@@ -91,7 +91,7 @@ const rows = vouchers.map((v) => ({
       field: "amount",
       headerName: "مبلغ",
       minWidth: 170,
-      headerAlign: "right",
+      align:"right",
       valueFormatter: formatNumber,
     },
   ];
@@ -124,42 +124,23 @@ const rows = vouchers.map((v) => ({
         </div>
 
        <div className={styles.GridHeight}  >
-          <DataGridPro
+          <CustomDataGrid
               rows={filteredRows}
               columns={columns}
-              scrollbarSize={0}
-              showToolbar
-
-
-                slots={{footer: CustomFooter,}}
-
-      sx={{
-            direction : 'rtl' ,
+              slots={{footer: CustomFooter,}}
+                
             
-                "& .MuiDataGrid-scrollbarFiller": {
-                display: "none",
-                                                  },
-            
-
-           "& .MuiDataGrid-columnHeader:not(:last-child)": {
-            borderLeft: "1px solid #ddd"},
-                                          
-            "& .MuiDataGrid-cell:not(:last-child)": {
-            borderLeft: "1px solid #ddd"},
-              "& .MuiDataGrid-main": {
-            overflowX: "hidden",
-                                      },
-                                            
-          }}  
-                                  
-              getRowClassName={(params) =>params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd"}  
+            onRowClick={(params) => {
+            navigate(`/Vouchers/${params.row.id}`);
+            }}
+            // getRowClassName={(params) =>params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd"}  
               
               // pagination
               // paginationMode="server"
               // sortingMode="server"
               // filterMode="server"
 
-              pageSizeOptions={[5, 10, 25]}
+              // pageSizeOptions={[5, 10, 25]}
 
               // initialState={{
               //  pagination: {
@@ -170,9 +151,6 @@ const rows = vouchers.map((v) => ({
               //                   },
               // }}
               
-              onRowClick={(params) => {
-              navigate(`/Vouchers/${params.row.id}`);
-              }}
            />
 
        </div>
