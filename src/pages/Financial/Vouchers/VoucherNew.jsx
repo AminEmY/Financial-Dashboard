@@ -55,7 +55,7 @@ const VoucherNew = () => {
 
 const handleCellKeyDown = (params, event) => {
 
-  console.log("Key:", event.key, "Field:", params.field);
+console.log("Enter", params.field);
 
   if (event.key !== "Enter") return ;
 
@@ -69,22 +69,40 @@ const handleCellKeyDown = (params, event) => {
   ];
 
   const currentIndex = order.indexOf(params.field);
+   console.log("currentIndex:", currentIndex);
 
-  if (currentIndex === -1) return;
+  if (currentIndex === -1)  {console.log("field not found") 
+    return;}
 
   // ستون بعدی
   if (currentIndex < order.length - 1) {
-    apiRef.current.startCellEditMode({
-      id: params.id,
-      field: order[currentIndex + 1],
-    });
+        console.log(
+      "move to:",
+      order[currentIndex + 1]
+    );
+
+const nextField = order[currentIndex + 1];
+
+apiRef.current.startCellEditMode({
+  id: params.id,
+  field: nextField,
+});
+
+
+setTimeout(() => {
+  apiRef.current.setCellFocus(
+    params.id,
+    nextField
+  );
+}, 100);
 
     return;
   }
 
+    console.log("last column");
   // آخرین ستون
   addLine();
-};    
+                                                };    
 
 const addLine = () => {
   

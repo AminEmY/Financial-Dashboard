@@ -1,7 +1,8 @@
 import { DataGridPro } from "@mui/x-data-grid-pro";
 
 const CustomDataGrid = (props) => {
-    return  <DataGridPro
+   
+  return  <DataGridPro
 
     
 
@@ -10,8 +11,7 @@ const CustomDataGrid = (props) => {
       columnHeaderHeight={38}
       
       //showToolbar
-      
-{...props}
+
 
       sx={{
             direction : 'rtl' ,
@@ -29,7 +29,7 @@ const CustomDataGrid = (props) => {
             }}
     
     
-    
+    {...props}
     
              />;
 }
