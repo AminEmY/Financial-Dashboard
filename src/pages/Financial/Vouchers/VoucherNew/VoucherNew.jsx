@@ -1,11 +1,12 @@
 import {React,useState} from 'react';
-import styles from './VoucherNew.module.css';
+import styles from "./VoucherNew.module.css";
 import { Button } from '@mui/material';
-import {formatNumber} from "../../../utils/formatter";//جهت تبدیل اعداد و تاریخ به فارسی
-import CustomDataGrid from "../../../components/common/CustomizedDataGrid";
+import {formatNumber} from "../../../../utils/formatter";//جهت تبدیل اعداد و تاریخ به فارسی
+import CustomDataGrid from "../../../../components/common/CustomizedDataGrid";
 import getVoucherColumns from "./VoucherColumns";
 import { useGridApiRef } from "@mui/x-data-grid-pro";
 import VoucherHeader from "./VoucherHeader";
+import VoucherLineGrid from "./VoucherLineGrid"
 
 
 
@@ -165,7 +166,8 @@ return (
     
   <div className={styles.GHeight}>
     
-    < CustomDataGrid
+    <VoucherLineGrid />
+    {/* < CustomDataGrid
       apiRef={apiRef}
       
       rows={voucher.lines}
@@ -174,7 +176,7 @@ return (
       onCellKeyDown={handleCellKeyDown}
       processRowUpdate={processRowUpdate}
       
-      />
+      /> */}
   </div>
 
   <div className={styles.Footer}>

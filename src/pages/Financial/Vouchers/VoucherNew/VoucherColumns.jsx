@@ -1,4 +1,4 @@
-import { formatNumber, toPersianDigits } from "../../../utils/formatter";
+import { formatNumber, toPersianDigits } from "../../../../utils/formatter";
 
 const getVoucherColumns = () => {
    
