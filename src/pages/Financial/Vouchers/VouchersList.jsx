@@ -16,7 +16,7 @@ const VouchersList = () => {
 
  useEffect(() => {
   axios
-    .post("http://localhost:8049/api/Voucher/Search")
+    .post("http://ecipc107:8049/api/Voucher/Search")
     .then((res) => {
       // console.log(res.data);
       setVouchers(res.data);
