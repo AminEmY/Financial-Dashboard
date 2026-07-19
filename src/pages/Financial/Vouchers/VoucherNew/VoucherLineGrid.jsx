@@ -3,11 +3,12 @@ import getVoucherColumns from "./VoucherColumns";
 import { useGridApiRef } from "@mui/x-data-grid-pro";
 import { Button } from '@mui/material';
 import styles from "./VoucherLineGrid.module.css";
+import { useMemo } from "react";
 
 
 const VoucherLineGrid = ({ voucher, setVoucher}) => {
     
-    const columns = getVoucherColumns();
+    const columns = useMemo(() => getVoucherColumns(), []);//برای اینکه هر بار اجرا نشه و فقط وقتی تغییر کرد []
     const apiRef = useGridApiRef();
     const processRowUpdate = (newRow) => {
 
