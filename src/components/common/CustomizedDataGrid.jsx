@@ -11,7 +11,6 @@ const CustomDataGrid = (props) => {
       scrollbarSize={0}
       rowHeight={36}
       columnHeaderHeight={38}
-      
       //showToolbar
 
 

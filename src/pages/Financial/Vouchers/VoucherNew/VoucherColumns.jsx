@@ -18,9 +18,9 @@ const getVoucherColumns = () => {
                  valueFormatter: toPersianDigits,
                },
                {
-                 field: "accountName",
-                 headerName: "عنوان حساب",
-                 flex: 2,
+               field: "accountName",
+               headerName: "عنوان حساب",
+               flex: 2,
                editable: false,
              },
              {
@@ -34,6 +34,7 @@ const getVoucherColumns = () => {
                headerName: "بدهکار",
                flex: 1,
                editable: true,
+               type: "number",
                valueFormatter: formatNumber,
              },
              {
@@ -41,6 +42,7 @@ const getVoucherColumns = () => {
                headerName: "بستانکار",
                flex: 1,
                editable: true,
+               type: "number",
                valueFormatter: formatNumber,
              },
            ]);
