@@ -1,8 +1,7 @@
 import { formatNumber, toPersianDigits } from "../../../../utils/formatter";
+// import VoucherAmountEditCell from "./VoucherAmountEditCell";
 
-const getVoucherColumns = () => {
-   
-    return (
+const columns = 
            [
                {
                  field: "row",
@@ -45,7 +44,7 @@ const getVoucherColumns = () => {
                type: "number",
                valueFormatter: formatNumber,
              },
-           ]);
-}
+           ];
+
  
-export default getVoucherColumns;
+export default columns;

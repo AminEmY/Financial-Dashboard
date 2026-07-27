@@ -1,50 +1,39 @@
-import TextField from "@mui/material/TextField";
+// import { TextField } from "@mui/material";
+// import { useGridApiContext } from "@mui/x-data-grid-pro";
 
- function VoucherAmountEditCell(props) {
-  const {
-    id,
-    field,
-    value,
-    apiRef,
-  } = props;
+// export default function VoucherAmountEditCell(props) {
+//     const { id, field, value } = props;
 
-  console.log(props);
+//     const apiRef = useGridApiContext();
 
-  const handleChange = (e) => {
-    const newValue = Number(e.target.value) || 0;
-    console.log("Amount Edit Cell");
-    apiRef.setEditCellValue({
-      id,
-      field,
-      value: newValue,
-    });
-  console.log(field, newValue);
-    if (field === "debtorAmount") {
-      apiRef.setEditCellValue({
-        id,
-        field: "creditorAmount",
-        value: 0,
-      });
-    }
+//     const handleChange = async (event) => {
 
-    if (field === "creditorAmount") {
-      apiRef.setEditCellValue({
-        id,
-        field: "debtorAmount",
-        value: 0,
-      });
-    }
-  };
+//         const newValue = Number(event.target.value) || 0;
 
-  return (
-    <TextField
-      value={value ?? ""}
-      type="number"
-      variant="standard"
-      fullWidth
-      onChange={handleChange}
-    />
-  );
-}
+//         await apiRef.current.setEditCellValue({
+//             id,
+//             field,
+//             value: newValue,
+//         });
 
-export default VoucherAmountEditCell
+//         const oppositeField =
+//             field === "debtorAmount"
+//                 ? "creditorAmount"
+//                 : "debtorAmount";
+
+//         await apiRef.current.setEditCellValue({
+//             id,
+//             field: oppositeField,
+//             value: 0,
+//         });
+//     };
+
+//     return (
+//         <TextField
+//             fullWidth
+//             variant="standard"
+//             value={value ?? ""}
+//             onChange={handleChange}
+//         />
+//     );
+// }
