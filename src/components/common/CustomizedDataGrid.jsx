@@ -1,17 +1,14 @@
-import { DataGridPro, useGridApiRef, } from "@mui/x-data-grid-pro";
+import { DataGridPro } from "@mui/x-data-grid-pro";
 
 const CustomDataGrid = (props) => {
   
-  // const apiRef = useGridApiRef();
-
   return  <DataGridPro
 
-      // apiRef={apiRef}
 
       scrollbarSize={0}
       rowHeight={36}
       columnHeaderHeight={38}
-      //showToolbar
+      showToolbar
 
 
       sx={{
