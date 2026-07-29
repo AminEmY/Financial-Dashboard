@@ -1,8 +1,25 @@
 import { useGridApiRef } from "@mui/x-data-grid-pro";
 import {getColumns} from "./VoucherColumns";
+import { useState } from "react";
 
 export default function useVoucherGrid(voucher, setVoucher) {
     const apiRef = useGridApiRef();
+
+        //  استیت و توابع مدیریت Snackbar
+    // =========================================================
+    const [snackbar, setSnackbar] = useState({
+        open: false,
+        message: "",
+        severity: "error" // می‌تواند success، info، warning یا error باشد
+    });
+
+    const closeSnackbar = (event, reason) => {
+        if (reason === 'clickaway') return;
+        setSnackbar((prev) => ({ ...prev, open: false }));
+    };
+
+
+
         // =========================================================
     //   تابع حذف ردیف و مرتب‌سازی شماره ردیف‌ها
    
@@ -23,7 +40,7 @@ export default function useVoucherGrid(voucher, setVoucher) {
         }));
     };
 
-    // تولید ستون‌ها همراه با پاس دادن تابع حذف به آن‌ها
+    // تولید ستون‌ها همراه با پاس دادن تابع حذف به آن‌ها و پاس دادن آرایه سطرها به ستون‌ها برای استخراج تاریخچه شرح‌ها
     const dynamicColumns = getColumns(deleteLine);
 
 
@@ -43,6 +60,24 @@ export default function useVoucherGrid(voucher, setVoucher) {
         else if (creditor !== 0 && creditor !== oldCreditor) {
             updatedRow.debtorAmount = 0;
         }
+
+        //   ذخیره دائمی شرح در حافظه مرورگر
+        // =========================================================
+        if (updatedRow.sharh && updatedRow.sharh.trim() !== "") {
+            // ۱. خواندن لیست تاریخچه قبلی از دیتابیس مرورگر
+            const localData = localStorage.getItem("sharh_history");
+            let currentHistory = localData ? JSON.parse(localData) : [];
+            
+            // ۲. اضافه کردن شرح جدید به آرایه تاریخچه
+            currentHistory.push(updatedRow.sharh.trim());
+            
+            // ۳. فیلتر کردن مقادیر برای حذف موارد تکراری
+            const uniqueHistory = Array.from(new Set(currentHistory));
+            
+            // ۴. ذخیره مجدد آرایه پاکسازی شده در دیتابیس مرورگر به صورت رشته متنی (String)
+            localStorage.setItem("sharh_history", JSON.stringify(uniqueHistory));}
+
+
 
     // ۴. آرایه قبلی سطرها را مپ می‌کنیم تا سطر ادیت شده را جایگزین کنیم        
         const updatedLines = voucher.lines.map((line) =>
@@ -66,7 +101,12 @@ export default function useVoucherGrid(voucher, setVoucher) {
             const lastLine = voucher.lines[voucher.lines.length - 1];
 // اگر کد حساب آخرین سطر خالی بود، پیام داده و عملیات را متوقف کن
             if (!lastLine.accountCode || lastLine.accountCode.trim() === "") {
-                alert("لطفاً ابتدا کد حساب ردیف فعلی را وارد کنید.");
+                //  از استیت اسنک‌بار استفاده می‌کنیم
+                setSnackbar({
+                    open: true,
+                    message: "لطفاً ابتدا کد حساب ردیف فعلی را وارد کنید",
+                    severity: "warning"
+                });
                 return;
             }
         }
@@ -88,8 +128,8 @@ export default function useVoucherGrid(voucher, setVoucher) {
             lines: [...prev.lines, newRow],
         }));
 
-        //  [ فوکوس ایمن روی سطر جدید با تاخیر ۵۰ میلی‌ثانیه‌ای] 
-        // =========================================================
+        //   فوکوس ایمن روی سطر جدید با تاخیر ۵۰ میلی‌ثانیه‌ای
+
         // برای حل مشکل خطای تکثیر نشدن سطر یا MissingRowIdError
         // ۵۰ میلی‌ثانیه صبر می‌کنیم تا ابتدا رندر ری‌اکت تمام شود و سطر در DOM بنشیند
 
@@ -109,33 +149,9 @@ export default function useVoucherGrid(voucher, setVoucher) {
         const currentColumnIndex = visibleColumns.findIndex((col) => col.field === params.field);
 
 
-        //  [تغییر جدید - کپی شرح با کلید 
-        // =========================================================
-        // ۱. چک می‌کنیم که کاربر حتماً روی فیلد "شرح" باشد و دکمه اسلش (/) را زده باشد
-        if (params.field === 'sharh' && event.key === '/') {
-            // ۲. موقعیت (ایندکس) سطر فعلی در جدول را پیدا می‌کنیم
-            const currentRowIndex = voucher.lines.findIndex((line) => line.id === params.id);
-            
-            // ۳. اگر سطر فعلی ردیف اول نباشد (یعنی سطری بالاتر از آن وجود داشته باشد)
-            if (currentRowIndex > 0) {
-                event.preventDefault(); // جلوگیری از تایپ شدن خود کاراکتر "/" در کادر
-                
-                // ۴. شرحِ سطر بالایی را استخراج می‌کنیم
-                const previousRowSharh = voucher.lines[currentRowIndex - 1].sharh;
 
-                // ۵. با استفاده از متد رسمی دیتاگرید، مقدار سطر فعلی را زنده آپدیت می‌کنیم تا در لحظه روی صفحه دیده شود
-                apiRef.current.setEditCellValue({
-                    id: params.id,
-                    field: 'sharh',
-                    value: previousRowSharh
-                });
-            }
-            return;
-        }
-
-
-        // =========================================================
-      //  [تغییر جدید - اصلاح برعکس بودن کلیدهای چپ و راست در حالت RTL]
+        
+      //  [  اصلاح برعکس بودن کلیدهای چپ و راست در حالت فارسی 
       // =========================================================
       
         if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
@@ -203,5 +219,5 @@ export default function useVoucherGrid(voucher, setVoucher) {
         }
     };
 
-    return { apiRef, columns:dynamicColumns , processRowUpdate, addLine, onCellKeyDown };
+    return { apiRef, columns:dynamicColumns , processRowUpdate, addLine, onCellKeyDown, snackbar, closeSnackbar }; //+ اسنک بار 
 }
