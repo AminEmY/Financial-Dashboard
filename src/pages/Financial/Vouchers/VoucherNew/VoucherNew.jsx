@@ -13,12 +13,14 @@ const VoucherNew = () => {
     
 
 
+  // ⭐️ [اصلاح امنیتی] استفاده از ?. و قرار دادن آرایه خالی پیش‌فرض تا در صورت نبود سطر، سیستم کرش نکند
+  const lines = voucher?.lines || [];
 
 
-  const totalDebtor = voucher.lines.reduce(
+  const totalDebtor = lines.reduce(
   (sum, line) => sum + Number(line.debtorAmount || 0) , 0 ); //حالا که State آپدیت می‌شود، دیگر لازم نیست این دو مقدار را دستی نگه داریم
 
-  const totalCreditor = voucher.lines.reduce(
+  const totalCreditor = lines.reduce(
   (sum, line) => sum + Number(line.creditorAmount || 0) , 0 );
 
   const isBalanced = totalDebtor === totalCreditor; //تراز بودن سند

@@ -1,23 +1,108 @@
 import { formatNumber, toPersianDigits } from "../../../../utils/formatter";
 import { GridActionsCellItem } from "@mui/x-data-grid-pro";
 import DeleteIcon from "@mui/icons-material/Delete"; //   آیکون را ایمپورت کن
-import { Autocomplete, TextField } from "@mui/material"; //  ایمپورت‌برای پیشنهاد شرح
+import SearchIcon from "@mui/icons-material/Search"; //  آیکون ذره‌بین برای پنجره کمکی
+import { Autocomplete, TextField, IconButton, InputAdornment  } from "@mui/material"; //   ایمپورت‌برای پیشنهاد شرح و انتخاب حساب
 
-// تابع کارخانه‌ای (Factory) برای ستون‌ها تا بتوانیم تابع حذف را به آن پاس دهیم
-export const getColumns = (deleteLine) => [
-   {
+
+// تابع کارخانه‌ای (Factory) برای ستون‌ها تا بتوانیم تابع حذف را به آن پاس دهیم و اضافه کردن تابع openAccountModal به ورودی‌های ستون
+export const getColumns = (deleteLine, openAccountModal) => [
+    {
      field: "row",
      headerName: "ردیف",
      width: 80,
-     valueFormatter: toPersianDigits,
+     // ⭐️ حل باگ نهایی کرش گرید: استفاده امن از sequence خود سطر به جای متدهای خراب apiRef
+     valueGetter: (value, row) => {
+       return row && row.sequence ? row.sequence : "";
+     },
+     valueFormatter: (value) => {
+       if (value === undefined || value === null || value === "") return "";
+       return toPersianDigits(value);
+     },
    },
-   {
-     field: "accountCode",
-     headerName: "کد حساب",
-     flex: 1,
-     editable: true,
-     valueFormatter: toPersianDigits,
-   },
+  {
+  field: "accountCode",
+  headerName: "کد حساب",
+  flex: 1,
+  editable: true,
+  // ⭐️ [اصلاح امنیتی] اگر مقدار سطر جدید خالی بود، فرمتر فارسی‌ساز را اجرا نکن تا گرید کرش نکند
+  valueFormatter: (value) => {
+    if (!value) return "";
+    return toPersianDigits(value);
+  },
+
+  renderEditCell: (params) => (
+    <TextField
+      fullWidth
+      variant="standard"
+      autoFocus
+      defaultValue={params.value || ""}
+
+      onChange={(e) => {
+        params.api.setEditCellValue({
+          id: params.id,
+          field: params.field,
+          value: e.target.value,
+        });
+      }}
+
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          // مقدار واقعی‌ای که کاربر داخل TextField نوشته را می‌گیریم
+          const typedValue = e.currentTarget.value.trim();
+
+          // اگر چیزی ننوشته → مودال انتخاب حساب
+          if (!typedValue) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            // ⭐️ [اصلاح ترتیب آرگومان‌ها] هماهنگ با ورودی‌های هوک: اول کاراکتر (خالی)، دوم آیدی سطر
+            openAccountModal("", params.id);
+            return;
+          }
+        }
+      }}
+
+      sx={{
+        "& input": {
+          fontFamily: "Vazir, Tahoma",
+          fontSize: "14px",
+          padding: "0 8px",
+        },
+      }}
+
+      InputProps={{
+        endAdornment: (
+          <InputAdornment position="end">
+            <IconButton
+              size="small"
+              onMouseDown={(e) => {
+                // جلوگیری از اینکه کلیک روی آیکون باعث از دست رفتن حالت Edit سلول شود
+                e.preventDefault();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+
+                const inputValue = e.currentTarget
+                  ?.closest(".MuiDataGrid-cell")
+                  ?.querySelector("input")
+                  ?.value || "";
+
+                // ⭐️ [اصلاح ترتیب آرگومان‌ها] هماهنگ با ورودی‌های هوک: اول مقدار فیلد، دوم آیدی سطر
+                openAccountModal(inputValue, params.id);
+              }}
+            >
+              <SearchIcon
+                fontSize="small"
+                sx={{ color: "#1976d2" }}
+              />
+            </IconButton>
+          </InputAdornment>
+        ),
+      }}
+    />
+  ),
+},
    {
      field: "accountName",
      headerName: "عنوان حساب",

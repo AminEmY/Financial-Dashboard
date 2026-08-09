@@ -8,3 +8,196 @@
 
   margin-top: 3px;
 }
+
+/* تنظیم تم پیش‌فرض و فونت‌ها */
+.AlertFont {
+  width: 100%;
+  font-family: 'Vazir', 'Tahoma', sans-serif !important;
+}
+
+/* نوار ابزار پایین جدول اسناد */
+.SummaryBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-top: 8px;
+  margin-bottom: 12px;
+  font-family: 'Vazir', 'Tahoma', sans-serif;
+  font-size: 14px;
+}
+
+.SummaryItem {
+  display: flex;
+  align-items: center;
+}
+
+.SummaryLabel {
+  color: #555;
+  margin-left: 6px;
+}
+
+.DebitText {
+  color: #2e7d32;
+}
+
+.CreditText {
+  color: #c62828;
+}
+
+/* استایل وضعیت‌های تراز و ناموزون سند */
+.StatusBalanced {
+  color: #2e7d32;
+  background-color: #e8f5e9;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+.StatusUnbalanced {
+  color: #c62828;
+  background-color: #ffebee;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+/* استایل‌های مربوط به پنجره مودال */
+.ModalTitle {
+  font-family: 'Vazir', 'Tahoma', sans-serif !important;
+  font-size: 16px !important;
+  text-align: right !important;
+  padding: 16px 24px 8px 24px !important;
+}
+
+.SearchInput :global(.MuiInputBase-input) {
+  font-family: 'Vazir', 'Tahoma', sans-serif !important;
+  font-size: 14px !important;
+}
+
+.SearchInput {
+  margin-top: 8px !important;
+  margin-bottom: 16px !important;
+}
+
+.LoadingContainer {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.AccountsList {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.AccountItem {
+  border-bottom: 1px solid #f0f0f0;
+  text-align: right !important;
+}
+
+.AccountNameText {
+  font-family: 'Vazir', 'Tahoma', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+}
+
+.AccountCodeText {
+  font-family: 'Vazir', 'Tahoma', sans-serif !important;
+  font-size: 12px !important;
+  color: #666 !important;
+  margin-top: 4px;
+}
+
+.EmptyResult {
+  text-align: center;
+  color: #888;
+  padding: 20px;
+  font-family: 'Vazir', 'Tahoma', sans-serif;
+}
+
+
+/* کدهای زیر را به انتهای فایل فعلی اضافه کنید */
+
+.TabFont {
+  font-family: 'Vazir', 'Tahoma', sans-serif !important;
+  font-weight: bold !important;
+  font-size: 13px !important;
+}
+
+.TreeWrapper {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-left: 8px;
+}
+
+/* باکس نگهدارنده هر ردیف در درخت حساب‌ها */
+.TreeLabelContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font-family: 'Vazir', 'Tahoma', sans-serif;
+  font-size: 14px;
+  padding: 4px 0;
+}
+
+.TreeCodeSpan {
+  color: #777;
+  font-size: 12px;
+}
+
+/* دکمه انتخاب روبه‌روی حساب‌های مجاز */
+.TreeSelectBtn {
+  margin-right: auto !important; /* هل دادن دکمه به داخلی‌ترین قسمت سمت چپ */
+  font-family: 'Vazir', 'Tahoma', sans-serif !important;
+  font-size: 11px !important;
+  padding: 1px 8px !important;
+  height: 24px;
+}
+
+/* اصلاح استایل متون داخلی لایبرری درخت برای فونت فارسی */
+.TreeWrapper :global(.MuiTreeItem-label) {
+  width: 100%;
+}
+
+
+/*  متمایز کردن ظاهر حساب‌های سطح آخر (معین/تفصیلی) در ساختار درختی */
+.TreeLabelContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 0;
+}
+
+/*  رنگ متمایز و ملایم برای متن حساب‌های سطح آخر قابل انتخاب */
+:global(.MuiTreeItem-content):not([aria-expanded="true"]):not([aria-expanded="false"]) .TreeLabelContainer span:first-child {
+  color: #1976d2; /* رنگ آبی سازمانی یا هر رنگ متمایز دیگر */
+  font-weight: bold;
+}
+
+/*  استایل‌دهی به کد حساب در لایه درخت */
+.TreeCodeSpan {
+  color: #757575;
+  font-size: 0.85rem;
+}
+
+/* افکت هاور و فوکوس اختصاصی روی حساب‌های سطح آخر زمان پیمایش با کیبورد */
+:global(.MuiTreeItem-content):not([aria-expanded="true"]):not([aria-expanded="false"]):hover {
+  background-color: rgba(25, 118, 210, 0.08) !important;
+}
+
+:global(.MuiTreeItem-root:focus) > :global(.MuiTreeItem-content) {
+  background-color: rgba(25, 118, 210, 0.15) !important;
+  outline: 1px dashed #1976d2;
+}
+
+/*  دکمه انتخاب (برای مواقعی که کاربر همچنان تمایل به استفاده از موس دارد) */
+.TreeSelectBtn {
+  margin-right: auto !important; /* انتقال دکمه به سمت چپ در حالت RTL */
+  font-family: inherit !important;
+  font-size: 0.75rem !important;
+  padding: 2px 8px !important;
+}
