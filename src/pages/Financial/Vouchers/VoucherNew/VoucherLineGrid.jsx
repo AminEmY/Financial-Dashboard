@@ -21,7 +21,12 @@ const VoucherLineGrid = ({ voucher, setVoucher }) => {
     const [allAccounts, setAllAccounts] = useState([]); // ذخیره کل حساب‌ها برای ساخت درخت
     const [treeLoading, setTreeLoading] = useState(false);
 
-     // ⭐️ [تغییر مهم] پاس دادن توابع تغییر استیت فیلد متنی و تب‌ها به هوک، برای برطرف کردن خطای Not Defined و همگام‌سازی دکمه‌ها
+        //  استیت نگه‌دارنده شاخه‌های باز شده درخت !
+    const [expandedTreeItems, setExpandedTreeItems] = useState([]); 
+
+
+
+     //  پاس دادن توابع تغییر استیت فیلد متنی و تب‌ها به هوک، برای برطرف کردن خطای Not Defined و همگام‌سازی دکمه‌ها
     const { 
         apiRef, 
         columns, 
@@ -32,8 +37,9 @@ const VoucherLineGrid = ({ voucher, setVoucher }) => {
         closeSnackbar, 
         accountModal, 
         closeAccountModal, 
-        selectAccountFromModal  
-    } = useVoucherGrid(voucher, setVoucher, setSearchTerm, setActiveTabOverride)
+        selectAccountFromModal,
+    
+    } = useVoucherGrid(voucher, setVoucher, setSearchTerm, setActiveTabOverride, allAccounts, setExpandedTreeItems)
 
 
     // ⭐️ [تغییر مهم] محاسبه داینامیک تب فعال بر اساس وضعیت فشرده شدن کلیدها در هوک
@@ -90,26 +96,29 @@ const VoucherLineGrid = ({ voucher, setVoucher }) => {
 
 
   // افکت لود کل حساب‌ها برای ساخت درخت
-  useEffect(() => {
-    if (!accountModal.open || activeTab !== 1) return;
+ // ⭐️ افکت اصلاح شده در فایل VoucherLineGrid.jsx را به این شکل تغییر دهید:
+// ⭐️ این افکت را در فایل VoucherLineGrid.jsx جایگزین افکت قبلی درخت کنید:
+useEffect(() => {
+  // شرط باز بودن مودال حذف شد تا به محض ورود کاربر به صفحه سند، دیتای مرجع حساب‌ها لود و آماده شود
+  const fetchAllAccountsForTree = async () => {
+    setTreeLoading(true);
+    try {
+      const response = await axios.post("http://ecipc107:8049/api/Account/GetAll", {
+        filter: "", 
+        forSearch: false
+      });
+      setAllAccounts(response.data || []);
+    } catch (err) {
+      console.error("خطا در دریافت حساب‌ها برای درخت:", err);
+    } finally {
+      setTreeLoading(false);
+    }
+  };
 
-    const fetchAllAccountsForTree = async () => {
-      setTreeLoading(true);
-      try {
-        const response = await axios.post("http://ecipc107:8049/api/Account/GetAll", {
-          filter: "", 
-          forSearch: false
-        });
-        setAllAccounts(response.data || []);
-      } catch (err) {
-        console.error("خطا در دریافت حساب‌ها برای درخت:", err);
-      } finally {
-        setTreeLoading(false);
-      }
-    };
+  fetchAllAccountsForTree();
+}, []); // 👈 آرایه وابستگی خالی است تا فقط یک‌بار در ابتدای لود صفحه اجرا شود
 
-    fetchAllAccountsForTree();
-  }, [accountModal.open, activeTab]);
+
 
 
    // ✨ الگوریتم هوشمند تبدیل لیست به درخت بر اساس طول کد حساب (کاملاً فیکس شده)
@@ -270,8 +279,8 @@ const VoucherLineGrid = ({ voucher, setVoucher }) => {
             apiRef={apiRef}
             rows={voucher.lines}
             columns={columns}
-            processRowUpdate={processRowUpdate}
-            onCellKeyDown={onCellKeyDown} // فعال کردن پروپرتی کی‌داون برای اعمال جابه‌جایی با Enter
+            processRowUpdate={processRowUpdate} 
+            onCellKeyDown={onCellKeyDown}
         />
     </div>
         
@@ -357,9 +366,14 @@ const VoucherLineGrid = ({ voucher, setVoucher }) => {
                 <div className={styles.LoadingContainer}><CircularProgress size={30} /></div>
               ) : structuredTreeData.length > 0 ? (
                 // ⭐️ [تغییر مهم] اضافه شدن شنود کلید برای انتخاب مستقیم ردیف با اینتر از داخل درخت حساب‌ها
-                <SimpleTreeView onKeyDown={handleTreeKeyDown}>
+                <SimpleTreeView 
+                  expandedItems={expandedTreeItems} 
+                  onExpandedItemsChange={(event, itemIds) => setExpandedTreeItems(itemIds)}                  
+                  onKeyDown={handleTreeKeyDown}
+                >
                   {renderTreeItems(structuredTreeData)}
                 </SimpleTreeView>
+
               ) : (
                 <div className={styles.EmptyResult}>ساختار درختی یافت نشد.</div>
               )}

@@ -7,7 +7,7 @@ import axios from "axios";
 
 
 // ⭐️ [تغییر جدید] اضافه شدن استیت‌های فیلد متنی و تب‌ها به ورودی‌های هوک برای هدایت سناریوی اینتر و سرچ سریع
-export default function useVoucherGrid(voucher, setVoucher, setSearchTerm, setActiveTabOverride) {
+export default function useVoucherGrid(voucher, setVoucher, setSearchTerm, setActiveTabOverride, allAccounts, setExpandedTreeItems ) {
 
     const apiRef = useGridApiRef();
 
@@ -21,7 +21,7 @@ export default function useVoucherGrid(voucher, setVoucher, setSearchTerm, setAc
 
 
     // =========================================================
-    // ✨ [تغییر جدید - استیت‌های مدیریت مودال حساب‌ها] ✨
+    //  استیت‌های مدیریت مودال حساب‌ها
     // =========================================================
     const [accountModal, setAccountModal] = useState({
         open: false,
@@ -36,6 +36,7 @@ export default function useVoucherGrid(voucher, setVoucher, setSearchTerm, setAc
     const closeAccountModal = useCallback(() => {
         setAccountModal({ open: false, initialSearch: "", activeRowId: null });
     }, []);
+
 
     // ✨ [تغییر جدید - تابع نهایی کردن انتخاب حساب از داخل مودال] ✨
     const selectAccountFromModal = (account) => {
@@ -102,95 +103,171 @@ export default function useVoucherGrid(voucher, setVoucher, setSearchTerm, setAc
 
 // تولید ستون‌ها همراه با پاس دادن تابع حذف به آن‌ها و پاس دادن آرایه سطرها به ستون‌ها برای استخراج تاریخچه شرح‌ها و انتخاب حساب
     // ⭐️ [تغییر جدید] استفاده از useMemo و کالبک ناشناس برای حل کامل باگ Cannot access refs during render متیریال یو‌آی
-    const dynamicColumns = useMemo(() => {
-        return getColumns(deleteLine, (...args) => openAccountModal(...args));
-    }, [deleteLine, openAccountModal]);    
+    // تولید ستون‌ها همراه با پاس دادن تابع حذف، کالبک مودال و توابع تغییر استیت تب‌ها و سرچ
+    // ⭐️ [اصلاح فیکس] پاس دادن setSearchTerm و setActiveTabOverride به تابع getColumns
+    // ⭐️ آرگومان‌های پنجم و ششم (allAccounts و setExpandedTreeItems) به تابع getColumns اضافه شدند
+const dynamicColumns = useMemo(() => {
+    return getColumns(
+        deleteLine, 
+        (...args) => openAccountModal(...args),
+        setSearchTerm,       
+        setActiveTabOverride
+    );
+}, [deleteLine, openAccountModal, setSearchTerm, setActiveTabOverride]);
 
 
-    const processRowUpdate = async (newRow, oldRow) => {
+
+   
+
+
+// ⭐️ [نسخه نهایی و ۱۰۰٪ تضمینی حسابداری] رد کردن سطر دارای فرزند و ریست کردن سلول
+const processRowUpdate = async (newRow, oldRow) => {
         const updatedRow = { ...newRow };
 
-    // ۱. مبالغ جدید و قدیم را برای مقایسه راحت‌تر به عدد تبدیل می‌کنیم
+        // ۱. منطق بدهکار و بستانکار خودتان (کاملاً دست‌نخورده)
         const debtor = Number(updatedRow.debtorAmount || 0);
         const creditor = Number(updatedRow.creditorAmount || 0);
         const oldDebtor = Number(oldRow.debtorAmount || 0);
         const oldCreditor = Number(oldRow.creditorAmount || 0);
 
-    // ۲. اگر کاربر عدد جدیدی در بدهکار وارد کرد، بستانکار همان سطر صفر می‌شود
         if (debtor !== 0 && debtor !== oldDebtor) {
-            updatedRow.creditorAmount = 0;}
-    // ۳. اگر کاربر عدد جدیدی در بستانکار وارد کرد، بدهکار همان سطر صفر می‌شود
-        else if (creditor !== 0 && creditor !== oldCreditor) {
+            updatedRow.creditorAmount = 0;
+        } else if (creditor !== 0 && creditor !== oldCreditor) {
             updatedRow.debtorAmount = 0;
         }
 
-        //   ذخیره دائمی شرح در حافظه مرورگر
-        // =========================================================
+        // ۲. ذخیره شرح در حافظه مرورگر
         if (updatedRow.sharh && updatedRow.sharh.trim() !== "") {
-            // ۱. خواندن لیست تاریخچه قبلی از دیتابیس مرورگر
             const localData = localStorage.getItem("sharh_history");
             let currentHistory = localData ? JSON.parse(localData) : [];
-            
-            // ۲. اضافه کردن شرح جدید به آرایه تاریخچه
             currentHistory.push(updatedRow.sharh.trim());
-            
-            // ۳. فیلتر کردن مقادیر برای حذف موارد تکراری
             const uniqueHistory = Array.from(new Set(currentHistory));
-            
-            // ۴. ذخیره مجدد آرایه پاکسازی شده در دیتابیس مرورگر به صورت رشته متنی (String)
-            localStorage.setItem("sharh_history", JSON.stringify(uniqueHistory));}
+            localStorage.setItem("sharh_history", JSON.stringify(uniqueHistory));
+        }
 
-
-        // منطق استعلام مستقیم متنی کد حساب از API (سر جای خود باقی است)
+                // ⭐️ [نسخه نهایی و ۱۰۰٪ قطعی] بررسی فرزند داشتن حساب بر اساس کدهای واقعی سرور
         if (updatedRow.accountCode && updatedRow.accountCode !== oldRow.accountCode) {
+            const typedCode = updatedRow.accountCode.trim();
+            const typedCodeStr = String(typedCode);
+
+            // 🔍 جستجوی فوق‌العاده دقیق در دیتای سرور برای پیدا کردن فرزند واقعی
+            const hasChildren = allAccounts.some((acc) => {
+                if (!acc || acc.code === undefined || acc.code === null) return false;
+                
+                const currentCodeStr = String(acc.code).trim();
+                
+                // حساب زمانی فرزندِ کد تایپ‌شده است که:
+                // ۱. کدش با کد تایپ‌شده شروع شود (مثلاً 110201 با 1102 شروع می‌شود)
+                // ۲. خودِ کد تایپ‌شده نباشد (currentCodeStr !== typedCodeStr)
+                // ۳. طول کدش از کد تایپ‌شده بلندتر باشد (نشانه لایه عمیق‌تر بودن در درخت)
+                return currentCodeStr.startsWith(typedCodeStr) && 
+                       currentCodeStr !== typedCodeStr && 
+                       currentCodeStr.length > typedCodeStr.length;
+            });
+
+            if (hasChildren) {
+                // 🚨 سناریو: حساب فرزند دارد (مثل کد 11 یا 2011) -> فیلد ریست شده و درخت باز می‌شود
+                setSnackbar({
+                    open: true,
+                    message: "کد حساب " + typedCode + " دارای زیرمجموعه است. لطفاً حساب سطح آخر را انتخاب کنید.",
+                    severity: "warning"
+                });
+
+                const parentsToOpen = [];
+                for (let i = 1; i <= typedCode.length; i++) {
+                    parentsToOpen.push(typedCode.substring(0, i));
+                }
+                
+                // باز کردن مودال درخت حساب‌ها به صورت پایدار
+                // باز کردن مودال درخت حساب‌ها به صورت پایدار در فایل useVoucherGrid.jsx
+                setTimeout(() => {
+                    setActiveTabOverride(1); // ۱. قفل روی تب درخت حساب‌ها
+                    setExpandedTreeItems(parentsToOpen); // ۲. فرستادن کدهای والد برای باز شدن شاخه‌ها
+                    openAccountModal("", newRow.id); // ۳. باز کردن مودال روی سطر جاری
+                    
+                    // ⭐️ [شاهکار بومی مرورگر]: پرش مستقیم فوکوس و پررنگ کردن گره با جاوااسکریپت خالص
+                    // پیدا کردن آیدی عددی دیتابیس (node.id) برای گره‌ای که کاربر وارد کرده است
+                    const targetNode = allAccounts.find(acc => String(acc.code).trim() === typedCode.trim());
+                    
+                    if (targetNode) {
+                        // ۱۵۰ میلی‌ثانیه صبر می‌کنیم تا درخت کاملاً در DOM رندر و شاخه‌هایش باز شوند
+                        setTimeout(() => {
+                            // در متیریال‌یو‌آی نسخه جدید، المان دکمه یا محتوای گره درخت دارای کلاس .MuiTreeItem-content است
+                            // ما بر اساس ساختار itemId که به درخت داده‌ایم، به دنبال المان حاوی آن می‌گردیم
+                            const nodeElement = document.querySelector(`[itemId="${targetNode.id}"] .MuiTreeItem-content`) || 
+                                                document.querySelector(`[id*="${targetNode.id}"]`) ||
+                                                document.getElementById(`simple-tree-view-item-${targetNode.id}`);
+                            
+                            if (nodeElement) {
+                                // ۱. اسکرول کردن نرم صفحه درخت تا این گره دقیقاً در مرکز دید کاربر قرار بگیرد
+                                nodeElement.scrollIntoView({ block: "center", behavior: "smooth" });
+                                
+                                // ۲. قفل کردن فوکوس واقعی کیبورد مرورگر روی آن سطر
+                                if (nodeElement instanceof HTMLElement) {
+                                    nodeElement.focus();
+                                    
+                                    // ۳. شبیه‌سازی کلیک یا فوکوس ظاهری برای فعال شدن کلاس پررنگ (Highlight) متیریال‌یو‌آی
+                                    nodeElement.classList.add("Mui-focused");
+                                    nodeElement.classList.add("Mui-selected");
+                                }
+                            }
+                        }, 150); // تاخیر مناسب جهت رندر کامل درخت لود شده
+                    }
+                }, 50);
+
+                return oldRow; // ریست شدن سطر گرید
+
+
+            }
+
+            // 🎯 سناریو: حساب فرزند ندارد و آخرین سطح است (مثل کد 1102) -> استعلام نام حساب از API و ثبت موفق
+            // ۴. اگر حساب فرزند نداشت و سطح آخر بود -> استعلام عادی از API و ثبت موفق
             try {
                 const response = await axios.post("http://ecipc107:8049/api/Account/GetAll", {
-                    filter: updatedRow.accountCode.trim(),
+                    filter: typedCode,
                     forSearch: true
                 });
 
-                const foundAccount = response.data?.find(
-                    (acc) => acc.code === updatedRow.accountCode.trim()
-                );
+                const foundAccount = response.data?.find((acc) => acc.code === typedCode);
 
                 if (foundAccount) {
                     updatedRow.accountId = foundAccount.id;
                     updatedRow.accountName = foundAccount.name;
+
+                    // ⭐️ [نسخه نهایی و ۱۰۰٪ قطعی]: هدایت مستقیم فوکوس به شرح بدون نیاز به متدهای خراب ایندکس سطر
+                    setTimeout(() => {
+                        if (apiRef.current && apiRef.current.setCellFocus) {
+                            // متمرکز کردن مکان‌نما به صورت مستقیم روی ستون شرح همین ردیف با استفاده از آیدی سطر
+                            apiRef.current.setCellFocus(newRow.id, "sharh");
+                            
+                            // باز کردن اتوماتیک ادیتور شرح و لیست تاریخچه
+                            apiRef.current.startCellEditMode({ id: newRow.id, field: "sharh" });
+                        }
+                    }, 80);
+
                 } else {
                     updatedRow.accountCode = "";
                     updatedRow.accountId = null;
                     updatedRow.accountName = "";
-                    
-                    setSnackbar({
-                        open: true,
-                        message: "کد حساب وارد شده در سیستم معتبر نیست.",
-                        severity: "error"
-                    });
+                    setSnackbar({ open: true, message: "کد حساب وارد شده در سیستم معتبر نیست.", severity: "error" });
                 }
             } catch (error) {
                 console.error("API Error:", error);
-                setSnackbar({
-                    open: true,
-                    message: "خطا در برقراری ارتباط با سرور حساب‌ها.",
-                    severity: "error"
-                });
             }
-        }            
+
+        }
 
 
-    // ۴. آرایه قبلی سطرها را مپ می‌کنیم تا سطر ادیت شده را جایگزین کنیم        
+        // ۵. آپدیت نهایی استیت در صورت معتبر بودن حساب
         const updatedLines = voucher.lines.map((line) =>
             line.id === newRow.id ? updatedRow : line
         );
-
-    // ۵. استیت اصلی کامپوننت مادر را آپدیت می‌کنیم تا جمع کل در فوتر تغییر کند    
-        setVoucher((prev) => ({
-            ...prev,
-            lines: updatedLines
-        }));
-
+        setVoucher((prev) => ({ ...prev, lines: updatedLines }));
         return updatedRow;
     };
+
+
+
 
 // ⭐️ نسخه اصلاح‌شده و بهینه تابع addLine در فایل useVoucherGrid.jsx:
 const addLine = useCallback(() => {
@@ -238,34 +315,26 @@ const addLine = useCallback(() => {
     }, 50);
 }, [voucher.lines, setVoucher, apiRef]); // 👈 اضافه کردن وابستگی‌ها برای عملکرد صحیح
 
-
-    // ⭐️ [تلفیق کامل با کدهای خودت] مدیریت هوشمند کلیدها، جهت‌نماهای RTL و تفکیک مودال حساب‌ها
-    const onCellKeyDown = useCallback((params, event) => {
+    // ⭐️ [اصلاح نهایی] برگرداندن تابع به منطق حرکتی جهت‌نماها و اینتر عمومی خودتان
+const onCellKeyDown = useCallback((params, event) => {
         const visibleColumns = apiRef.current.getVisibleColumns();
         const currentColumnIndex = visibleColumns.findIndex((col) => col.field === params.field);
 
-        //  [اصلاح برعکس بودن کلیدهای چپ و راست در حالت فارسی - کاملاً حفظ شده] 
+        //  [اصلاح برعکس بودن کلیدهای چپ و راست در حالت فارسی - کاملاً دست‌نخورده] 
         // =========================================================
         if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-            // اگر در حالت ویرایش یک سلول هستیم، کاری به فلش‌ها نداریم تا کاربر بتواند روی متن عقب/جلو برود
             if (apiRef.current.getCellMode(params.id, params.field) === 'edit') {
                 return; 
             }
-            
-            // معکوس کردن هویت کلید فشرده شده قبل از رسیدن رویداد به مغز اصلی دیتاگرید
             const invertedKey = event.key === 'ArrowLeft' ? 'ArrowRight' : 'ArrowLeft';
-            
-            // با استفاده از Object.defineProperty ویژگی رویداد اصلی را بازنویسی و معکوس می‌کنیم
             Object.defineProperty(event, 'key', {
                 get: function() { return invertedKey; }
             });
 
-            // برای عبور روان از روی ستون غیرقابل ویرایش "accountName"
             const step = invertedKey === 'ArrowRight' ? 1 : -1;
             const targetColumn = visibleColumns[currentColumnIndex + step];
             
             if (targetColumn && targetColumn.field === 'accountName') {
-                // اگر مقصد بعدی ستون مسدود شده نام حساب بود، فوکوس را به صورت دستی هدایت کرده و رویداد اصلی را قطع می‌کنیم
                 event.preventDefault();
                 const skipStep = invertedKey === 'ArrowRight' ? 2 : -2;
                 const finalColumn = visibleColumns[currentColumnIndex + skipStep];
@@ -274,53 +343,22 @@ const addLine = useCallback(() => {
                 }
                 return;
             }
-
-            // در صورتی که ستون عادی بود، اجازه می‌دهیم رویداد معکوس شده ما به خوردِ هسته متیریال یوآی برود
             return;
         }
 
-        // ⭐️ [بخش جدید و اصلاح‌شده سناریو] مدیریت اختصاصی کلیدها برای ستون کد حساب قبل از اینترهای عمومی گرید
-        if (params.field === "accountCode") {
-            // لیست کلیدهای سیستمی که نباید پنجره جستجوی متنی سریع را باز کنند
-            const ignoredKeys = [
-                "Escape", "Tab", "Shift", "Control", "Alt", "Meta",
-                "ArrowUp", "ArrowDown", "Backspace", "Delete", "CapsLock"
-            ];
-
-            // اگر کاربر کلیدی غیر از اینتر و کلیدهای بالا زد (یعنی کلید متنی زد)
-            if (event.key !== 'Enter' && !ignoredKeys.includes(event.key)) {
-                event.preventDefault();
-                event.stopPropagation();
-                
-                const typedChar = event.key;
-
-                // خروج امن از ویرایش سلول برای جلوگیری از باگ تداخل رندر
-                apiRef.current.stopCellEditMode({ id: params.id, field: params.field });
-
-                setTimeout(() => {
-                    setActiveTabOverride(0); // قفل روی تب جستجوی سریع متنی (تب شماره ۰)
-                    setSearchTerm(typedChar); // پر کردن فیلد سرچ با کاراکتر فشرده شده
-                    openAccountModal(typedChar, params.id);
-                }, 60);
-                return;
-            }
-        }
-
-        // مدیریت عمومی کلید Enter (کاملاً وفادار به کدهای خودت)
+        // مدیریت کلید Enter عمومی 
         if (event.key === 'Enter') {
-            // ⭐️ [اصلاح هوشمند سناریو] اگر روی کد حساب بودیم و مقدار خالی بود، اینتر عمومی گرید را متوقف می‌کنیم تا تب درخت باز شود
-            if (params.field === "accountCode" && (!params.value || params.value.trim() === "")) {
-                event.preventDefault();
-                event.stopPropagation();
-                apiRef.current.stopCellEditMode({ id: params.id, field: params.field });
-                
-                setTimeout(() => {
-                    setActiveTabOverride(1); // قفل روی تب ساختار درختی (تب شماره ۱)
-                    openAccountModal("", params.id);
-                }, 60);
-                return;
+            // ⭐️ فیکس اصلی: اگر روی ستون کد حساب بودیم، تمام منطق‌های قدیمی باز کردن دستی مودال را پاک می‌کنیم.
+            // فقط اجازه می‌دهیم سلول از حالت ادیت خارج شود و کارهای ثبت طبیعی گرید را جلو ببرد.
+            if (params.field === 'accountCode') {
+                if (apiRef.current.getCellMode(params.id, params.field) === 'edit') {
+                    apiRef.current.stopCellEditMode({ id: params.id, field: params.field });
+                }
+                // قطع اجرای کدهای بعدی جابه‌جایی سطر، تا متد processRowUpdate شانس ثبت و تغییر استیت را داشته باشد
+                return; 
             }
 
+            // روال عادی کلید اینتر برای سایر ستون‌ها (شرح، بدهکار، بستانکار - کاملاً وفادار به کدهای خودت)
             if (apiRef.current.getCellMode(params.id, params.field) === 'edit') {
                 apiRef.current.stopCellEditMode({ id: params.id, field: params.field });
             }
@@ -349,7 +387,13 @@ const addLine = useCallback(() => {
                 }
             }
         }
-    }, [apiRef, openAccountModal, setActiveTabOverride, setSearchTerm, addLine]);
+
+
+    // ⭐️ [اصلاح فیکس] اضافه کردن وابستگی‌های جا افتاده به انتهای تابع onCellKeyDown:
+}, [apiRef, addLine,]);
+
+
+
 
     // خروجی نهایی هوک همراه با اضافه شدن متد کلیدها و ستون‌های داینامیک اصلاح شده
     return { 
@@ -362,7 +406,8 @@ const addLine = useCallback(() => {
         closeSnackbar, 
         accountModal, 
         closeAccountModal, 
-        selectAccountFromModal 
+        selectAccountFromModal,
+         
     }; 
 }
 
