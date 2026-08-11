@@ -166,59 +166,110 @@ const processRowUpdate = async (newRow, oldRow) => {
             });
 
             if (hasChildren) {
-                // 🚨 سناریو: حساب فرزند دارد (مثل کد 11 یا 2011) -> فیلد ریست شده و درخت باز می‌شود
+                // 🚨 حساب فرزند دارد! یعنی سطح آخر نیست.
                 setSnackbar({
                     open: true,
                     message: "کد حساب " + typedCode + " دارای زیرمجموعه است. لطفاً حساب سطح آخر را انتخاب کنید.",
                     severity: "warning"
                 });
 
+                // ✨ الگوریتم هوشمند استخراج آیدی‌های واقعی دیتابیس برای کل زنجیره پدرها
                 const parentsToOpen = [];
-                for (let i = 1; i <= typedCode.length; i++) {
-                    parentsToOpen.push(typedCode.substring(0, i));
-                }
                 
-                // باز کردن مودال درخت حساب‌ها به صورت پایدار
+                // ابتدا کدهای متنی بالادستی را جدا می‌کنیم (مثلاً برای 1211 کدهای ['1', '12', '121', '1211'] را می‌سازد)
+                const parentCodes = [];
+                for (let i = 1; i <= typedCode.length; i++) {
+                    parentCodes.push(typedCode.substring(0, i));
+                }
+
+                // ⭐️ فیکس طلایی: جستجو در allAccounts و پیدا کردن آیدی واقعی دیتابیس (id) برای تک‌تک این کدها
+                parentCodes.forEach(pCode => {
+                    const foundParent = allAccounts.find(acc => String(acc.code).trim() === pCode);
+                    if (foundParent) {
+                        // آیدی‌ها را به صورت رشته متنی اضافه می‌کنیم چون SimpleTreeView پروپرتی itemId را رشته می‌گیرد
+                        parentsToOpen.push(String(foundParent.id));
+                    }
+                });
                 // باز کردن مودال درخت حساب‌ها به صورت پایدار در فایل useVoucherGrid.jsx
                 setTimeout(() => {
                     setActiveTabOverride(1); // ۱. قفل روی تب درخت حساب‌ها
                     setExpandedTreeItems(parentsToOpen); // ۲. فرستادن کدهای والد برای باز شدن شاخه‌ها
                     openAccountModal("", newRow.id); // ۳. باز کردن مودال روی سطر جاری
                     
-                    // ⭐️ [شاهکار بومی مرورگر]: پرش مستقیم فوکوس و پررنگ کردن گره با جاوااسکریپت خالص
-                    // پیدا کردن آیدی عددی دیتابیس (node.id) برای گره‌ای که کاربر وارد کرده است
-                    const targetNode = allAccounts.find(acc => String(acc.code).trim() === typedCode.trim());
-                    
-                    if (targetNode) {
-                        // ۱۵۰ میلی‌ثانیه صبر می‌کنیم تا درخت کاملاً در DOM رندر و شاخه‌هایش باز شوند
-                        setTimeout(() => {
-                            // در متیریال‌یو‌آی نسخه جدید، المان دکمه یا محتوای گره درخت دارای کلاس .MuiTreeItem-content است
-                            // ما بر اساس ساختار itemId که به درخت داده‌ایم، به دنبال المان حاوی آن می‌گردیم
-                            const nodeElement = document.querySelector(`[itemId="${targetNode.id}"] .MuiTreeItem-content`) || 
-                                                document.querySelector(`[id*="${targetNode.id}"]`) ||
-                                                document.getElementById(`simple-tree-view-item-${targetNode.id}`);
-                            
-                            if (nodeElement) {
-                                // ۱. اسکرول کردن نرم صفحه درخت تا این گره دقیقاً در مرکز دید کاربر قرار بگیرد
-                                nodeElement.scrollIntoView({ block: "center", behavior: "smooth" });
-                                
-                                // ۲. قفل کردن فوکوس واقعی کیبورد مرورگر روی آن سطر
-                                if (nodeElement instanceof HTMLElement) {
-                                    nodeElement.focus();
-                                    
-                                    // ۳. شبیه‌سازی کلیک یا فوکوس ظاهری برای فعال شدن کلاس پررنگ (Highlight) متیریال‌یو‌آی
-                                    nodeElement.classList.add("Mui-focused");
-                                    nodeElement.classList.add("Mui-selected");
-                                }
+                    const typedCodeStr = String(typedCode).trim();
+
+                    // استفاده از MutationObserver برای کشف رندر شدن المان بعد از باز شدن شاخه‌ها
+                    const observer = new MutationObserver((mutations, obs) => {
+                        const treeRoot = document.querySelector('.MuiSimpleTreeView-root');
+                        if (!treeRoot) return;
+
+                        // ⭐️ [شاهکار حل باگ اختصاصی 1011]: پیدا کردن المان مستقیم از روی متن کد حساب درون پرانتز!
+                        // این روش کاملاً مستقل از آیدی دیتابیس است و تداخل دیتایی را کلاً محو می‌کند
+                        let nodeElement = null;
+                        
+                        // تمام گزینه‌های متنی داخل درخت را بررسی می‌کنیم
+                        const allTreeLabels = treeRoot.querySelectorAll('.MuiTreeItem-content');
+                        for (const label of allTreeLabels) {
+                            const labelText = label.textContent || "";
+                            // چک می‌کنیم آیا متن داخل این شاخه دقیقاً شامل کد حساب تایپ شده هست یا خیر (مثلاً شامل "(1011)")
+                            if (labelText.includes("(" + typedCodeStr + ")")) {
+                                nodeElement = label;
+                                break;
                             }
-                        }, 150); // تاخیر مناسب جهت رندر کامل درخت لود شده
-                    }
+                        }
+
+                        // اگر از روش بالا پیدا نشد، به عنوان زاپاس از روی آیدی دیتابیس سرچ کن
+                        if (!nodeElement) {
+                            const targetNode = allAccounts.find(acc => String(acc.code).trim() === typedCodeStr);
+                            if (targetNode) {
+                                nodeElement = treeRoot.querySelector(`[itemId="${targetNode.id}"] .MuiTreeItem-content`) || 
+                                              treeRoot.querySelector(`[itemId="${targetNode.id}"]`);
+                            }
+                        }
+                        
+                        if (nodeElement) {
+                            obs.disconnect(); // متوقف کردن آبزرور به محض پیدا شدن المان
+                            
+                            requestAnimationFrame(() => {
+                                setTimeout(() => {
+                                    // ۱. اسکرول نرم به مرکز درخت حساب‌ها
+                                    nodeElement.scrollIntoView({ block: "center", behavior: "smooth" });
+                                    
+                                    // ۲. گرفتن فوکوس بومی مرورگر
+                                    if (nodeElement instanceof HTMLElement) {
+                                        nodeElement.focus();
+                                        
+                                        // ۳. اضافه کردن کلاس‌های رسمی MUI برای هایلایت شدن
+                                        nodeElement.classList.add("Mui-focused");
+                                        nodeElement.classList.add("Mui-selected");
+                                        
+                                        // ۴. متمرکز کردن لایه اصلی دکمه برای کدهای عمیق
+                                        const innerButton = nodeElement.closest('[role="treeitem"]');
+                                        if (innerButton instanceof HTMLElement) {
+                                            innerButton.focus();
+                                        }
+                                    }
+                                }, 220); 
+                            });
+                        }
+                    });
+
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true
+                    });
+
+                    setTimeout(() => {
+                        observer.disconnect();
+                    }, 3000);
+                    
                 }, 50);
 
                 return oldRow; // ریست شدن سطر گرید
 
-
             }
+
+
 
             // 🎯 سناریو: حساب فرزند ندارد و آخرین سطح است (مثل کد 1102) -> استعلام نام حساب از API و ثبت موفق
             // ۴. اگر حساب فرزند نداشت و سطح آخر بود -> استعلام عادی از API و ثبت موفق

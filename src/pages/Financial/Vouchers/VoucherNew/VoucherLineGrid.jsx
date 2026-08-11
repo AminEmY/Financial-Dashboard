@@ -232,7 +232,7 @@ useEffect(() => {
       return (
         <TreeItem 
           key={node.id} 
-          itemId={String(node.id)} 
+          itemId={String(node.id)} // 🎯 آیدی گره بر اساس آیدی عددی دیتابیس است و با parentsToOpen همخوانی دارد 
           label={
             <div className={styles.TreeLabelContainer}>
               <span>{node.name}</span>
