@@ -224,6 +224,55 @@ useEffect(() => {
     }
   };
 
+  // ⭐️ [نسخه قطعی و نهایی]: شبیه‌سازی کلیک مجازی روی اولین پدر جهت قفل کردن فوکوس کیبورد بدون نیاز به Tab
+  useEffect(() => {
+    if (!accountModal.open || activeTab !== 1) return;
+
+    const observer = new MutationObserver((mutations, obs) => {
+      const treeRoot = document.querySelector('.MuiSimpleTreeView-root');
+      if (treeRoot) {
+        obs.disconnect();
+
+        setTimeout(() => {
+          // پیدا کردن اولین ریشه بالادستی درخت حساب‌ها
+          const firstRootNode = treeRoot.querySelector('[role="treeitem"] .MuiTreeItem-content') || 
+                                treeRoot.querySelector('[role="treeitem"]');
+          
+          if (firstRootNode && firstRootNode instanceof HTMLElement) {
+            // ۱. فعال کردن ویژگی دریافت فوکوس مرورگر روی المان ریشه
+            firstRootNode.setAttribute('tabindex', '0');
+            
+            // ۲. شبیه‌سازی یک کلیک مجازی برای بیدار کردن استیت‌های داخلی درخت متیریال یوآی
+            firstRootNode.click();
+            
+            // ۳. قفل کردن قطعی فوکوس واقعی مرورگر روی اولین گره
+            firstRootNode.focus();
+            
+            // ۴. فعال کردن استایل‌های ظاهری هایلایت رسمی MUI
+            firstRootNode.classList.add("Mui-focused");
+            firstRootNode.classList.add("Mui-selected");
+
+            // زاپاس: فعال کردن فوکوس روی تگ والدی که ویژگی نقشی دارد برای کارهای جهت‌نما
+            const parentTreeItem = firstRootNode.closest('[role="treeitem"]');
+            if (parentTreeItem && parentTreeItem instanceof HTMLElement) {
+              parentTreeItem.setAttribute('tabindex', '0');
+              parentTreeItem.focus();
+            }
+          }
+        }, 250); // تاخیر مناسب جهت همگام‌سازی با باز شدن مودال
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    return () => observer.disconnect();
+  }, [accountModal.open, activeTab]);
+
+
+  
   // تابع بازگشتی رندر درخت حساب‌ها
   const renderTreeItems = (nodes) => {
     return nodes.map((node) => {
