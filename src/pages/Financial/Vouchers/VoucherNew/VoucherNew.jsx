@@ -1,6 +1,5 @@
 import {React} from 'react';
 import styles from "./VoucherNew.module.css";
-import {formatNumber} from "../../../../utils/formatter";//جهت تبدیل اعداد و تاریخ به فارسی
 import VoucherHeader from "./VoucherHeader";
 import VoucherLineGrid from "./VoucherLineGrid"
 import useVoucher from "./useVoucher";
@@ -13,17 +12,6 @@ const VoucherNew = () => {
     
 
 
-  // ⭐️ [اصلاح امنیتی] استفاده از ?. و قرار دادن آرایه خالی پیش‌فرض تا در صورت نبود سطر، سیستم کرش نکند
-  const lines = voucher?.lines || [];
-
-
-  const totalDebtor = lines.reduce(
-  (sum, line) => sum + Number(line.debtorAmount || 0) , 0 ); //حالا که State آپدیت می‌شود، دیگر لازم نیست این دو مقدار را دستی نگه داریم
-
-  const totalCreditor = lines.reduce(
-  (sum, line) => sum + Number(line.creditorAmount || 0) , 0 );
-
-  const isBalanced = totalDebtor === totalCreditor; //تراز بودن سند
 
 return (
   
@@ -45,24 +33,6 @@ return (
   </div>
 
 
-
-  <div className={styles.Footer}>
-
-    <span>
-        جمع بستانکار :
-        {formatNumber(totalCreditor)}
-    </span>
-
-    <span>
-        جمع بدهکار :
-        {formatNumber(totalDebtor)}
-    </span>
-
-    <span className={isBalanced ? styles.Balanced : styles.NotBalanced} >
-        {isBalanced ? "سند تراز است" : "سند تراز نیست"}
-    </span>
-
-  </div>
 
 
 </div> 

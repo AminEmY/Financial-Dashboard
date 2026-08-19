@@ -201,3 +201,87 @@
   font-size: 0.75rem !important;
   padding: 2px 8px !important;
 }
+
+/* =========================================================
+   نوار پایین سند - جمع مبالغ و وضعیت تراز
+   ========================================================= */
+
+.SummaryBar {
+    direction: rtl;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 100%;
+    min-height: 65px;
+
+    margin-top: 10px;
+    padding: 10px 16px;
+
+    background: #f7f7f7;
+    border: 1px solid #d8d8d8;
+    border-radius: 6px;
+
+    box-sizing: border-box;
+
+    font-family: Vazir, Tahoma, sans-serif;
+}
+
+
+/* هر قسمت از اطلاعات */
+.SummaryItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    white-space: nowrap;
+}
+
+
+/* باکس سمت راست: مشخصات حساب ردیف فوکوس‌شده */
+.AccountInfoBox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.AccountInfoText {
+  color: #1976d2;
+}
+
+.AccountInfoCode {
+  color: #777;
+  font-weight: normal;
+  font-size: 12px;
+}
+
+.EmptyAccountText {
+  color: #999;
+  font-size: 13px;
+}
+
+/* باکس سمت چپ: بستانکار، بدهکار و مانده در کنار هم */
+.BalanceBox {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.BalanceItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* باکس سمت راست: زنجیره گروه / کل / معین، هر کدام در یک ردیف */
+.AccountHierarchyBox {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.AccountHierarchyRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

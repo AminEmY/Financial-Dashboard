@@ -1,13 +1,13 @@
 import { useGridApiRef } from "@mui/x-data-grid-pro";
 import {getColumns} from "./VoucherColumns";
-import { useState, useCallback, useMemo } from "react"; // ⭐️ اضافه شدن هوک‌های ری‌اکت برای حل باگ رندر
+import { useState, useCallback, useMemo } from "react"; //  اضافه شدن هوک‌های ری‌اکت برای حل باگ رندر
 import axios from "axios";
 
 
 
 
-// ⭐️ [تغییر جدید] اضافه شدن استیت‌های فیلد متنی و تب‌ها به ورودی‌های هوک برای هدایت سناریوی اینتر و سرچ سریع
-export default function useVoucherGrid(voucher, setVoucher, setSearchTerm, setActiveTabOverride, allAccounts, setExpandedTreeItems ) {
+//  اضافه شدن استیت‌های فیلد متنی و تب‌ها به ورودی‌های هوک برای هدایت سناریوی اینتر و سرچ سریع
+export default function useVoucherGrid(voucher, setVoucher, setSearchTerm, setActiveTabOverride, allAccounts, setExpandedTreeItems,setAllAccounts,setTreeData  ) {
 
     const apiRef = useGridApiRef();
 
@@ -25,52 +25,119 @@ export default function useVoucherGrid(voucher, setVoucher, setSearchTerm, setAc
     // =========================================================
     const [accountModal, setAccountModal] = useState({
         open: false,
-        activeRowId: null // ذخیره شناسه سطری که قرار است حساب انتخابی روی آن بنشیند
+        activeRowId: null, // ذخیره شناسه سطری که قرار است حساب انتخابی روی آن بنشیند
+        initialSearch: "",
+        focusFirstRoot: false
     });
 
-     // ⭐️ [تغییر جدید] هماهنگ‌سازی پارامترها بر اساس فیلتر متنی گرید و آیدی ردیف
-    const openAccountModal = useCallback((initialSearch = "", rowId = null) => {
-        setAccountModal({ open: true, initialSearch, activeRowId: rowId });
-    }, []);
-
-    const closeAccountModal = useCallback(() => {
-        setAccountModal({ open: false, initialSearch: "", activeRowId: null });
-    }, []);
-
-
-    // ✨ [تغییر جدید - تابع نهایی کردن انتخاب حساب از داخل مودال] ✨
-    const selectAccountFromModal = (account) => {
-        if (!accountModal.activeRowId) return;
-
-        // آپدیت کردن سطر جاری جدول با دیتای انتخاب شده از پنجره کمکی
-        const updatedLines = voucher.lines.map((line) => {
-            if (line.id === accountModal.activeRowId) {
-                return {
-                    ...line,
-                    accountId: account.id,
-                    accountCode: account.code,
-                    accountName: account.name
-                };
-            }
-            return line;
+     //  هماهنگ‌سازی پارامترها بر اساس فیلتر متنی گرید و آیدی ردیف
+ const openAccountModal = useCallback(
+    (initialSearch = "", rowId = null, focusFirstRoot = false) => {
+        setAccountModal({
+            open: true,
+            initialSearch,
+            activeRowId: rowId,
+            focusFirstRoot
         });
 
-        setVoucher((prev) => ({
-            ...prev,
-            lines: updatedLines
-        }));
+        setSearchTerm(initialSearch);
+    },
+    [setSearchTerm]
+);
 
-        // بعد از ثبت انتخاب، فوکوس را به صورت خودکار به ستون "شرح" همان سطر منتقل می‌کنیم
-        const targetId = accountModal.activeRowId;
-        setTimeout(() => {
-            if (apiRef.current && apiRef.current.setCellFocus) {
-                apiRef.current.setCellFocus(targetId, "sharh");
-                apiRef.current.startCellEditMode({ id: targetId, field: "sharh" });
+const closeAccountModal = useCallback(() => {
+    setAccountModal({
+        open: false,
+        initialSearch: "",
+        activeRowId: null,
+        focusFirstRoot: false
+    });
+}, []);
+
+
+    //     تابع نهایی کردن انتخاب حساب از داخل مودال 
+const selectAccountFromModal = async (account) => {
+    if (!accountModal.activeRowId || !account) return;
+
+    // اگر حساب والد بود، اجازه انتخاب نداریم
+    if (account.childCount > 0) {
+        setSnackbar({
+            open: true,
+            message: `حساب "${account.name}" دارای زیرمجموعه است. لطفاً تا آخرین سطح درخت پیش رفته و حساب برگ را انتخاب کنید.`,
+            severity: "warning"
+        });
+        return;
+    }
+
+    // ⭐ جدید
+    // گرفتن زنجیره والدهای حساب انتخاب‌شده
+    try {
+        const response = await axios.post(
+            "http://ecipc107:8049/api/Account/SearchTreeView",
+            {
+                code: String(account.code).trim()
             }
-        }, 50);
+        );
 
-        closeAccountModal();
-    };
+        const hierarchyAccounts = response.data || [];
+
+        if (setAllAccounts) {
+            setAllAccounts((prev) => {
+                const merged = [...prev];
+
+                hierarchyAccounts.forEach((newAccount) => {
+                    const index = merged.findIndex(
+                        (item) =>
+                            String(item.code).trim() ===
+                            String(newAccount.code).trim()
+                    );
+
+                    if (index >= 0) {
+                        merged[index] = newAccount;
+                    } else {
+                        merged.push(newAccount);
+                    }
+                });
+
+                return merged;
+            });
+        }
+    } catch (error) {
+        console.error("خطا در دریافت ساختار والدهای حساب:", error);
+    }
+
+    // ادامه کد قبلی
+    const updatedLines = voucher.lines.map((line) => {
+        if (line.id === accountModal.activeRowId) {
+            return {
+                ...line,
+                accountId: account.id,
+                accountCode: account.code,
+                accountName: account.name
+            };
+        }
+        return line;
+    });
+
+    setVoucher((prev) => ({
+        ...prev,
+        lines: updatedLines
+    }));
+
+    const targetId = accountModal.activeRowId;
+
+    setTimeout(() => {
+        if (apiRef.current && apiRef.current.setCellFocus) {
+            apiRef.current.setCellFocus(targetId, "sharh");
+            apiRef.current.startCellEditMode({
+                id: targetId,
+                field: "sharh"
+            });
+        }
+    }, 50);
+
+    closeAccountModal();
+};
 
 
     const closeSnackbar = (event, reason) => {
@@ -102,10 +169,10 @@ export default function useVoucherGrid(voucher, setVoucher, setSearchTerm, setAc
     }, [voucher.lines, setVoucher]);
 
 // تولید ستون‌ها همراه با پاس دادن تابع حذف به آن‌ها و پاس دادن آرایه سطرها به ستون‌ها برای استخراج تاریخچه شرح‌ها و انتخاب حساب
-    // ⭐️ [تغییر جدید] استفاده از useMemo و کالبک ناشناس برای حل کامل باگ Cannot access refs during render متیریال یو‌آی
+    //   استفاده از useMemo و کالبک ناشناس برای حل کامل باگ Cannot access refs during render متیریال یو‌آی
     // تولید ستون‌ها همراه با پاس دادن تابع حذف، کالبک مودال و توابع تغییر استیت تب‌ها و سرچ
-    // ⭐️ [اصلاح فیکس] پاس دادن setSearchTerm و setActiveTabOverride به تابع getColumns
-    // ⭐️ آرگومان‌های پنجم و ششم (allAccounts و setExpandedTreeItems) به تابع getColumns اضافه شدند
+    //   پاس دادن setSearchTerm و setActiveTabOverride به تابع getColumns
+    //  آرگومان‌های پنجم و ششم (allAccounts و setExpandedTreeItems) به تابع getColumns اضافه شدند
 const dynamicColumns = useMemo(() => {
     return getColumns(
         deleteLine, 
@@ -120,11 +187,11 @@ const dynamicColumns = useMemo(() => {
    
 
 
-// ⭐️ [نسخه نهایی و ۱۰۰٪ تضمینی حسابداری] رد کردن سطر دارای فرزند و ریست کردن سلول
+//  رد کردن سطر دارای فرزند و ریست کردن سلول
 const processRowUpdate = async (newRow, oldRow) => {
         const updatedRow = { ...newRow };
 
-        // ۱. منطق بدهکار و بستانکار خودتان (کاملاً دست‌نخورده)
+        // ۱. منطق بدهکار و بستانکار خودتان 
         const debtor = Number(updatedRow.debtorAmount || 0);
         const creditor = Number(updatedRow.creditorAmount || 0);
         const oldDebtor = Number(oldRow.debtorAmount || 0);
@@ -145,165 +212,272 @@ const processRowUpdate = async (newRow, oldRow) => {
             localStorage.setItem("sharh_history", JSON.stringify(uniqueHistory));
         }
 
-                // ⭐️ [نسخه نهایی و ۱۰۰٪ قطعی] بررسی فرزند داشتن حساب بر اساس کدهای واقعی سرور
-        if (updatedRow.accountCode && updatedRow.accountCode !== oldRow.accountCode) {
+                //  بررسی فرزند داشتن حساب بر اساس کدهای واقعی سرور
+if (updatedRow.accountCode && updatedRow.accountCode !== oldRow.accountCode) {
             const typedCode = updatedRow.accountCode.trim();
             const typedCodeStr = String(typedCode);
 
-            // 🔍 جستجوی فوق‌العاده دقیق در دیتای سرور برای پیدا کردن فرزند واقعی
-            const hasChildren = allAccounts.some((acc) => {
-                if (!acc || acc.code === undefined || acc.code === null) return false;
-                
-                const currentCodeStr = String(acc.code).trim();
-                
-                // حساب زمانی فرزندِ کد تایپ‌شده است که:
-                // ۱. کدش با کد تایپ‌شده شروع شود (مثلاً 110201 با 1102 شروع می‌شود)
-                // ۲. خودِ کد تایپ‌شده نباشد (currentCodeStr !== typedCodeStr)
-                // ۳. طول کدش از کد تایپ‌شده بلندتر باشد (نشانه لایه عمیق‌تر بودن در درخت)
-                return currentCodeStr.startsWith(typedCodeStr) && 
-                       currentCodeStr !== typedCodeStr && 
-                       currentCodeStr.length > typedCodeStr.length;
-            });
+            try {
+                // 🔍 این درخواست، هم خودِ حساب تایپ‌شده (با childCount دقیق)، هم زنجیره والدهاش رو برمی‌گردونه
+                const response = await axios.post("http://ecipc107:8049/api/Account/SearchTreeView", {
+                    code: typedCodeStr
+                });
+
+                const fetchedAccounts = response.data || [];
+
+                // ✨ نتایج تازه رو با allAccounts موجود ادغام می‌کنیم (بدون تکراری‌شدن) تا کش کم‌کم کامل بشه
+                if (setAllAccounts) {
+                    setAllAccounts((prev) => {
+                        const merged = [...prev];
+                        fetchedAccounts.forEach((acc) => {
+                            const existingIndex = merged.findIndex((m) => String(m.code).trim() === String(acc.code).trim());
+                            if (existingIndex >= 0) {
+                                merged[existingIndex] = acc;
+                            } else {
+                                merged.push(acc);
+                            }
+                        });
+                        return merged;
+                    });
+                }
+
+                const accountNode = fetchedAccounts.find((acc) => String(acc.code).trim() === typedCodeStr);
+
+                if (!accountNode) {
+                    updatedRow.accountCode = "";
+                    updatedRow.accountId = null;
+                    updatedRow.accountName = "";
+                    setSnackbar({ open: true, message: "کد حساب وارد شده در سیستم معتبر نیست.", severity: "error" });
+                    return oldRow;
+                }
+
+                // دیگه نیازی به حدس زدن با startsWith نیست؛ childCount مستقیم از سرور میاد
+                const hasChildren = accountNode.childCount > 0;
 
             if (hasChildren) {
                 // 🚨 حساب فرزند دارد! یعنی سطح آخر نیست.
                 setSnackbar({
                     open: true,
-                    message: "کد حساب " + typedCode + " دارای زیرمجموعه است. لطفاً حساب سطح آخر را انتخاب کنید.",
+                    message: "کد حساب " + typedCode + " دارای " + accountNode.childCount + " زیرمجموعه است. لطفاً حساب سطح آخر را انتخاب کنید.",
                     severity: "warning"
                 });
 
-                // ✨ الگوریتم هوشمند استخراج آیدی‌های واقعی دیتابیس برای کل زنجیره پدرها
+                // ✨ دنبال کردن زنجیره واقعی والدها با فیلد parentCode (به‌جای حدس زدن با پیشوند کد)
                 const parentsToOpen = [];
-                
-                // ابتدا کدهای متنی بالادستی را جدا می‌کنیم (مثلاً برای 1211 کدهای ['1', '12', '121', '1211'] را می‌سازد)
-                const parentCodes = [];
-                for (let i = 1; i <= typedCode.length; i++) {
-                    parentCodes.push(typedCode.substring(0, i));
+                let current = accountNode;
+                let depth = 0;
+                const MAX_DEPTH = 10; // فقط برای جلوگیری از حلقه بی‌نهایت در صورت دیتای خراب
+
+                while (current && depth < MAX_DEPTH) {
+                    parentsToOpen.unshift(String(current.id));
+                    if (!current.parentCode) break;
+                    const parentCodeStr = String(current.parentCode).trim();
+                    current = fetchedAccounts.find((acc) => String(acc.code).trim() === parentCodeStr)
+                        || allAccounts.find((acc) => String(acc.code).trim() === parentCodeStr)
+                        || null;
+                    depth += 1;
+                            }
+            // باز کردن مودال درخت حساب‌ها
+            setTimeout(() => {
+                setActiveTabOverride(1);
+
+                // مسیر والدها را باز نگه می‌داریم
+                setExpandedTreeItems(parentsToOpen);
+
+                // =====================================================
+                // ⭐ مهم:
+                // بچه‌های تمام نودهای مسیر را از پاسخ API داخل treeData می‌ریزیم
+                // =====================================================
+setTreeData((prevTree) => {
+
+    const buildChildren = (item) => {
+
+        // بچه‌های مستقیم این حساب
+        const directChildren = fetchedAccounts
+            .filter(
+                (acc) =>
+                    String(acc.parentCode).trim() ===
+                    String(item.code).trim()
+            )
+            .map((acc) => {
+
+                // اگر این بچه خودش یکی از والدهای مسیر است،
+                // بچه‌های خودش را هم همین الان بساز
+                if (parentsToOpen.includes(String(acc.id))) {
+                    return {
+                        ...acc,
+                        children: buildChildren(acc)
+                    };
                 }
 
-                // ⭐️ فیکس طلایی: جستجو در allAccounts و پیدا کردن آیدی واقعی دیتابیس (id) برای تک‌تک این کدها
-                parentCodes.forEach(pCode => {
-                    const foundParent = allAccounts.find(acc => String(acc.code).trim() === pCode);
-                    if (foundParent) {
-                        // آیدی‌ها را به صورت رشته متنی اضافه می‌کنیم چون SimpleTreeView پروپرتی itemId را رشته می‌گیرد
-                        parentsToOpen.push(String(foundParent.id));
-                    }
-                });
-                // باز کردن مودال درخت حساب‌ها به صورت پایدار در فایل useVoucherGrid.jsx
-                setTimeout(() => {
-                    setActiveTabOverride(1); // ۱. قفل روی تب درخت حساب‌ها
-                    setExpandedTreeItems(parentsToOpen); // ۲. فرستادن کدهای والد برای باز شدن شاخه‌ها
-                    openAccountModal("", newRow.id); // ۳. باز کردن مودال روی سطر جاری
-                    
-                    const typedCodeStr = String(typedCode).trim();
+                // در غیر این صورت فقط dummy نشان بده
+                return {
+                    ...acc,
+                    children:
+                        acc.childCount > 0
+                            ? [
+                                {
+                                    id: `${acc.id}-dummy`,
+                                    name: "بارگذاری...",
+                                    isDummy: true
+                                }
+                            ]
+                            : []
+                };
+            });
 
-                    // استفاده از MutationObserver برای کشف رندر شدن المان بعد از باز شدن شاخه‌ها
-                    const observer = new MutationObserver((mutations, obs) => {
-                        const treeRoot = document.querySelector('.MuiSimpleTreeView-root');
-                        if (!treeRoot) return;
+        return directChildren;
+    };
 
-                        // ⭐️ [شاهکار حل باگ اختصاصی 1011]: پیدا کردن المان مستقیم از روی متن کد حساب درون پرانتز!
-                        // این روش کاملاً مستقل از آیدی دیتابیس است و تداخل دیتایی را کلاً محو می‌کند
-                        let nodeElement = null;
-                        
-                        // تمام گزینه‌های متنی داخل درخت را بررسی می‌کنیم
-                        const allTreeLabels = treeRoot.querySelectorAll('.MuiTreeItem-content');
-                        for (const label of allTreeLabels) {
-                            const labelText = label.textContent || "";
-                            // چک می‌کنیم آیا متن داخل این شاخه دقیقاً شامل کد حساب تایپ شده هست یا خیر (مثلاً شامل "(1011)")
-                            if (labelText.includes("(" + typedCodeStr + ")")) {
-                                nodeElement = label;
-                                break;
-                            }
-                        }
 
-                        // اگر از روش بالا پیدا نشد، به عنوان زاپاس از روی آیدی دیتابیس سرچ کن
-                        if (!nodeElement) {
-                            const targetNode = allAccounts.find(acc => String(acc.code).trim() === typedCodeStr);
-                            if (targetNode) {
-                                nodeElement = treeRoot.querySelector(`[itemId="${targetNode.id}"] .MuiTreeItem-content`) || 
-                                              treeRoot.querySelector(`[itemId="${targetNode.id}"]`);
-                            }
-                        }
-                        
-                        if (nodeElement) {
-                            obs.disconnect(); // متوقف کردن آبزرور به محض پیدا شدن المان
-                            
-                            requestAnimationFrame(() => {
-                                setTimeout(() => {
-                                    // ۱. اسکرول نرم به مرکز درخت حساب‌ها
-                                    nodeElement.scrollIntoView({ block: "center", behavior: "smooth" });
-                                    
-                                    // ۲. گرفتن فوکوس بومی مرورگر
-                                    if (nodeElement instanceof HTMLElement) {
-                                        nodeElement.focus();
-                                        
-                                        // ۳. اضافه کردن کلاس‌های رسمی MUI برای هایلایت شدن
-                                        nodeElement.classList.add("Mui-focused");
-                                        nodeElement.classList.add("Mui-selected");
-                                        
-                                        // ۴. متمرکز کردن لایه اصلی دکمه برای کدهای عمیق
-                                        const innerButton = nodeElement.closest('[role="treeitem"]');
-                                        if (innerButton instanceof HTMLElement) {
-                                            innerButton.focus();
-                                        }
-                                    }
-                                }, 220); 
-                            });
-                        }
-                    });
+    const updateTreeRecursively = (nodes) => {
 
-                    observer.observe(document.body, {
-                        childList: true,
-                        subtree: true
-                    });
+        return nodes.map((item) => {
 
-                    setTimeout(() => {
-                        observer.disconnect();
-                    }, 3000);
-                    
-                }, 50);
+            // اگر این نود یکی از مسیرهای ماست
+            if (parentsToOpen.includes(String(item.id))) {
 
-                return oldRow; // ریست شدن سطر گرید
-
+                return {
+                    ...item,
+                    children: buildChildren(item)
+                };
             }
 
+            // در سایر شاخه‌ها دنبال نود موردنظر بگرد
+            if (Array.isArray(item.children) && item.children.length > 0) {
 
+                return {
+                    ...item,
+                    children: updateTreeRecursively(item.children)
+                };
+            }
 
-            // 🎯 سناریو: حساب فرزند ندارد و آخرین سطح است (مثل کد 1102) -> استعلام نام حساب از API و ثبت موفق
-            // ۴. اگر حساب فرزند نداشت و سطح آخر بود -> استعلام عادی از API و ثبت موفق
-            try {
-                const response = await axios.post("http://ecipc107:8049/api/Account/GetAll", {
-                    filter: typedCode,
-                    forSearch: true
+            return item;
+        });
+    };
+
+    return updateTreeRecursively(prevTree);
+});
+
+                // مودال را باز کن
+                openAccountModal("", newRow.id);
+
+                const typedCodeStr = String(typedCode).trim();
+
+                // =====================================================
+                // ⭐ بعد از رندر شدن درخت، خود حساب تایپ‌شده را پیدا کن
+                // و روی همان فوکوس کن
+                // =====================================================
+                const observer = new MutationObserver((mutations, obs) => {
+
+                    const treeRoot = document.querySelector(
+                        ".MuiSimpleTreeView-root"
+                    );
+
+                    if (!treeRoot) return;
+
+                    let nodeElement = null;
+
+                    const allTreeLabels =
+                        treeRoot.querySelectorAll(".MuiTreeItem-content");
+
+                    for (const label of allTreeLabels) {
+
+                        const labelText = label.textContent || "";
+
+                        if (labelText.includes("(" + typedCodeStr + ")")) {
+                            nodeElement = label;
+                            break;
+                        }
+                    }
+
+                    if (!nodeElement) {
+                        const targetNode = allAccounts.find(
+                            (acc) =>
+                                String(acc.code).trim() === typedCodeStr
+                        );
+
+                        if (targetNode) {
+                            nodeElement =
+                                treeRoot.querySelector(
+                                    `[itemId="${targetNode.id}"] .MuiTreeItem-content`
+                                ) ||
+                                treeRoot.querySelector(
+                                    `[itemId="${targetNode.id}"]`
+                                );
+                        }
+                    }
+
+                    if (nodeElement) {
+
+                        obs.disconnect();
+
+                        requestAnimationFrame(() => {
+
+                            setTimeout(() => {
+
+                                nodeElement.scrollIntoView({
+                                    block: "center",
+                                    behavior: "smooth"
+                                });
+
+                                if (nodeElement instanceof HTMLElement) {
+
+                                    nodeElement.focus();
+
+                                    nodeElement.classList.add(
+                                        "Mui-focused"
+                                    );
+
+                                    nodeElement.classList.add(
+                                        "Mui-selected"
+                                    );
+
+                                    const treeItem =
+                                        nodeElement.closest(
+                                            '[role="treeitem"]'
+                                        );
+
+                                    if (
+                                        treeItem instanceof HTMLElement
+                                    ) {
+                                        treeItem.focus();
+                                    }
+                                }
+
+                            }, 220);
+                        });
+                    }
                 });
 
-                const foundAccount = response.data?.find((acc) => acc.code === typedCode);
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
 
-                if (foundAccount) {
-                    updatedRow.accountId = foundAccount.id;
-                    updatedRow.accountName = foundAccount.name;
+                setTimeout(() => {
+                    observer.disconnect();
+                }, 3000);
 
-                    // ⭐️ [نسخه نهایی و ۱۰۰٪ قطعی]: هدایت مستقیم فوکوس به شرح بدون نیاز به متدهای خراب ایندکس سطر
-                    setTimeout(() => {
-                        if (apiRef.current && apiRef.current.setCellFocus) {
-                            // متمرکز کردن مکان‌نما به صورت مستقیم روی ستون شرح همین ردیف با استفاده از آیدی سطر
-                            apiRef.current.setCellFocus(newRow.id, "sharh");
-                            
-                            // باز کردن اتوماتیک ادیتور شرح و لیست تاریخچه
-                            apiRef.current.startCellEditMode({ id: newRow.id, field: "sharh" });
-                        }
-                    }, 80);
+            }, 50);
 
-                } else {
-                    updatedRow.accountCode = "";
-                    updatedRow.accountId = null;
-                    updatedRow.accountName = "";
-                    setSnackbar({ open: true, message: "کد حساب وارد شده در سیستم معتبر نیست.", severity: "error" });
-                }
+                return oldRow;
+            }
+
+            // 🎯 سناریو: حساب فرزند ندارد و آخرین سطح است -> از همون accountNode بالا استفاده می‌کنیم
+            updatedRow.accountId = accountNode.id;
+            updatedRow.accountName = accountNode.name;
+
+                setTimeout(() => {
+                    if (apiRef.current && apiRef.current.setCellFocus) {
+                        apiRef.current.setCellFocus(newRow.id, "sharh");
+                        apiRef.current.startCellEditMode({ id: newRow.id, field: "sharh" });
+                    }
+                }, 80);
+
             } catch (error) {
                 console.error("API Error:", error);
+                return oldRow;
             }
 
         }
@@ -320,7 +494,7 @@ const processRowUpdate = async (newRow, oldRow) => {
 
 
 
-// ⭐️ نسخه اصلاح‌شده و بهینه تابع addLine در فایل useVoucherGrid.jsx:
+//  نسخه اصلاح‌شده و بهینه تابع addLine در فایل 
 const addLine = useCallback(() => {
     //  [جلوگیری از ایجاد سطر بدون کد حساب] 
     if (voucher.lines.length > 0) {
@@ -366,12 +540,12 @@ const addLine = useCallback(() => {
     }, 50);
 }, [voucher.lines, setVoucher, apiRef]); // 👈 اضافه کردن وابستگی‌ها برای عملکرد صحیح
 
-    // ⭐️ [اصلاح نهایی] برگرداندن تابع به منطق حرکتی جهت‌نماها و اینتر عمومی خودتان
+    //  برگرداندن تابع به منطق حرکتی جهت‌نماها و اینتر عمومی 
 const onCellKeyDown = useCallback((params, event) => {
         const visibleColumns = apiRef.current.getVisibleColumns();
         const currentColumnIndex = visibleColumns.findIndex((col) => col.field === params.field);
 
-        //  [اصلاح برعکس بودن کلیدهای چپ و راست در حالت فارسی - کاملاً دست‌نخورده] 
+        //  اصلاح برعکس بودن کلیدهای چپ و راست در حالت فارسی
         // =========================================================
         if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
             if (apiRef.current.getCellMode(params.id, params.field) === 'edit') {
@@ -382,25 +556,25 @@ const onCellKeyDown = useCallback((params, event) => {
                 get: function() { return invertedKey; }
             });
 
-            const step = invertedKey === 'ArrowRight' ? 1 : -1;
-            const targetColumn = visibleColumns[currentColumnIndex + step];
+            // const step = invertedKey === 'ArrowRight' ? 1 : -1;
+            // const targetColumn = visibleColumns[currentColumnIndex + step];
             
-            if (targetColumn && targetColumn.field === 'accountName') {
-                event.preventDefault();
-                const skipStep = invertedKey === 'ArrowRight' ? 2 : -2;
-                const finalColumn = visibleColumns[currentColumnIndex + skipStep];
-                if (finalColumn) {
-                    apiRef.current.setCellFocus(params.id, finalColumn.field);
-                }
-                return;
-            }
+            // if (targetColumn && targetColumn.field === 'accountName') {
+            //     event.preventDefault();
+            //     const skipStep = invertedKey === 'ArrowRight' ? 2 : -2;
+            //     const finalColumn = visibleColumns[currentColumnIndex + skipStep];
+            //     if (finalColumn) {
+            //         apiRef.current.setCellFocus(params.id, finalColumn.field);
+            //     }
+            //     return;
+            // }
             return;
         }
 
         // مدیریت کلید Enter عمومی 
         if (event.key === 'Enter') {
-            // ⭐️ فیکس اصلی: اگر روی ستون کد حساب بودیم، تمام منطق‌های قدیمی باز کردن دستی مودال را پاک می‌کنیم.
-            // فقط اجازه می‌دهیم سلول از حالت ادیت خارج شود و کارهای ثبت طبیعی گرید را جلو ببرد.
+            //   فیکس اصلی: اگر روی ستون کد حساب بودیم، تمام منطق‌های قدیمی باز کردن دستی مودال را پاک می‌کنیم.
+            //  فقط اجازه می‌دهیم سلول از حالت ادیت خارج شود و کارهای ثبت طبیعی گرید را جلو ببرد.
             if (params.field === 'accountCode') {
                 if (apiRef.current.getCellMode(params.id, params.field) === 'edit') {
                     apiRef.current.stopCellEditMode({ id: params.id, field: params.field });
@@ -409,7 +583,7 @@ const onCellKeyDown = useCallback((params, event) => {
                 return; 
             }
 
-            // روال عادی کلید اینتر برای سایر ستون‌ها (شرح، بدهکار، بستانکار - کاملاً وفادار به کدهای خودت)
+            // روال عادی کلید اینتر برای سایر ستون‌ها (شرح، بدهکار، بستانکار )
             if (apiRef.current.getCellMode(params.id, params.field) === 'edit') {
                 apiRef.current.stopCellEditMode({ id: params.id, field: params.field });
             }
@@ -424,12 +598,12 @@ const onCellKeyDown = useCallback((params, event) => {
             }
 
             if (currentColumnIndex < visibleColumns.length - 1) {
-                let nextColumn = visibleColumns[currentColumnIndex + 1];
+                // let nextColumn = visibleColumns[currentColumnIndex + 1];
 
-                if (nextColumn.field === 'accountName') {
-                    nextColumn = visibleColumns[currentColumnIndex + 2];
-                }
-
+                // if (nextColumn.field === 'accountName') {
+                //     nextColumn = visibleColumns[currentColumnIndex + 2];
+                // }
+                const nextColumn = visibleColumns[currentColumnIndex + 1];
                 if (nextColumn) {
                     setTimeout(() => {
                         apiRef.current.setCellFocus(params.id, nextColumn.field);
@@ -440,7 +614,7 @@ const onCellKeyDown = useCallback((params, event) => {
         }
 
 
-    // ⭐️ [اصلاح فیکس] اضافه کردن وابستگی‌های جا افتاده به انتهای تابع onCellKeyDown:
+    //  اضافه کردن وابستگی‌های جا افتاده به انتهای تابع onCellKeyDown:
 }, [apiRef, addLine,]);
 
 

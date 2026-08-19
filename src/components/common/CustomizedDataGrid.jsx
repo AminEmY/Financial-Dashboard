@@ -1,6 +1,6 @@
 import { DataGridPro } from "@mui/x-data-grid-pro";
 
-const CustomDataGrid = (props) => {
+const CustomDataGrid = ({ sx, ...props }) => {
   
   return  <DataGridPro
 
@@ -23,7 +23,7 @@ const CustomDataGrid = (props) => {
               textAlign: 'right'}, 
                 
 
-            ...(props.sx || {}) // اگر صفحه‌ای استایل اختصاصی اضافه داشت بشه، روی این هم اعمال شود.        
+            ...(sx || {}) // ادغام دقیق استایل‌های اختصاصی پاس داده شده از صفحات دیگر       
             }}
     
     

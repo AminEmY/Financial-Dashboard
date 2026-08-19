@@ -34,10 +34,13 @@ export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiv
           e.preventDefault();
           params.api.stopCellEditMode({ id: params.id, field: params.field });
 
-          setTimeout(() => {
-            setActiveTabOverride(1); // قفل روی تب درخت حساب‌ها
-            openAccountModal("", params.id);
-          }, 60);
+              setTimeout(() => {
+                  setActiveTabOverride(1);
+
+                  // چون کاربر سلول خالی را Enter زده،
+                  // اولین و بالاترین حساب درخت باید فوکوس شود.
+                  openAccountModal("", params.id, true);
+              }, 60);
           return;
         }
         
@@ -136,17 +139,12 @@ export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiv
       // ⭐️ رندر تمیز و بدون خطای قوانین هوک و مستقل از متغیرهای تکراری
       renderEditCell: (params) => <AccountCodeEditCell params={params} />
     },
-    {
-      field: "accountName",
-      headerName: "عنوان حساب",
-      flex: 2,
-      editable: false,
-    },
+
       //   سفارشی‌سازی ادیتور ستون شرح
    {
      field: "sharh",
      headerName: "شرح",
-     flex: 2,
+     flex: 2.5,
      editable: true,
      renderEditCell: (params) => {
        // خواندن تاریخچه ذخیره شده از حافظه مرورگر. اگر خالی بود یک آرایه خالی برگشت داده می‌شود.
