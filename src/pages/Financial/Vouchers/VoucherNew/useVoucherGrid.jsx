@@ -370,47 +370,39 @@ setTreeData((prevTree) => {
                 // =====================================================
                 const observer = new MutationObserver((mutations, obs) => {
 
+         console.log("🔥 ACCOUNT TREE OBSERVER RUNNING");
+
                     const treeRoot = document.querySelector(
                         ".MuiSimpleTreeView-root"
                     );
-
+         console.log("🔥 TREE ROOT:", treeRoot);  
                     if (!treeRoot) return;
 
-                    let nodeElement = null;
-
-                    const allTreeLabels =
-                        treeRoot.querySelectorAll(".MuiTreeItem-content");
-
-                    for (const label of allTreeLabels) {
-
-                        const labelText = label.textContent || "";
-
-                        if (labelText.includes("(" + typedCodeStr + ")")) {
-                            nodeElement = label;
-                            break;
-                        }
-                    }
-
-                    if (!nodeElement) {
-                        const targetNode = allAccounts.find(
-                            (acc) =>
-                                String(acc.code).trim() === typedCodeStr
-                        );
-
-                        if (targetNode) {
-                            nodeElement =
-                                treeRoot.querySelector(
-                                    `[itemId="${targetNode.id}"] .MuiTreeItem-content`
-                                ) ||
-                                treeRoot.querySelector(
-                                    `[itemId="${targetNode.id}"]`
-                                );
-                        }
-                    }
+                 let nodeElement = null;
+                
+                 // پیدا کردن مستقیم خود TreeItem با ID واقعی حساب
+                 // چون کد داخل UI ممکن است فارسی (۷۱) نمایش داده شود
+                 const targetElement = treeRoot.querySelector(
+                     `[id$="-${accountNode.id}"]`
+                 );
+                
+                 if (targetElement) {
+                     nodeElement = targetElement.querySelector(
+                         ".MuiTreeItem-content"
+                     );
+                
+                     if (!nodeElement) {
+                         nodeElement = targetElement;
+                     }
+                 }
+                
+                 console.log("🎯 TARGET ELEMENT:", targetElement);
+                 console.log("🎯 NODE ELEMENT:", nodeElement);
 
                     if (nodeElement) {
 
                         obs.disconnect();
+                 
 
                         requestAnimationFrame(() => {
 
@@ -421,29 +413,21 @@ setTreeData((prevTree) => {
                                     behavior: "smooth"
                                 });
 
-                                if (nodeElement instanceof HTMLElement) {
+                           const treeItem =
+                               nodeElement.closest('[role="treeitem"]');
+                
+                           if (treeItem instanceof HTMLElement) {
+                               treeItem.focus();
+                               treeItem.classList.add("Mui-focused");
+                               treeItem.classList.add("Mui-selected");
+                
+                               console.log(
+                                   "🎯 FOCUS ON ACCOUNT:",
+                                   typedCodeStr,
+                                   document.activeElement
+                               );
+                           }
 
-                                    nodeElement.focus();
-
-                                    nodeElement.classList.add(
-                                        "Mui-focused"
-                                    );
-
-                                    nodeElement.classList.add(
-                                        "Mui-selected"
-                                    );
-
-                                    const treeItem =
-                                        nodeElement.closest(
-                                            '[role="treeitem"]'
-                                        );
-
-                                    if (
-                                        treeItem instanceof HTMLElement
-                                    ) {
-                                        treeItem.focus();
-                                    }
-                                }
 
                             }, 220);
                         });
@@ -454,7 +438,7 @@ setTreeData((prevTree) => {
                     childList: true,
                     subtree: true
                 });
-
+        console.log("🔥 OBSERVER STARTED");
                 setTimeout(() => {
                     observer.disconnect();
                 }, 3000);

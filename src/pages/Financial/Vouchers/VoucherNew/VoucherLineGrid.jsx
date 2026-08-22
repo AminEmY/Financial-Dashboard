@@ -44,8 +44,6 @@ const VoucherLineGrid = ({ voucher, setVoucher }) => {
     const [treeData, setTreeData] = useState([]); 
     const [expandedTreeItems, setExpandedTreeItems] = useState([]); 
 
-    // مشخص می‌کند اطلاعات فرزندان کدام نودها قبلاً از API گرفته شده
-    const [loadedTreeNodes, setLoadedTreeNodes] = useState(new Set());
 
     const { 
         apiRef, 
