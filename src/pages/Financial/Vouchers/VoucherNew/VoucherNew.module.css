@@ -1,23 +1,47 @@
 .Header {
-    text-align: center;
-    margin-bottom: 14px;
-    margin-top: -15px;
-
-  }
-
-.HeaderForm{
-    display:flex;
-    gap:12px;
-    align-items:center;
-    margin-bottom:12px;
-    direction:rtl;
+  text-align: center;
+  margin-bottom: 8px;
+  margin-top: -15px;
+  font-size: 20px;
 }
 
-.HeaderForm :global(.MuiTextField-root){
-    flex:1;
+.HeaderForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr 1fr;
+  gap: 8px 10px;
+  align-items: center;
+  margin-bottom: 8px;
+  direction: rtl;
 }
-  
 
+.HeaderForm :global(.MuiTextField-root) {
+  width: 100%;
+}
+
+.HeaderForm :global(.MuiInputBase-root) {
+  font-size: 13px;
+  height: 36px;
+}
+
+.HeaderForm :global(.MuiInputLabel-root) {
+  font-size: 12px;
+}
+
+/* شرح و توضیحات ردیف دوم */
+.HeaderForm :global(.MuiTextField-root:nth-child(5)),
+.HeaderForm :global(.MuiTextField-root:nth-child(6)) {
+  grid-column: span 2;
+}
+
+.HeaderForm :global(.MuiInputBase-multiline) {
+  height: auto;
+  min-height: 55px;
+}
+
+.ShrhToz {
+  grid-column: span 2;
+}
+------------------------------------------------------------
 
 .Footer {
   display: flex;
@@ -48,3 +72,4 @@
 .NotBalanced {
   color: #d32f2f;
 }
+

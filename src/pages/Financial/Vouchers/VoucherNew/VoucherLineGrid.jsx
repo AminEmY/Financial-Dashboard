@@ -32,7 +32,7 @@ function findNodeById(nodes, id) {
   return null;
 }
 
-const VoucherLineGrid = ({ voucher, setVoucher }) => {
+const VoucherLineGrid = ({ voucher, setVoucher, onSave  }) => {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [accounts, setAccounts] = useState([]);
@@ -604,6 +604,7 @@ const handleTreeKeyDown = (event) => {
 
     return (
       <>
+    <div className={styles.GridSection}>
       <div className={styles.GHeight}>
           <CustomDataGrid 
               apiRef={apiRef}
@@ -612,23 +613,36 @@ const handleTreeKeyDown = (event) => {
               processRowUpdate={processRowUpdate} 
               onCellKeyDown={onCellKeyDown}
               sx={{
-             '& .MuiDataGrid-footerContainer': {
-                 display: 'none', // مخفی کردن کامل نوار پایینی (Total Rows و Row Selected)
-             },
-             '& .MuiDataGrid-overlay': {
-                 fontSize: '0.9rem',
-                 fontFamily: 'inherit',
-             }
-         }}
-         localeText={{
-             noRowsLabel: 'هیچ ردیفی ثبت نشده است',
-         }}
-          />
+                      '& .MuiDataGrid-footerContainer': {
+                          display: 'none', // مخفی کردن کامل نوار پایینی (Total Rows و Row Selected)
+                      },
+                      '& .MuiDataGrid-overlay': {
+                          fontSize: '0.9rem',
+                          fontFamily: 'inherit',
+                      }
+                    }}
+              localeText={{ noRowsLabel: 'هیچ ردیفی ثبت نشده است',}}
+              
+              isCellEditable={(params) => {
+                   const ableField = params.colDef.accountFeatureAble;
+                        // ستون عادی است → قابل ویرایش
+                        if (!ableField) return true;
+                        // ستون Feature است → فقط طبق Able همان حساب
+                        return params.row?.accountFeatures?.[ableField] === true;
+                    }}
+           />
       </div>
+          <div className={styles.AddRowContainer}>
+                  <Button
+                    className={styles.AddRowButton}
+                    variant="contained"
+                    onClick={addLine}
+                  >
+                    افزودن ردیف
+                  </Button>
+            </div>
+     </div>
           
-        <Button className={styles.Bttn} variant="contained" onClick={addLine}>
-          افزودن ردیف
-        </Button>
         
         <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={closeSnackbar}>
           <Alert onClose={closeSnackbar} severity={snackbar.severity} variant="filled" className={styles.AlertFont}>
@@ -736,6 +750,8 @@ const handleTreeKeyDown = (event) => {
           </DialogContent>
         </Dialog>
 
+
+  <div className={styles.BottomSection}>
         <div dir="rtl" className={styles.SummaryBar}>
 
           <div className={styles.AccountHierarchyBox}>
@@ -797,6 +813,12 @@ const handleTreeKeyDown = (event) => {
             </div>
           </div>
         </div>
+     <div className={styles.SaveSection}>
+        <Button className={styles.SaveButton}  variant="contained" onClick={onSave}>
+         ثبت سند 
+        </Button>
+     </div>
+  </div>
 
      </>
     );

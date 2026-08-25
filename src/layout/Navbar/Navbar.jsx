@@ -16,8 +16,8 @@ const Navbar = () => {
 
   return (
     <div className={styles.navbar}>
-      <h3>Welcome, {user?.firstName}</h3>
-      <button onClick={handleLogout}>Logout</button>
+      <h3>{user?.firstName}</h3>
+      <button onClick={handleLogout}>خروج</button>
     </div>
   );
 };

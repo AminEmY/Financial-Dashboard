@@ -105,6 +105,16 @@ const selectAccountFromModal = async (account) => {
     } catch (error) {
         console.error("خطا در دریافت ساختار والدهای حساب:", error);
     }
+    
+     // گرفتن قابلیت‌های حساب برای ردیف سند
+      const voucherAccountResponse = await axios.post(
+            "http://ecipc107:8049/api/Account/GetForVoucher",
+            {
+                code: String(account.code).trim()
+            }
+        );
+      const accountFeatures = voucherAccountResponse.data || null;
+        console.log("ACCOUNT FEATURES - MODAL:", account.code, accountFeatures );
 
     // ادامه کد قبلی
     const updatedLines = voucher.lines.map((line) => {
@@ -113,11 +123,13 @@ const selectAccountFromModal = async (account) => {
                 ...line,
                 accountId: account.id,
                 accountCode: account.code,
-                accountName: account.name
+                accountName: account.name,
+                accountFeatures: accountFeatures
             };
         }
         return line;
     });
+
 
     setVoucher((prev) => ({
         ...prev,
@@ -178,9 +190,10 @@ const dynamicColumns = useMemo(() => {
         deleteLine, 
         (...args) => openAccountModal(...args),
         setSearchTerm,       
-        setActiveTabOverride
+        setActiveTabOverride,
+        voucher.lines
     );
-}, [deleteLine, openAccountModal, setSearchTerm, setActiveTabOverride]);
+}, [deleteLine, openAccountModal, setSearchTerm, setActiveTabOverride,voucher.lines]);
 
 
 
@@ -254,7 +267,7 @@ if (updatedRow.accountCode && updatedRow.accountCode !== oldRow.accountCode) {
                 // دیگه نیازی به حدس زدن با startsWith نیست؛ childCount مستقیم از سرور میاد
                 const hasChildren = accountNode.childCount > 0;
 
-            if (hasChildren) {
+         if (hasChildren) {
                 // 🚨 حساب فرزند دارد! یعنی سطح آخر نیست.
                 setSnackbar({
                     open: true,
@@ -277,8 +290,8 @@ if (updatedRow.accountCode && updatedRow.accountCode !== oldRow.accountCode) {
                         || null;
                     depth += 1;
                             }
-            // باز کردن مودال درخت حساب‌ها
-            setTimeout(() => {
+                // باز کردن مودال درخت حساب‌ها
+                setTimeout(() => {
                 setActiveTabOverride(1);
 
                 // مسیر والدها را باز نگه می‌داریم
@@ -288,18 +301,18 @@ if (updatedRow.accountCode && updatedRow.accountCode !== oldRow.accountCode) {
                 // ⭐ مهم:
                 // بچه‌های تمام نودهای مسیر را از پاسخ API داخل treeData می‌ریزیم
                 // =====================================================
-setTreeData((prevTree) => {
+              setTreeData((prevTree) => {
 
-    const buildChildren = (item) => {
+                const buildChildren = (item) => {
 
-        // بچه‌های مستقیم این حساب
-        const directChildren = fetchedAccounts
-            .filter(
-                (acc) =>
-                    String(acc.parentCode).trim() ===
-                    String(item.code).trim()
-            )
-            .map((acc) => {
+                // بچه‌های مستقیم این حساب
+                const directChildren = fetchedAccounts
+                    .filter(
+                        (acc) =>
+                            String(acc.parentCode).trim() ===
+                            String(item.code).trim()
+                    )
+                    .map((acc) => {
 
                 // اگر این بچه خودش یکی از والدهای مسیر است،
                 // بچه‌های خودش را هم همین الان بساز
@@ -321,43 +334,43 @@ setTreeData((prevTree) => {
                                     name: "بارگذاری...",
                                     isDummy: true
                                 }
-                            ]
-                            : []
-                };
-            });
+                                            ]
+                                            : []
+                                };
+                            });
 
-        return directChildren;
-    };
+                        return directChildren;
+                    };
 
 
-    const updateTreeRecursively = (nodes) => {
+              const updateTreeRecursively = (nodes) => {
 
-        return nodes.map((item) => {
+                return nodes.map((item) => {
 
-            // اگر این نود یکی از مسیرهای ماست
-            if (parentsToOpen.includes(String(item.id))) {
+             // اگر این نود یکی از مسیرهای ماست
+              if (parentsToOpen.includes(String(item.id))) {
 
                 return {
                     ...item,
                     children: buildChildren(item)
                 };
-            }
+                }
 
-            // در سایر شاخه‌ها دنبال نود موردنظر بگرد
-            if (Array.isArray(item.children) && item.children.length > 0) {
+                        // در سایر شاخه‌ها دنبال نود موردنظر بگرد
+                        if (Array.isArray(item.children) && item.children.length > 0) {
 
-                return {
-                    ...item,
-                    children: updateTreeRecursively(item.children)
+                            return {
+                                ...item,
+                                children: updateTreeRecursively(item.children)
+                            };
+                         }
+
+                             return item;
+                        });
                 };
-            }
 
-            return item;
-        });
-    };
-
-    return updateTreeRecursively(prevTree);
-});
+                return updateTreeRecursively(prevTree);
+                });
 
                 // مودال را باز کن
                 openAccountModal("", newRow.id);
@@ -370,12 +383,12 @@ setTreeData((prevTree) => {
                 // =====================================================
                 const observer = new MutationObserver((mutations, obs) => {
 
-         console.log("🔥 ACCOUNT TREE OBSERVER RUNNING");
+              console.log("🔥 ACCOUNT TREE OBSERVER RUNNING");
 
                     const treeRoot = document.querySelector(
                         ".MuiSimpleTreeView-root"
                     );
-         console.log("🔥 TREE ROOT:", treeRoot);  
+              console.log("🔥 TREE ROOT:", treeRoot);  
                     if (!treeRoot) return;
 
                  let nodeElement = null;
@@ -429,21 +442,21 @@ setTreeData((prevTree) => {
                            }
 
 
-                            }, 220);
-                        });
-                    }
-                });
+                              }, 220);
+                          });
+                        }
+                    });
 
                 observer.observe(document.body, {
                     childList: true,
                     subtree: true
                 });
-        console.log("🔥 OBSERVER STARTED");
+              console.log("🔥 OBSERVER STARTED");
                 setTimeout(() => {
                     observer.disconnect();
-                }, 3000);
+                     }, 3000);
 
-            }, 50);
+                 }, 50);
 
                 return oldRow;
             }
@@ -451,6 +464,17 @@ setTreeData((prevTree) => {
             // 🎯 سناریو: حساب فرزند ندارد و آخرین سطح است -> از همون accountNode بالا استفاده می‌کنیم
             updatedRow.accountId = accountNode.id;
             updatedRow.accountName = accountNode.name;
+
+             // گرفتن تنظیمات موردنیاز این حساب برای ردیف سند
+             const voucherAccountResponse = await axios.post(
+                 "http://ecipc107:8049/api/Account/GetForVoucher",
+                 {
+                     code: String(accountNode.code).trim()
+                 }
+             );
+             updatedRow.accountFeatures = voucherAccountResponse.data || null;
+            //  console.log("ACCOUNT FEATURES:", accountNode.code, voucherAccountResponse.data );
+
 
                 setTimeout(() => {
                     if (apiRef.current && apiRef.current.setCellFocus) {
@@ -505,6 +529,7 @@ const addLine = useCallback(() => {
         sharh: "",
         debtorAmount: 0,
         creditorAmount: 0,
+        accountFeatures: null,
     };
 
     setVoucher((prev) => ({
@@ -587,7 +612,19 @@ const onCellKeyDown = useCallback((params, event) => {
                 // if (nextColumn.field === 'accountName') {
                 //     nextColumn = visibleColumns[currentColumnIndex + 2];
                 // }
-                const nextColumn = visibleColumns[currentColumnIndex + 1];
+                 // 🟢 فقط ستون‌هایی که برای حساب این ردیف فعال هستند
+             const row = apiRef.current.getRow(params.id);
+            
+             const nextColumn = visibleColumns
+               .slice(currentColumnIndex + 1)
+               .find((column) => {
+                 // ستون‌های عادی همیشه قابل ورود هستند
+                 if (!column.accountFeatureAble) return true;
+            
+                 // ستون Feature فقط اگر Able آن حساب true باشد
+                 return row?.accountFeatures?.[column.accountFeatureAble] === true;
+               });
+
                 if (nextColumn) {
                     setTimeout(() => {
                         apiRef.current.setCellFocus(params.id, nextColumn.field);

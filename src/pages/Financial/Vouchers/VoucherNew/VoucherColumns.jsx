@@ -9,7 +9,30 @@ import { Autocomplete, TextField, IconButton, InputAdornment  } from "@mui/mater
 
 
 // تابع کارخانه‌ای (Factory) برای ستون‌ها تا بتوانیم تابع حذف را به آن پاس دهیم و اضافه کردن تابع openAccountModal به ورودی‌های ستون
-export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiveTabOverride) => {
+export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiveTabOverride , voucherLines) => {
+  
+  // 🟢 تعیین اینکه کدام Featureها حداقل برای یکی از ردیف‌ها فعال هستند
+  const featureColumns = [
+    { key: "good",           able: "goodAble",           field: "good",           headerName: "کالا" },
+    { key: "markaz1",        able: "markaz1Able",        field: "markaz1",        headerName: "مرکز ۱" },
+    { key: "markaz2",        able: "markaz2Able",        field: "markaz2",        headerName: "مرکز ۲" },
+    { key: "markaz3",        able: "markaz3Able",        field: "markaz3",        headerName: "مرکز ۳" },
+    { key: "markaz4",        able: "markaz4Able",        field: "markaz4",        headerName: "مرکز ۴" },
+    { key: "dateCheq",       able: "dateCheqAble",       field: "dateCheq",       headerName: "تاریخ چک" },
+    { key: "numCheq",        able: "numCheqAble",        field: "numCheq",        headerName: "شماره چک" },
+    { key: "tedad1",         able: "tedad1Able",         field: "tedad1",         headerName: "تعداد ۱" },
+    { key: "tedad2",         able: "tedad2Able",         field: "tedad2",         headerName: "تعداد ۲" },
+    { key: "tedad3",         able: "tedad3Able",         field: "tedad3",         headerName: "تعداد ۳" },
+    { key: "currencyCode",   able: "currencyCodeAble",   field: "currencyCode",   headerName: "کد ارز" },
+    { key: "currencyFee",    able: "currencyFeeAble",    field: "currencyFee",    headerName: "نرخ ارز" },
+    { key: "currencyTedad",  able: "currencyTedadAble",  field: "currencyTedad",  headerName: "مقدار ارز" },
+  ];
+
+  const activeFeatureColumns = featureColumns.filter(({ able }) =>
+    voucherLines?.some(
+      (line) => line.accountFeatures?.[able] === true
+    )
+  );
 
   const AccountCodeEditCell = ({ params }) => {
     const [localValue, setLocalValue] = useState(params.value || "");
@@ -183,22 +206,35 @@ export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiv
      
      }
    },
-   {
-     field: "debtorAmount",
-     headerName: "بدهکار",
+         // 🟢 Feature columns
+   ...activeFeatureColumns.map(({ field , able, headerName }) => ({
+     field,
+     headerName,
      flex: 1,
-     editable: true,
      type: "number",
-     valueFormatter: formatNumber,
-   },
-   {
-     field: "creditorAmount",
-     headerName: "بستانکار",
-     flex: 1,
-     editable: true,
-     type: "number",
-     valueFormatter: formatNumber,
-   },
+     editable: (params) =>
+     params.row?.accountFeatures?.[able] === true,
+     
+     // 🟢 برای تشخیص در onCellKeyDown
+     accountFeatureAble: able,
+   })),
+
+    {
+      field: "debtorAmount",
+      headerName: "بدهکار",
+      flex: 1,
+      editable: true,
+      type: "number",
+      valueFormatter: formatNumber,
+    },
+    {
+      field: "creditorAmount",
+      headerName: "بستانکار",
+      flex: 1,
+      editable: true,
+      type: "number",
+      valueFormatter: formatNumber,
+    },
 
    //   اضافه شدن ستون عملیات حذف ردیف
    {
@@ -208,7 +244,7 @@ export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiv
      width: 70,
      getActions: (params) => [
        <GridActionsCellItem
-         icon={<DeleteIcon  color = "error"  />}
+       icon={<DeleteIcon  color = "error"  />}
          label="حذف"
          onClick={() => deleteLine(params.id)}
        />,
