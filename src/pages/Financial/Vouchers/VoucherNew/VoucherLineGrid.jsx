@@ -815,7 +815,7 @@ const handleTreeKeyDown = (event) => {
         </div>
      <div className={styles.SaveSection}>
         <Button className={styles.SaveButton}  variant="contained" onClick={onSave}>
-         ثبت سند 
+            {voucher.id ? "ویرایش سند" : "ثبت سند"}
         </Button>
      </div>
   </div>

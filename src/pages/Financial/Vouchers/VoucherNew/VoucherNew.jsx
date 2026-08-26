@@ -1,75 +1,91 @@
-import {React} from 'react';
+import {React, useState} from 'react';
 import styles from "./VoucherNew.module.css";
 import VoucherHeader from "./VoucherHeader";
 import VoucherLineGrid from "./VoucherLineGrid"
 import useVoucher from "./useVoucher";
-import { Button } from '@mui/material';
 import axios from "axios";
-
+import { Snackbar, Alert } from "@mui/material";
+import { validateVoucher , validateVoucherBalance } from "./voucherNewValidations";
 
 
 const VoucherNew = () => {
 
   const { voucher, setVoucher } = useVoucher();
 
+  const [saveStatus, setSaveStatus] = useState(null);
+
+
+
+  const [snackbar, setSnackbar] = useState({
+    open:false,
+    message:"",
+    severity:"error"
+  });
+
+  const [successSnackbar, setSuccessSnackbar] = useState({
+    open:false,
+    message:""
+  });
+
+
+
+  const showErrorSnackbar = (message) => {
+    setSnackbar({
+      open:true,
+      message,
+      severity:"error"
+    });
+  };
+
+
+  const showSuccessSnackbar = (message) => {
+    setSuccessSnackbar({
+      open:true,
+      message
+    });
+  };
+
+  const closeSnackbar = () => {
+    setSnackbar((prev) => ({
+      ...prev,
+      open: false,
+    }));
+  };
+
+
+
   const handleSave = async () => {
     
+      const validationErrors = validateVoucher(voucher);
+
+        if (validationErrors.length > 0) {
+
+          console.log("❌ VALIDATION ERRORS:", validationErrors);
+
+        showErrorSnackbar(
+        validationErrors
+          .map((error) => error.message)
+          .join("\n"),
+        "error"
+        );
+
+          return;
+        }
+
+        console.log("✅ VOUCHER VALIDATION PASSED");
+      const balanceValidation = validateVoucherBalance(voucher);
+
+      // کنترل بالانس بودن سند
+        if (!balanceValidation.isValid) {
+
+            showErrorSnackbar(
+                balanceValidation.message,
+                "error"
+            );
+
+            return;
+        }
     
-    if (Number(voucher.state) !== 0) {
-
-      for (const line of voucher.lines) {
-
-          // ردیف خالی فعلاً در این Validation بررسی نمی‌شود
-          if (!line.accountCode) continue;
-
-          const features = line.accountFeatures;
-          if (!features) continue;
-
-          const requiredFeatures = [
-              ["goodAble", "good", "کالا"],
-              ["markaz1Able", "markaz1", "مرکز هزینه ۱"],
-              ["markaz2Able", "markaz2", "مرکز هزینه ۲"],
-              ["markaz3Able", "markaz3", "مرکز هزینه ۳"],
-              ["markaz4Able", "markaz4", "مرکز هزینه ۴"],
-              ["dateCheqAble", "dateCheq", "تاریخ چک"],
-              ["numCheqAble", "numCheq", "شماره چک"],
-              ["tedad1Able", "tedad1", "تعداد ۱"],
-              ["tedad2Able", "tedad2", "تعداد ۲"],
-              ["tedad3Able", "tedad3", "تعداد ۳"],
-              ["currencyCodeAble", "currencyCode", "کد ارز"],
-              ["currencyFeeAble", "currencyFee", "نرخ ارز"],
-              ["currencyTedadAble", "currencyTedad", "مقدار ارز"],
-          ];
-
-          for (const [ableField, valueField, title] of requiredFeatures) {
-
-              if (
-                  features[ableField] === true &&
-                  (line[valueField] === undefined ||
-                    line[valueField] === null ||
-                    String(line[valueField]).trim() === "")
-              ) {
-                  console.log("VALIDATION ERROR:", {
-                      row: line.row,
-                      accountCode: line.accountCode,
-                      field: valueField,
-                      title
-                  });
-
-                  //  setSnackbar({
-                  //      open: true,
-                  //      message: `ردیف ${line.row}: مقدار ${title} برای حساب ${line.accountCode} الزامی است.`,
-                  //      severity: "error"
-                  //  });
-
-                  return;
-              }
-          }
-      }
-     } 
-
-      
-
     // ========================================
     // BUILD API PAYLOAD
     // ========================================
@@ -139,32 +155,57 @@ const VoucherNew = () => {
     // ========================================
 
     try {
-      const response = await axios.post(
-        "http://ecipc107:8049/api/Voucher/Insert",
-        payload
-      );
+          let response;
+
+          if (voucher.id) {
+
+              console.log("UPDATE VOUCHER:", payload);
+
+              response = await axios.put(
+                  "http://ecipc107:8049/api/Voucher/Update",
+                  {
+                      ...payload,
+                      id: voucher.id
+                  }
+              );
+
+          } else {
+
+              console.log("INSERT VOUCHER:", payload);
+
+              response = await axios.post(
+                  "http://ecipc107:8049/api/Voucher/Insert",
+                  payload
+              );
+          }
 
       console.log("INSERT RESPONSE:", response.data);
 
-      if (response.data?.isSuccess) {
+    if (response.data?.isSuccess) {
 
-        console.log("✅ VOUCHER INSERTED:", response.data.data);
+      const result = response.data.data;
 
-        // اطلاعاتی که Backend ساخته
-        const insertedVoucher = response.data.data;
+        if(result){
 
-        // شماره سند و ID برگشتی را داخل state نگه می‌داریم
-        setVoucher((prev) => ({
-          ...prev,
-          number: insertedVoucher?.number ?? prev.number,
-          id: insertedVoucher?.id ?? prev.id,
-        }));
+            setVoucher(prev => ({ 
+                ...prev,
+                id: result.id,
+                number: result.number,
+                atfNumber: result.atfNumber
+            }));
 
-        // پیام موفقیت
-        // فعلاً برای تست:
-        alert(
-          `سند با موفقیت ثبت شد.\nشماره سند: ${insertedVoucher?.number ?? "-"}`
-        );
+            showSuccessSnackbar(
+                voucher.id
+                ? "ویرایش سند با موفقیت انجام شد"
+                : `سند شماره ${result.number} ثبت شد`,
+                "success"
+            );
+
+            setSaveStatus({
+              type: "saved",
+              number: result.number
+            });
+         }
 
       } else {
 
@@ -173,9 +214,10 @@ const VoucherNew = () => {
           response.data?.message
         );
 
-        alert(
+        showErrorSnackbar(
           response.data?.message ||
-          "ثبت سند با خطا مواجه شد."
+          "ثبت سند با خطا مواجه شد.",
+          "error"
         );
       }
 
@@ -187,14 +229,14 @@ const apiError = error.response?.data;
 
 console.error("API ERROR DATA:", apiError);
 
-          alert(
-            apiError?.message ||
-            apiError?.title ||
-            apiError?.errors ||
-            apiError ||
-            error.message ||
-            "خطا در ارتباط با سرور."
-          );
+        showErrorSnackbar(
+        apiError?.message ||
+        apiError?.title ||
+        apiError ||
+        error.message ||
+        "خطا در ارتباط با سرور.",
+        "error"
+        );
     }
   };
     
@@ -204,9 +246,22 @@ console.error("API ERROR DATA:", apiError);
 return (
   
   
-  <div>
+<div>
     
-    <h3 className={styles.Header}>سند جدید</h3>
+    <div className={styles.TitleRow}>
+        <h3 className={styles.Header}>
+            {voucher.number 
+              ? `سند ${voucher.number}` 
+              : "سند جدید"}
+        </h3>
+
+        {saveStatus?.type === "saved" && (
+
+            <div className={styles.SavedBadge}>
+                ✔ ثبت شده
+            </div>
+        )}
+    </div>
 
     <VoucherHeader voucher={voucher} setVoucher={setVoucher}/>
 
@@ -220,7 +275,76 @@ return (
 
   </div>
 
+    <Snackbar
+      open={snackbar.open}
+      autoHideDuration={4000}
+      onClose={closeSnackbar}
+      anchorOrigin={{
+        vertical: "bottom",
+        horizontal: "center",
+      }}
+    >
+      <Alert
+        onClose={closeSnackbar}
+        severity={snackbar.severity}
+        variant="filled"
+        sx={{ direction: "rtl" }}
+      >
+        {snackbar.message}
+      </Alert>
+    </Snackbar>
 
+    <Snackbar
+      open={successSnackbar.open}
+      autoHideDuration={6000}
+      onClose={() =>
+        setSuccessSnackbar({
+          open:false,
+          message:""
+        })
+      }
+      anchorOrigin={{
+        vertical:"bottom",
+        horizontal:"center"
+      }}
+    >
+      <Alert
+        severity="success"
+        variant="filled"
+        icon={false}
+        sx={{
+          direction:"rtl",
+          width:"auto",
+          minHeight:"40px",
+          display:"flex",
+          alignItems:"center",
+          justifyContent:"center",
+          fontSize:"1.2rem",
+          fontWeight:700,
+          borderRadius:"14px",
+          boxShadow:"0 8px 25px rgba(0,0,0,0.25)"
+        }}
+      >
+          <div
+            style={{
+              display:"flex",
+              alignItems:"center",
+              justifyContent:"center",
+              gap:"10px",
+              direction:"rtl"
+            }}
+          >
+            <span style={{fontSize:"24px"}}>
+              ✅
+            </span>
+
+            <span>
+              {successSnackbar.message}
+            </span>
+          </div>
+
+      </Alert>
+    </Snackbar>
 </div> 
 
 );

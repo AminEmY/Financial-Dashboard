@@ -211,7 +211,6 @@ export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiv
      field,
      headerName,
      flex: 1,
-     type: "number",
      editable: (params) =>
      params.row?.accountFeatures?.[able] === true,
      

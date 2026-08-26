@@ -10,7 +10,7 @@
   grid-template-columns: 1fr 1fr 1.2fr 1fr;
   gap: 8px 10px;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 14px;
   direction: rtl;
 }
 
@@ -36,6 +36,26 @@
 .HeaderForm :global(.MuiInputBase-multiline) {
   height: auto;
   min-height: 55px;
+}
+
+.TitleRow{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:15px;
+    direction: rtl;
+}
+
+
+.SavedBadge{
+    background:#2e7d32;
+    color:white;
+    padding:5px 15px;
+    border-radius:20px;
+    font-size:14px;
+    font-weight:bold;
+    margin-bottom: 14px;
+    margin-top: -15px;
 }
 
 .ShrhToz {
