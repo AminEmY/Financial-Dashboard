@@ -1,24 +1,262 @@
 .sidebar {
-  width: 240px;
-  background: #1e293b;
-  color: white;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
+
+    width:260px;
+
+    height:100vh;
+
+    padding:15px;
+
+    background:#0f172a;
+
+    color:white;
+
+    overflow-y:auto;
+
+    box-sizing:border-box;
+
+    flex-shrink:0;
+
 }
+
 
 .logo {
-  margin-bottom: 30px;
+
+    text-align:center;
+    margin-bottom:25px;
+    font-size:22px;
+
 }
+
+
+
+/* سطح اول */
+.menuParent {
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:12px 14px;
+
+    margin-bottom:6px;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    background:#1e293b;
+
+    color:#f8fafc;
+
+    font-weight:600;
+
+    transition:0.2s;
+
+}
+
+
+.menuParent:hover {
+
+    background:#334155;
+
+}
+
+
+
+/* زیر منوها */
+
+.subMenu {
+
+    margin-right:15px;
+
+    border-right:2px solid #475569;
+
+    padding-right:10px;
+
+}
+
+
+
+/* لینک‌های نهایی */
 
 .link {
-  display: block;
-  color: #cbd5e1;
-  text-decoration: none;
-  margin-bottom: 15px;
+
+    display:flex;
+
+    align-items:center;
+
+    width:100%;
+
+    box-sizing:border-box;
+
+    padding:10px 14px;
+
+    margin:4px 0;
+
+    border-radius:8px;
+
+    color:#cbd5e1;
+
+    text-decoration:none;
+
+    transition:all .2s ease;
+
 }
 
+
+.link:hover {
+
+    background:#1e293b;
+
+    color:white;
+
+}
+
+
+.link:hover {
+
+    background:#1e293b;
+
+    color:white;
+
+}
+
+.link:hover {
+
+    background:#334155;
+
+    color:white;
+
+}
+
+
+
 .active {
-  color: white;
-  font-weight: bold;
+
+    display:flex;
+
+    align-items:center;
+
+    width:100%;
+
+    box-sizing:border-box;
+
+    padding:10px 14px;
+
+    margin:4px 0;
+
+    border-radius:8px;
+
+    background:linear-gradient(
+        90deg,
+        #1d4ed8,
+        #2563eb
+    );
+
+    color:white;
+
+    font-weight:600;
+
+    text-decoration:none;
+
+    box-shadow:
+        0 3px 10px rgba(37,99,235,0.35);
+
+}
+
+/* .active::before {
+
+    content:"";
+
+    position:absolute;
+
+    right:0;
+
+    top:0;
+
+    height:100%;
+
+    width:4px;
+
+    background:#93c5fd;
+
+} */
+
+.subMenu {
+
+    margin-right:12px;
+
+    padding-right:10px;
+
+    border-right:1px solid rgba(148,163,184,0.25);
+
+}
+
+
+.subMenu .menuParent {
+
+    background:transparent;
+
+    color:#e2e8f0;
+
+    font-size:14px;
+
+    padding:9px 12px;
+
+}
+
+
+.subMenu .menuParent:hover {
+
+    background:#1e293b;
+
+}
+
+
+.subMenu .link {
+
+    background:#172554;
+
+    font-size:13px;
+
+    width:100%;
+
+}
+
+
+
+.subMenu .subMenu .link:hover {
+
+    background:#64748b;
+
+}
+
+.menuParent {
+
+    background:#1e293b;
+
+    border-radius:8px;
+
+    padding:11px 14px;
+
+    margin-bottom:5px;
+
+}
+
+
+.subMenu .menuParent {
+
+    background:#172554;
+
+    font-size:14px;
+
+}
+
+
+.subMenu .link {
+
+    background:transparent;
+
+    font-size:13px;
+
 }

@@ -4,16 +4,32 @@ import Navbar from "../Navbar/Navbar";
 import styles from "./MainLayout.module.css";
 
 const MainLayout = () => {
+
+
+
   return (
+    
     <div className={styles.layout}>
+
       <Sidebar />
 
+
       <div className={styles.content}>
+
         <Navbar /> 
+
+        <div className={styles.tabsArea}>
+        {/* بعداً GlobalTabs اینجا می‌آید */}
+        </div>
+
         <div className={styles.page}>
           <Outlet />
         </div>
+
       </div>
+
+
+
     </div>
   );
 };

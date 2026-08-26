@@ -1,8 +1,18 @@
-.navbar {
-  height: 40px;
-  background: #f1f5f9;
+.container {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  padding: 0 20px;
+  justify-content: space-between;
+  direction: rtl; /* اگه کل پروژه RTL نیست، این خط مهمه */
+  height: 40px;
+}
+
+.logo {
+  height: 64px;   /* از 40px بردمش بالاتر، خودت تنظیم کن */
+  width: auto;    /* نسبت تصویر حفظ می‌شه، کش نمیاد */
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
