@@ -1,11 +1,15 @@
 .GridSection {
   width: 100%;
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .GHeight {
   height: 590px;
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
 }
 
 .AddRowContainer {
@@ -182,7 +186,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     min-height: 65px;
     padding: 10px 16px;
     background: #f7f7f7;
@@ -191,6 +196,7 @@
     box-sizing: border-box;
     font-family: Vazir, Tahoma, sans-serif;
     font-size: 12px;
+    overflow: hidden;
 }
 
 
@@ -208,16 +214,20 @@
   align-items: stretch;
   gap: 10px;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   margin-top: 10px;
   direction: rtl;
+  box-sizing: border-box;
 }
 
 
 .SaveSection {
+  flex: 0 0 135px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 135px;
+  min-width: 0;
 }
 
 .SaveButton {

@@ -1,41 +1,38 @@
-
 const menuConfig = [
-
     {
         title: "داشبورد",
-        path: "/dashboard"
+        path: "/dashboard",
+        pageType: "dashboard",
+        closable: false,
     },
-
 
     {
         title: "مالی",
+
         children: [
 
             {
                 title: "اسناد",
+
                 children: [
 
                     {
                         title: "ثبت سند",
-                        path: "/Vouchers/VoucherNew"
+                        path: "/Vouchers/VoucherNew",
+                        pageType: "voucher-new",
                     },
 
                     {
                         title: "لیست اسناد",
-                        path: "/Vouchers"
-                    }
+                        path: "/Vouchers",
+                        pageType: "vouchers-list",
+                    },
 
-                ]
-            }
+                ],
+            },
 
-        ]
+        ],
     },
-
-
-    {
-        title: "احراز هویت",
-        path: "/authentication"
-    }
-
 ];
-export default menuConfig
+
+export default menuConfig;

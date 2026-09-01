@@ -4,15 +4,18 @@ import './index.css'
 import App from './App.jsx'
 import { BrowserRouter} from 'react-router-dom'
 import {AuthProvider} from './context/AuthProvider.jsx'
+import TabProvider from "./context/TabProvider";
+
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
 
+
+  <StrictMode>
     <BrowserRouter>
     <AuthProvider>
-        
+        <TabProvider>      
             <App/>
-        
+        </TabProvider> 
     </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

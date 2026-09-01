@@ -246,9 +246,8 @@ console.error("API ERROR DATA:", apiError);
 return (
   
   
-<div>
-    
-    <div className={styles.TitleRow}>
+<div className={styles.voucherPage}>   
+    {/* <div className={styles.TitleRow}>
         <h3 className={styles.Header}>
             {voucher.number 
               ? `سند ${voucher.number}` 
@@ -261,8 +260,7 @@ return (
                 ✔ ثبت شده
             </div>
         )}
-    </div>
-
+    </div> */}
     <VoucherHeader voucher={voucher} setVoucher={setVoucher}/>
 
   <div>

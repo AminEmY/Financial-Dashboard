@@ -4,6 +4,7 @@
   justify-content: space-between;
   direction: rtl; /* اگه کل پروژه RTL نیست، این خط مهمه */
   height: 40px;
+  margin-bottom: 8px;
 }
 
 .logo {
