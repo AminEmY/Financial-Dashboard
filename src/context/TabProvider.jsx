@@ -71,6 +71,17 @@ const TabProvider = ({ children }) => {
     });
   };
 
+const updateTab = (id, updates) => {
+  setTabs((prevTabs) =>
+    prevTabs.map((tab) =>
+      tab.id === id
+        ? { ...tab, ...updates }
+        : tab
+    )
+  );
+};
+
+
   return (
     <TabContext.Provider
       value={{
@@ -79,6 +90,7 @@ const TabProvider = ({ children }) => {
         openTab,
         activateTab,
         closeTab,
+        updateTab,
       }}
     >
       {children}

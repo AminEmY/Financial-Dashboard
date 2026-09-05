@@ -1,4 +1,4 @@
-import {React, useState} from 'react';
+import {React, useState, useEffect} from 'react';
 import styles from "./VoucherNew.module.css";
 import VoucherHeader from "./VoucherHeader";
 import VoucherLineGrid from "./VoucherLineGrid"
@@ -6,14 +6,25 @@ import useVoucher from "./useVoucher";
 import axios from "axios";
 import { Snackbar, Alert } from "@mui/material";
 import { validateVoucher , validateVoucherBalance } from "./voucherNewValidations";
+import useTabs from "../../../../context/useTabs";
 
 
-const VoucherNew = () => {
+const VoucherNew = ({ tab }) => {
 
-  const { voucher, setVoucher } = useVoucher();
+  const { voucher, setVoucher, loading, loadError, loadVoucherById } = useVoucher();
+
+  const { updateTab } = useTabs();
 
   const [saveStatus, setSaveStatus] = useState(null);
 
+
+  // اگر تب با آیدی یک سند باز شده باشد (کلیک روی سند در لیست)، اطلاعاتش از سرور خوانده می‌شود
+  useEffect(() => {
+    const voucherId = tab?.data?.id;
+    if (voucherId) {
+      loadVoucherById(voucherId);
+    }
+  }, [tab?.data?.id, loadVoucherById]);
 
 
   const [snackbar, setSnackbar] = useState({
@@ -194,6 +205,16 @@ const VoucherNew = () => {
                 atfNumber: result.atfNumber
             }));
 
+            if (!voucher.id) {
+                updateTab(tab.id, {
+                  title: "ویرایش سند",
+                  pageType: "voucher-detail",
+                  data: {
+                    id: result.id,
+                  },
+                });
+              }
+
             showSuccessSnackbar(
                 voucher.id
                 ? "ویرایش سند با موفقیت انجام شد"
@@ -241,26 +262,23 @@ console.error("API ERROR DATA:", apiError);
   };
     
 
+    // ترکیب خطای بارگذاری سند با snackbar خطا، بدون نیاز به useEffect و setState اضافه
+  const isErrorSnackbarOpen = snackbar.open || Boolean(loadError);
+  const errorSnackbarMessage = snackbar.open ? snackbar.message : loadError;
 
 
 return (
   
   
 <div className={styles.voucherPage}>   
-    {/* <div className={styles.TitleRow}>
-        <h3 className={styles.Header}>
-            {voucher.number 
-              ? `سند ${voucher.number}` 
-              : "سند جدید"}
-        </h3>
 
-        {saveStatus?.type === "saved" && (
 
-            <div className={styles.SavedBadge}>
-                ✔ ثبت شده
-            </div>
-        )}
-    </div> */}
+    {loading && (
+      <div style={{ padding: "8px 4px", color: "#1976d2" }}>
+        در حال دریافت اطلاعات سند...
+      </div>
+    )}
+
     <VoucherHeader voucher={voucher} setVoucher={setVoucher}/>
 
   <div>
@@ -274,7 +292,7 @@ return (
   </div>
 
     <Snackbar
-      open={snackbar.open}
+      open={isErrorSnackbarOpen}
       autoHideDuration={4000}
       onClose={closeSnackbar}
       anchorOrigin={{
@@ -284,11 +302,11 @@ return (
     >
       <Alert
         onClose={closeSnackbar}
-        severity={snackbar.severity}
+        severity="error"
         variant="filled"
         sx={{ direction: "rtl" }}
       >
-        {snackbar.message}
+        {errorSnackbarMessage}
       </Alert>
     </Snackbar>
 

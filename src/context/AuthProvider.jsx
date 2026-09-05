@@ -6,7 +6,7 @@ import { AuthContext } from "./AuthContext";
 export const AuthProvider = ({ children }) => {
 
   const [token, setToken] = useState ( localStorage.getItem("token"));
- const [user, setUser] = useState(() => {
+  const [user, setUser] = useState(() => {
   const saved = localStorage.getItem("user");
   return saved ? JSON.parse(saved) : null }); //برای داشتن اطلاعات یوزر و اگه خالی بود کرش نکنه
 

@@ -4,7 +4,6 @@ import './App.css';
 import Login from './pages/Login/Login'
 import Dashboard from './pages/Dashboard/Dashboard'
 import VouchersList from './pages/Financial/Vouchers/VouchersList'
-import VoucherDetail from './pages/Financial/Vouchers/VoucherDetail'
 import VoucherNew from './pages/Financial/Vouchers/VoucherNew/VoucherNew'
 import Notfound from './pages/Notfound/Notfound'
 import Authentication from './pages/Authentication/Authentication'
@@ -24,8 +23,8 @@ function App() {
 
       <Route path='/dashboard' element={<Dashboard/>} />
       <Route path='/Vouchers' element={<VouchersList/>} />
+      <Route path='/Vouchers/:id' element={<VouchersList/>} />
       <Route path='/Vouchers/VoucherNew' element={<VoucherNew/>}/>
-      <Route path='/Vouchers/:id' element={<VoucherDetail/>} />
 
       <Route path='/authentication' element={<Authentication/>} />
 

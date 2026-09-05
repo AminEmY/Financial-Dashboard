@@ -1,8 +1,8 @@
 import{ React,useState,useEffect } from 'react';
 import axios from "axios";
 import styles from "./VouchersList.module.css"
-import { useNavigate } from 'react-router-dom';
-import CustomDataGrid  from '../../../components/common/CustomizedDataGrid'
+import CustomDataGrid  from '../../../components/common/CustomizedDataGrid';
+import useTabs from "../../../context/useTabs";//سیستم تب بجای نویگیت
 import {formatNumber,toPersianDigits} from "../../../utils/formatter";//جهت تبدیل اعداد و تاریخ به فارسی
 
 
@@ -12,7 +12,8 @@ const VouchersList = () => {
 
   const [search, setSearch] = useState("");
   const [vouchers, setVouchers] = useState([]);
-  const navigate = useNavigate();
+
+  const { openTab } = useTabs();
 
  useEffect(() => {
   axios
@@ -118,51 +119,32 @@ const rows = vouchers.map((v) => ({
       
         <div className={styles.Toolbar}>
 
-             <button onClick={()=>{navigate("/Vouchers/VoucherNew")}}> + <span>     </span>   سند جدید   </button>       
              <input    placeholder="جستجو  ..."  value={search} onChange={(e) => setSearch(e.target.value)} />
 
         </div>
 
-       <div className={styles.GridHeight}  >
+        <div className={styles.GridHeight}  >
           <CustomDataGrid
               rows={filteredRows}
               columns={columns}
               slots={{footer: CustomFooter,}}
                 
             
-            onRowClick={(params) => {
-            navigate(`/Vouchers/${params.row.id}`);
-            }}
-            // getRowClassName={(params) =>params.indexRelativeToCurrentPage % 2 === 0 ? "even" : "odd"}  
-              
-              // pagination
-              // paginationMode="server"
-              // sortingMode="server"
-              // filterMode="server"
+              onRowClick={(params) => { openTab({
+                                                  title: `سند ${params.row.number}`,
+                                                  path: `/Vouchers/${params.row.id}`,
+                                                  pageType: "voucher-detail",
+                                                  data: {
+                                                  id: params.row.id,
+                                                  },
+                                                });
+                                              }}
 
-              // pageSizeOptions={[5, 10, 25]}
-
-              // initialState={{
-              //  pagination: {
-              //    paginationModel: { pageSize: 50, page: 1 }, 
-              //  },
-              //   pinnedColumns: {
-              //   left: ["number"],
-              //                   },
-              // }}
               
            />
 
-       </div>
-
-          {/* <div className={styles.Total} >
-           <strong>
-             جمع کل: {formatNumber(totalAmount)}
-           </strong>
-          </div> */}
-
-        
-        
+        </div>
+                
     </div>);
   };
   
