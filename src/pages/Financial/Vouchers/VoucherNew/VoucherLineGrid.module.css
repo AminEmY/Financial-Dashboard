@@ -13,7 +13,7 @@
 }
 
 .AddRowContainer {
-  height: 50px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -189,7 +189,8 @@
     flex: 1;
     min-width: 0;
     min-height: 65px;
-    padding: 10px 16px;
+    padding: 6px 6px;
+    margin-top: 2px;
     background: #f7f7f7;
     border: 1px solid #d8d8d8;
     border-radius: 6px;
@@ -216,7 +217,7 @@
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  margin-top: 10px;
+  margin-top: 1px;
   direction: rtl;
   box-sizing: border-box;
 }

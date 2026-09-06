@@ -6,6 +6,7 @@ import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { useEffect, useState, useMemo, useCallback } from "react";
 import axios from "axios";
 import { toPersianDigits } from "../../../../utils/formatter";
+import AccountHierarchySummary from "../../../../components/common/SummaryBar/AccountHierarchySummary"
 
 // تعریف توابع کمکی بازگشتی خارج از کامپوننت برای جلوگیری از خطای Hoisting و رندرهای مجدد
 function findNodeByCode(nodes, code) {
@@ -78,33 +79,6 @@ const VoucherLineGrid = ({ voucher, setVoucher, onSave  }) => {
         return lines.find((line) => line.id === focusedRowId) || null;
     }, [voucher, focusedRowId]);
 
-    const focusedAccountHierarchy = useMemo(() => {
-        if (!focusedLine || !focusedLine.accountCode || allAccounts.length === 0) {
-            return null;
-        }
-
-        const codeStr = String(focusedLine.accountCode).trim();
-        const accountNode = allAccounts.find((acc) => String(acc.code).trim() === codeStr);
-        if (!accountNode) return null;
-
-        const chain = [];
-        let current = accountNode;
-        let depth = 0;
-        const MAX_DEPTH = 20;
-
-        while (current && depth < MAX_DEPTH) {
-            chain.unshift(current);
-            if (!current.parentCode) break;
-            const parentCodeStr = String(current.parentCode).trim();
-            current = allAccounts.find((acc) => String(acc.code).trim() === parentCodeStr) || null;
-            depth += 1;
-        }
-
-
-        return chain;
-
-
-    }, [focusedLine, allAccounts]);
 
     const totals = useMemo(() => {
       const lines = voucher && voucher.lines ? voucher.lines : [];     
@@ -754,47 +728,7 @@ const handleTreeKeyDown = (event) => {
   <div className={styles.BottomSection}>
         <div dir="rtl" className={styles.SummaryBar}>
 
-          <div className={styles.AccountHierarchyBox}>
-                    {focusedAccountHierarchy ? (
-                        <>
-                            {focusedAccountHierarchy.map((account, index) => {
-
-                                let label;
-
-                                if (index === 0) {
-                                    label = "گروه حساب";
-                                } else if (index === 1) {
-                                    label = "حساب کل";
-                                } else {
-                                    label = `حساب معین${index - 1}`;
-                                }
-
-                                return (
-                                    <div
-                                        className={styles.AccountHierarchyRow}
-                                        key={account.id}
-                                    >
-                                        <span className={styles.SummaryLabel}>
-                                            {label}:
-                                        </span>
-
-                                        <strong className={styles.AccountInfoText}>
-                                            {account.name}
-
-                                            <span className={styles.AccountInfoCode}>
-                                                ({toPersianDigits(account.code)})
-                                            </span>
-                                        </strong>
-                                    </div>
-                                );
-                            })}
-                        </>
-                    ) : (
-                        <span className={styles.EmptyAccountText}>
-                            ردیفی انتخاب نشده
-                        </span>
-                    )}
-          </div>
+          <AccountHierarchySummary accountCode={focusedLine?.accountCode} />
 
           <div className={styles.BalanceBox}>
             <div className={styles.BalanceItem}>
