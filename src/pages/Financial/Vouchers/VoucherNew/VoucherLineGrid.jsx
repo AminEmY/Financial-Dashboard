@@ -728,7 +728,14 @@ const handleTreeKeyDown = (event) => {
   <div className={styles.BottomSection}>
         <div dir="rtl" className={styles.SummaryBar}>
 
-          <AccountHierarchySummary accountCode={focusedLine?.accountCode} />
+          <AccountHierarchySummary
+              accountCode={focusedLine?.accountCode}
+              markaz1Code={focusedLine?.markaz1}
+              markaz2Code={focusedLine?.markaz2}
+              markaz3Code={focusedLine?.markaz3}
+              markaz4Code={focusedLine?.markaz4}
+              goodCode={focusedLine?.good}
+          />
 
           <div className={styles.BalanceBox}>
             <div className={styles.BalanceItem}>
