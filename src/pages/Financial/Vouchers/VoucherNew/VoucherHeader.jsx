@@ -11,7 +11,9 @@ const VoucherHeader = ({ voucher, setVoucher }) => {
                                      });
                                           };
   return (
-    <div className={styles.HeaderForm}>
+  <div className={styles.HeaderForm}>
+
+    <div className={styles.HeaderRow}>
 
       {/* شماره سند توسط Backend تولید می‌شود */}
       <TextField
@@ -48,22 +50,23 @@ const VoucherHeader = ({ voucher, setVoucher }) => {
         onChange={(e) => handleChange("date", e.target.value)}
         size="small"
       />
-  
-      <TextField className={styles.ShrhToz}
+    </div>
+    <div className={styles.HeaderRow2}>
+      <TextField 
         label="شرح"
         value={voucher.sharh || ""}
         onChange={(e) => handleChange("sharh", e.target.value)}
         size="small"
       />
 
-      <TextField className={styles.ShrhToz}
+      <TextField 
         label="توضیحات"
         value={voucher.tozihat || ""}
         onChange={(e) => handleChange("tozihat", e.target.value)}
         size="small"
       />
-
     </div>
+  </div>
   );
 };
 

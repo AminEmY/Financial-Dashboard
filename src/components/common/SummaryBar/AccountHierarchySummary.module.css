@@ -1,0 +1,33 @@
+.AccountHierarchyBox {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.AccountHierarchyRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.SummaryLabel {
+  color: #555;
+  font-size: 12px;
+}
+
+.AccountInfoText {
+  color: #1976d2;
+  font-size: 12px;
+}
+
+.AccountInfoCode {
+  color: #777;
+  font-weight: normal;
+  font-size: 12px;
+  margin-right: 4px;
+}
+
+.EmptyAccountText {
+  color: #999;
+  font-size: 13px;
+}

@@ -141,15 +141,31 @@ export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiv
      field: "row",
      headerName: "ردیف",
      width: 80,
-     // ⭐️ حل باگ نهایی کرش گرید: استفاده امن از sequence خود سطر به جای متدهای خراب apiRef
+     align: "right",
+     // ⭐️ حل باگ نهایی کرش گرید: استفاده امن از row.sequence یا row.row (برای ردیف‌های تازه‌ساز)
      valueGetter: (value, row) => {
-       return row && row.sequence ? row.sequence : "";
+       const num = row?.sequence ?? row?.row;
+       return num ? num : "";
      },
      valueFormatter: (value) => {
        if (value === undefined || value === null || value === "") return "";
        return toPersianDigits(value);
      },
-   },
+     renderCell: (params) => (
+       <div
+         style={{
+           width: "100%",
+           textAlign: "right",
+           paddingRight: 8,
+         }}
+       >
+         {params.value !== "" && params.value !== undefined && params.value !== null
+           ? toPersianDigits(params.value)
+           : ""}
+       </div>
+     ),
+     
+    },
     {
       field: "accountCode",
       headerName: "کد حساب",
@@ -162,9 +178,8 @@ export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiv
       // ⭐️ رندر تمیز و بدون خطای قوانین هوک و مستقل از متغیرهای تکراری
       renderEditCell: (params) => <AccountCodeEditCell params={params} />
     },
-
       //   سفارشی‌سازی ادیتور ستون شرح
-   {
+    {
      field: "sharh",
      headerName: "شرح",
      flex: 2.5,

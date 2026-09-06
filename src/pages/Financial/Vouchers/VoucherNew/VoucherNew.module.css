@@ -6,17 +6,30 @@
 }
 
 .HeaderForm {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1.2fr 1fr;
-  gap: 8px 10px;
-  align-items: center;
+  direction: rtl;
   margin-bottom: 7px;
   margin-top: 14px;
-  direction: rtl;
 }
 
-.HeaderForm :global(.MuiTextField-root) {
-  width: 100%;
+.HeaderRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.HeaderRow :global(.MuiTextField-root) {
+  flex: 0 0 160px;
+  width: 160px;
+}
+
+.HeaderRow2 {
+  display: flex;
+  gap: 10px;
+}
+
+.HeaderRow2 :global(.MuiTextField-root) {
+  flex: 1 1 0;
 }
 
 .HeaderForm :global(.MuiInputBase-root) {
@@ -24,14 +37,21 @@
   height: 36px;
 }
 
+/* راست‌چین کردن لیبل‌ها به‌جای حالت پیش‌فرض چپ‌چین MUI */
 .HeaderForm :global(.MuiInputLabel-root) {
   font-size: 12px;
+  right: 30px;
+  left: unset;
+  transform-origin: top center;
 }
 
-/* شرح و توضیحات ردیف دوم */
-.HeaderForm :global(.MuiTextField-root:nth-child(5)),
-.HeaderForm :global(.MuiTextField-root:nth-child(6)) {
-  grid-column: span 2;
+.HeaderForm :global(.MuiInputLabel-root.MuiInputLabel-shrink) {
+  right: 55px;
+  transform: translate(0, -9px) scale(0.75);
+}
+
+.HeaderForm :global(.MuiOutlinedInput-notchedOutline legend) {
+  text-align: center;
 }
 
 .HeaderForm :global(.MuiInputBase-multiline) {
@@ -61,7 +81,8 @@
 }
 
 .ShrhToz {
-  grid-column: span 2;
+  flex: 1 1 260px;
+  min-width: 220px;
 }
 
 
