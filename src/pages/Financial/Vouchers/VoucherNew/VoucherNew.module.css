@@ -1,10 +1,3 @@
-.voucherPage {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
 .HeaderForm {
   direction: rtl;
   margin-bottom: 7px;
@@ -18,7 +11,8 @@
   margin-bottom: 8px;
 }
 
-.HeaderRow :global(.MuiTextField-root) {
+.HeaderRow > .FieldBox,
+.HeaderRow > :global(.rmdp-container) {
   flex: 0 0 160px;
   width: 160px;
 }
@@ -28,35 +22,77 @@
   gap: 10px;
 }
 
-.HeaderRow2 :global(.MuiTextField-root) {
+.HeaderRow2 > .FieldBox {
   flex: 1 1 0;
 }
 
-.HeaderForm :global(.MuiInputBase-root) {
-  font-size: 13px;
+.FieldBox {
+  display: flex;
+  align-items: center;
   height: 36px;
+  width: 100%;
+  background-color: #f5f6fa;
+  border-radius: 8px;
+  padding: 0 10px;
+  gap: 10px;
+  box-sizing: border-box;
+  cursor: text;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
 }
 
-/* راست‌چین کردن لیبل‌ها به‌جای حالت پیش‌فرض چپ‌چین MUI */
-.HeaderForm :global(.MuiInputLabel-root) {
+.FieldBox:hover {
+  background-color: #edeff5;
+}
+
+.FieldBox:focus-within {
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.16);
+}
+
+.FieldLabel {
   font-size: 12px;
-  right: 30px;
-  left: unset;
-  transform-origin: top center;
+  font-family: iransansx;
+  color: #8a8f98;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.HeaderForm :global(.MuiInputLabel-root.MuiInputLabel-shrink) {
-  right: 55px;
-  transform: translate(0, -9px) scale(0.75);
+.FieldBox:focus-within .FieldLabel {
+  color: #1976d2;
 }
 
-.HeaderForm :global(.MuiOutlinedInput-notchedOutline legend) {
-  text-align: center;
+.FieldInput {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
 }
 
-.HeaderForm :global(.MuiInputBase-multiline) {
-  height: auto;
-  min-height: 55px;
+.FieldInput :global(.MuiInputBase-input) {
+  text-align: left;
+  padding: 0 !important;
+  font-size: 13px;
+}
+
+.FieldBoxClickable {
+  cursor: pointer;
+}
+
+.FieldValueText {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  text-align: left;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.FieldCaret {
+  font-size: 12px;
+  color: #8a8f98;
+  flex-shrink: 0;
 }
 
 .TitleRow{

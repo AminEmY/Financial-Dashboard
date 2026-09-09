@@ -1,11 +1,16 @@
 import { useState, useCallback } from "react";
 import axios from "axios";
+import DateObject from "react-date-object";
+import persian from "react-date-object/calendars/persian";
+import persian_fa from "react-date-object/locales/persian_fa";
 
-const emptyVoucher = {
+const getTodayPersianDate = () =>
+    new DateObject({ calendar: persian, locale: persian_fa }).format("YYYY/MM/DD");
+
+const baseVoucher = {
     number: "",
     state: 0,
     subNumber: 0,
-    date: "1405/03/31",
     sharh: "",
     tozihat: "",
     debtorAmount: 0,
@@ -16,6 +21,7 @@ const emptyVoucher = {
     subDomain: 0,
     reference: 0,
     type: 0,
+    deletedLineIds: [],
 };
 
 // نگاشت هر ردیف سند از فرمت API (GetById) به فرمتی که گرید استفاده می‌کند
@@ -65,11 +71,15 @@ const mapVoucherFromApi = (data) => ({
     reference: data.reference ?? 0,
     type: data.type ?? 0,
     atfNumber: data.atfNumber,
+    deletedLineIds: [],
 });
 
 export default function useVoucher() {
 
-    const [voucher, setVoucher] = useState(emptyVoucher);
+    const [voucher, setVoucher] = useState(() => ({
+        ...baseVoucher,
+         date: getTodayPersianDate(), }) );
+
     const [loading, setLoading] = useState(false);
     const [loadError, setLoadError] = useState(null);
 

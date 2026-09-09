@@ -101,164 +101,170 @@ const VoucherNew = ({ tab }) => {
     // BUILD API PAYLOAD
     // ========================================
 
-      const validLines = voucher.lines.filter(
-      (line) => line.accountCode
-      );
+        const validLines = voucher.lines.filter(
+        (line) => line.accountCode
+        );
 
-      const payload = {
-      state: Number(voucher.state),
-      subNumber: Number(voucher.subNumber || 0),
-      date: voucher.date,
-      sharh: voucher.sharh,
-      tozihat: voucher.tozihat,
+        const linesPayload = validLines.map((line, index) => ({
+          row: index,
+          accountCode: line.accountCode,
 
-      debtorAmount: validLines.reduce(
-        (sum, line) => sum + Number(line.debtorAmount || 0),
-        0
-      ),
+          markaz1Code: line.markaz1 || "",
+          markaz2Code: line.markaz2 || "",
+          markaz3Code: line.markaz3 || "",
+          markaz4Code: line.markaz4 || "",
 
-      creditorAmount: validLines.reduce(
-        (sum, line) => sum + Number(line.creditorAmount || 0),
-        0
-      ),
+          goodCode: line.good || "",
 
-      countOfLines: validLines.length,
+          currencyCode: Number(line.currencyCode || 0),
+          currencyTedad: Number(line.currencyTedad || 0),
+          currencyFee: Number(line.currencyFee || 0),
 
-      inserterCode: voucher.inserterCode,
+          tedad1: Number(line.tedad1 || 0),
+          tedad2: Number(line.tedad2 || 0),
+          tedad3: Number(line.tedad3 || 0),
 
-      lines: validLines.map((line, index) => ({
-        row: index,
-        accountCode: line.accountCode,
+          sharh: line.sharh || "",
 
-        markaz1Code: line.markaz1 || "",
-        markaz2Code: line.markaz2 || "",
-        markaz3Code: line.markaz3 || "",
-        markaz4Code: line.markaz4 || "",
+          dateCheq: line.dateCheq || "",
+          numCheq: line.numCheq || "",
 
-        goodCode: line.good || "",
+          debtorAmount: Number(line.debtorAmount || 0),
+          creditorAmount: Number(line.creditorAmount || 0),
 
-        currencyCode: Number(line.currencyCode || 0),
-        currencyTedad: Number(line.currencyTedad || 0),
-        currencyFee: Number(line.currencyFee || 0),
+          // سطرهای تازه‌ساز (هنوز ثبت‌نشده روی سرور) باید id صفر بگیرن تا بک‌اند به‌جای آپدیت، درج‌شون کنه
+          id: line.isNew ? 0 : Number(line.id) || 0,
+        }));
 
-        tedad1: Number(line.tedad1 || 0),
-        tedad2: Number(line.tedad2 || 0),
-        tedad3: Number(line.tedad3 || 0),
+        const basePayload = {
+        state: Number(voucher.state),
+        subNumber: Number(voucher.subNumber || 0),
+        date: voucher.date,
+        sharh: voucher.sharh,
+        tozihat: voucher.tozihat,
 
-        sharh: line.sharh || "",
+        debtorAmount: validLines.reduce(
+          (sum, line) => sum + Number(line.debtorAmount || 0),
+          0
+        ),
 
-        dateCheq: line.dateCheq || "",
-        numCheq: line.numCheq || "",
+        creditorAmount: validLines.reduce(
+          (sum, line) => sum + Number(line.creditorAmount || 0),
+          0
+        ),
 
-        debtorAmount: Number(line.debtorAmount || 0),
-        creditorAmount: Number(line.creditorAmount || 0),
-      })),
+        countOfLines: validLines.length,
 
-      subDomain: voucher.subDomain,
-      reference: voucher.reference,
-      type: voucher.type,
-    };
+        inserterCode: voucher.inserterCode,
 
-    console.log("INSERT PAYLOAD:", payload);
+        lines: linesPayload,
 
-    // ========================================
-    // SEND TO API
-    // ========================================
+        subDomain: voucher.subDomain,
+        reference: voucher.reference,
+        type: voucher.type,
+      };
 
-    try {
-          let response;
+      console.log("SAVE PAYLOAD:", basePayload);
 
-          if (voucher.id) {
+      // ========================================
+      // SEND TO API
+      // ========================================
 
-              console.log("UPDATE VOUCHER:", payload);
+      try {
+            let response;
 
-              response = await axios.put(
-                  "http://ecipc107:8049/api/Voucher/Update",
-                  {
-                      ...payload,
-                      id: voucher.id
-                  }
+            if (voucher.id) {
+
+                const updatePayload = {
+                    ...basePayload,
+                    id: voucher.id,
+                    lineIdsForDelete: voucher.deletedLineIds || [],
+                };
+
+                console.log("UPDATE VOUCHER:", updatePayload);
+
+                response = await axios.post(
+                    "http://ecipc107:8049/api/Voucher/Update",
+                    updatePayload
+                );
+
+            } else {
+
+                console.log("INSERT VOUCHER:", basePayload);
+
+                response = await axios.post(
+                    "http://ecipc107:8049/api/Voucher/Insert",
+                    basePayload
+                );
+            }
+
+        console.log("SAVE RESPONSE:", response.data);
+
+      if (response.data?.isSuccess) {
+
+        const result = response.data.data;
+
+          if(result){
+
+              // رفرش کامل سند از سرور: هم id واقعی سطرهای تازه‌ساز رو می‌گیریم
+              // هم isNew و deletedLineIds به‌درستی ریست می‌شن، بدون نیاز به مدیریت دستی این حالت‌ها
+              await loadVoucherById(result.id);
+
+              if (!voucher.id) {
+                  updateTab(tab.id, {
+                    title: "ویرایش سند",
+                    pageType: "voucher-detail",
+                    data: {
+                      id: result.id,
+                    },
+                  });
+                }
+
+              showSuccessSnackbar(
+                  voucher.id
+                  ? "ویرایش سند با موفقیت انجام شد"
+                  : `سند شماره ${result.number} ثبت شد`,
+                  "success"
               );
 
-          } else {
-
-              console.log("INSERT VOUCHER:", payload);
-
-              response = await axios.post(
-                  "http://ecipc107:8049/api/Voucher/Insert",
-                  payload
-              );
+              setSaveStatus({
+                type: "saved",
+                number: result.number
+              });
           }
 
-      console.log("INSERT RESPONSE:", response.data);
+        } else {
 
-    if (response.data?.isSuccess) {
+          console.error(
+            "❌ VOUCHER SAVE ERROR:",
+            response.data?.message
+          );
 
-      const result = response.data.data;
+          showErrorSnackbar(
+            response.data?.message ||
+            "ثبت سند با خطا مواجه شد.",
+            "error"
+          );
+        }
 
-        if(result){
+      } catch (error) {
 
-            setVoucher(prev => ({ 
-                ...prev,
-                id: result.id,
-                number: result.number,
-                atfNumber: result.atfNumber
-            }));
+        console.error("❌ SAVE API ERROR:", error);
 
-            if (!voucher.id) {
-                updateTab(tab.id, {
-                  title: "ویرایش سند",
-                  pageType: "voucher-detail",
-                  data: {
-                    id: result.id,
-                  },
-                });
-              }
+    const apiError = error.response?.data;
 
-            showSuccessSnackbar(
-                voucher.id
-                ? "ویرایش سند با موفقیت انجام شد"
-                : `سند شماره ${result.number} ثبت شد`,
-                "success"
-            );
+    console.error("API ERROR DATA:", apiError);
 
-            setSaveStatus({
-              type: "saved",
-              number: result.number
-            });
-         }
-
-      } else {
-
-        console.error(
-          "❌ VOUCHER INSERT ERROR:",
-          response.data?.message
-        );
-
-        showErrorSnackbar(
-          response.data?.message ||
-          "ثبت سند با خطا مواجه شد.",
+          showErrorSnackbar(
+          apiError?.message ||
+          apiError?.title ||
+          apiError ||
+          error.message ||
+          "خطا در ارتباط با سرور.",
           "error"
-        );
+          );
       }
-
-    } catch (error) {
-
-      console.error("❌ INSERT API ERROR:", error);
-
-const apiError = error.response?.data;
-
-console.error("API ERROR DATA:", apiError);
-
-        showErrorSnackbar(
-        apiError?.message ||
-        apiError?.title ||
-        apiError ||
-        error.message ||
-        "خطا در ارتباط با سرور.",
-        "error"
-        );
-    }
+  
   };
     
 

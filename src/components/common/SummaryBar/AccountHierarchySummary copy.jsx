@@ -111,3 +111,41 @@ const AccountHierarchySummary = ({ accountCode }) => {
 };
 
 export default AccountHierarchySummary;
+
+
+//اگه بخوایم از ای پی آی استفاده نکنیم برای سامری بار ازین فایل با تغییرات زیر در فایل VoucherLineGrid.jsx استفاده میکنیم
+
+//اول import جدید رو اضافه کن (زیر بقیه importها): import AccountHierarchySummary from "../../../../components/common/AccountHierarchySummary";
+
+
+        // <div dir="rtl" className={styles.SummaryBar}>
+
+        //   <AccountHierarchySummary
+        //       accountCode={focusedLine?.accountCode}
+        //       markaz1Code={focusedLine?.markaz1}
+        //       markaz2Code={focusedLine?.markaz2}
+        //       markaz3Code={focusedLine?.markaz3}
+        //       markaz4Code={focusedLine?.markaz4}
+        //       goodCode={focusedLine?.good}
+        //   />
+
+        //   <div className={styles.BalanceBox}>
+        //     <div className={styles.BalanceItem}>
+        //       <span className={styles.SummaryLabel}>بستانکار:</span>
+        //       <strong className={styles.CreditText}>{totals.totalCredit.toLocaleString()}</strong>
+        //     </div>
+        //     <div className={styles.BalanceItem}>
+        //       <span className={styles.SummaryLabel}>بدهکار:</span>
+        //       <strong className={styles.DebitText}>{totals.totalDebit.toLocaleString()}</strong>
+        //     </div>
+        //     <div className={styles.BalanceItem}>
+        //       <span className={styles.SummaryLabel}>مانده:</span>
+        //       <strong className={totals.isBalanced ? styles.StatusBalanced : styles.StatusUnbalanced}>
+        //         {totals.isBalanced ? '۰' : totals.difference.toLocaleString()}
+        //       </strong>
+        //     </div>
+        //   </div>
+        // </div>
+
+        
+

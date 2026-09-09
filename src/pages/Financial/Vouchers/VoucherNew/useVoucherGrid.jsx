@@ -164,6 +164,9 @@ const selectAccountFromModal = async (account) => {
     //   تابع حذف ردیف و مرتب‌سازی شماره ردیف‌ها
    
     const deleteLine = useCallback((id) => {
+        // پیدا کردن خودِ سطر قبل از حذف، برای اینکه بدونیم قبلاً روی سرور بوده یا تازه‌ساز بوده
+        const lineToDelete = voucher.lines.find((line) => line.id === id);
+
         // ۱. فیلتر کردن و حذف سطر مورد نظر
         const filteredLines = voucher.lines.filter((line) => line.id !== id);
 
@@ -176,7 +179,12 @@ const selectAccountFromModal = async (account) => {
         // ۳. آپدیت استیت اصلی سند
         setVoucher((prev) => ({
             ...prev,
-            lines: reIndexedLines
+            lines: reIndexedLines,
+            // فقط سطرهایی که قبلاً روی سرور بودن (isNew نبودن) باید برای حذف واقعی به بک‌اند اعلام بشن
+            deletedLineIds:
+                lineToDelete && !lineToDelete.isNew
+                    ? [...(prev.deletedLineIds || []), lineToDelete.id]
+                    : (prev.deletedLineIds || []),
         }));
     }, [voucher.lines, setVoucher]);
 
@@ -530,6 +538,7 @@ const addLine = useCallback(() => {
         debtorAmount: 0,
         creditorAmount: 0,
         accountFeatures: null,
+        isNew: true,
     };
 
     setVoucher((prev) => ({
