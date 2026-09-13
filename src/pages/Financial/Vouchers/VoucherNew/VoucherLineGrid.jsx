@@ -3,10 +3,13 @@ import styles from "./VoucherLineGrid.module.css";
 import useVoucherGrid from "./useVoucherGrid";
 import { Button, Snackbar, Alert, Dialog, DialogTitle, DialogContent, TextField, List, ListItemButton, ListItemText, CircularProgress, Tabs, Tab, Box } from "@mui/material";
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback,useRef } from "react";
 import axios from "axios";
 import { toPersianDigits } from "../../../../utils/formatter";
 import AccountHierarchySummary from "../../../../components/common/SummaryBar/AccountHierarchySummary"
+import useEntityPicker from "../../../../components/common/pickers/useEntityPicker";
+import EntityPickerModal from "../../../../components/common/pickers/EntityPickerModal";
+import { entityPickerConfigs } from "../../../../components/common/pickers/entityPickerConfigs";
 
 // تعریف توابع کمکی بازگشتی خارج از کامپوننت برای جلوگیری از خطای Hoisting و رندرهای مجدد
 function findNodeByCode(nodes, code) {
@@ -45,6 +48,40 @@ const VoucherLineGrid = ({ voucher, setVoucher, onSave  }) => {
     const [treeData, setTreeData] = useState([]); 
     const [expandedTreeItems, setExpandedTreeItems] = useState([]); 
 
+    const goodPicker = useEntityPicker(entityPickerConfigs.good.apiBase, entityPickerConfigs.good.searchExtraBody);
+    const markaz1Picker = useEntityPicker(entityPickerConfigs.markaz1.apiBase);
+    const markaz2Picker = useEntityPicker(entityPickerConfigs.markaz2.apiBase);
+    const markaz3Picker = useEntityPicker(entityPickerConfigs.markaz3.apiBase);
+    const markaz4Picker = useEntityPicker(entityPickerConfigs.markaz4.apiBase);
+//سرچ توی مودال 
+    const [highlightedAccountIndex, setHighlightedAccountIndex] = useState(0);
+    const accountResultRefs = useRef([]);
+
+    // 🟢 همون الگوی derived-state (بدون useEffect) که برای مودال‌های کالا/مراکز استفاده کردیم
+    const [prevAccounts, setPrevAccounts] = useState(accounts);
+    if (accounts !== prevAccounts) {
+        setPrevAccounts(accounts);
+        setHighlightedAccountIndex(0);
+    }
+
+    // این یکی effect واقعیه (sync با DOM/اسکرول)، نه sync بین دو state
+    useEffect(() => {
+        const el = accountResultRefs.current[highlightedAccountIndex];
+        if (el) el.scrollIntoView({ block: "nearest" });
+    }, [highlightedAccountIndex]);
+
+
+
+    const entityPickers = {
+        good: goodPicker,
+        markaz1: markaz1Picker,
+        markaz2: markaz2Picker,
+        markaz3: markaz3Picker,
+        markaz4: markaz4Picker,
+    };
+
+
+
 
     const { 
         apiRef, 
@@ -57,7 +94,8 @@ const VoucherLineGrid = ({ voucher, setVoucher, onSave  }) => {
         accountModal, 
         closeAccountModal, 
         selectAccountFromModal,
-    } = useVoucherGrid(voucher, setVoucher, setSearchTerm, setActiveTabOverride, allAccounts, setExpandedTreeItems, setAllAccounts,setTreeData);
+        selectEntityFromModal
+    } = useVoucherGrid(voucher, setVoucher, setSearchTerm, setActiveTabOverride, allAccounts, setExpandedTreeItems, setAllAccounts,setTreeData, entityPickers);
 
     const activeTab = useMemo(() => {
         if (activeTabOverride !== null) return activeTabOverride;
@@ -646,6 +684,29 @@ const handleTreeKeyDown = (event) => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className={styles.SearchInput}
                   inputRef={searchInputRef}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setHighlightedAccountIndex((prev) =>
+                        Math.min(prev + 1, accounts.length - 1)
+                      );
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setHighlightedAccountIndex((prev) => Math.max(prev - 1, 0));
+                    } else if (e.key === "Enter") {
+                      const account = accounts[highlightedAccountIndex];
+                      const isParent =
+                        account &&
+                        (account.childCount > 0 ||
+                          (account.childCount === undefined && String(account.code).length < 4));
+
+                      if (account && !isParent) {
+                        e.preventDefault();
+                        selectAccountFromModal(account);
+                        setSearchTerm("");
+                      }
+                    }
+                  }}
                 />
 
                 {loading ? (
@@ -653,12 +714,14 @@ const handleTreeKeyDown = (event) => {
                 ) : (
                   <List className={styles.AccountsList}>
 
-                    {accounts.map((account) => {
+                    {accounts.map((account, index) => {
                       const isParent = account.childCount > 0 || (account.childCount === undefined && String(account.code).length < 4);
 
                       return (
                         <ListItemButton 
                           key={account.id} 
+                          ref={(el) => { accountResultRefs.current[index] = el; }}
+                          selected={index === highlightedAccountIndex}
                           disabled={isParent}
                           onClick={() => { 
                             if (!isParent) {
@@ -723,6 +786,15 @@ const handleTreeKeyDown = (event) => {
             )}
           </DialogContent>
         </Dialog>
+
+          {Object.entries(entityPickerConfigs).map(([key, config]) => (
+          <EntityPickerModal
+            key={key}
+            title={config.title}
+            picker={entityPickers[key]}
+            onSelect={(node) => selectEntityFromModal(key, node)}
+          />
+        ))}
 
 
   <div className={styles.BottomSection}>

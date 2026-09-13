@@ -1,0 +1,81 @@
+.TreeWrapper {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-left: 8px;
+}
+
+/* باکس نگهدارنده هر ردیف در درخت حساب‌ها */
+.TreeLabelContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font-family: 'Vazir', 'Tahoma', sans-serif;
+  font-size: 14px;
+  padding: 4px 0;
+}
+
+.TreeCodeSpan {
+  color: #777;
+  font-size: 12px;
+}
+
+/* دکمه انتخاب روبه‌روی حساب‌های مجاز */
+.TreeSelectBtn {
+  margin-right: auto !important; /* هل دادن دکمه به داخلی‌ترین قسمت سمت چپ */
+  font-family: 'Vazir', 'Tahoma', sans-serif !important;
+  font-size: 11px !important;
+  padding: 1px 8px !important;
+  height: 24px;
+}
+
+/* اصلاح استایل متون داخلی لایبرری درخت برای فونت فارسی */
+.TreeWrapper :global(.MuiTreeItem-label) {
+  width: 100%;
+}
+
+
+/*  متمایز کردن ظاهر حساب‌های سطح آخر (معین/تفصیلی) در ساختار درختی */
+.TreeLabelContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 0;
+}
+
+/*  رنگ متمایز و ملایم برای متن حساب‌های سطح آخر قابل انتخاب */
+:global(.MuiTreeItem-content):not([aria-expanded="true"]):not([aria-expanded="false"]) .TreeLabelContainer span:first-child {
+  color: #1976d2; /* رنگ آبی سازمانی یا هر رنگ متمایز دیگر */
+  font-weight: bold;
+}
+
+/*  استایل‌دهی به کد حساب در لایه درخت */
+.TreeCodeSpan {
+  color: #757575;
+  font-size: 0.85rem;
+}
+
+/* افکت هاور و فوکوس اختصاصی روی حساب‌های سطح آخر زمان پیمایش با کیبورد */
+:global(.MuiTreeItem-content):not([aria-expanded="true"]):not([aria-expanded="false"]):hover {
+  background-color: rgba(25, 118, 210, 0.08) !important;
+}
+
+:global(.MuiTreeItem-root:focus) > :global(.MuiTreeItem-content) {
+  background-color: rgba(25, 118, 210, 0.15) !important;
+  outline: 1px dashed #1976d2;
+}
+
+/*  دکمه انتخاب (برای مواقعی که کاربر همچنان تمایل به استفاده از موس دارد) */
+.TreeSelectBtn {
+  margin-right: auto !important; /* انتقال دکمه به سمت چپ در حالت RTL */
+  font-family: inherit !important;
+  font-size: 0.75rem !important;
+  padding: 2px 8px !important;
+}
+
+.LoadingContainer {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}

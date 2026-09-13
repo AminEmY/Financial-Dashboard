@@ -9,7 +9,7 @@ import { Autocomplete, TextField, IconButton, InputAdornment  } from "@mui/mater
 
 
 // تابع کارخانه‌ای (Factory) برای ستون‌ها تا بتوانیم تابع حذف را به آن پاس دهیم و اضافه کردن تابع openAccountModal به ورودی‌های ستون
-export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiveTabOverride , voucherLines) => {
+export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiveTabOverride, voucherLines, entityPickers) => {
   
   // 🟢 تعیین اینکه کدام Featureها حداقل برای یکی از ردیف‌ها فعال هستند
   const featureColumns = [
@@ -28,11 +28,19 @@ export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiv
     { key: "currencyTedad",  able: "currencyTedadAble",  field: "currencyTedad",  headerName: "مقدار ارز" },
   ];
 
-  const activeFeatureColumns = featureColumns.filter(({ able }) =>
-    voucherLines?.some(
-      (line) => line.accountFeatures?.[able] === true
-    )
-  );
+const entityKeys = ["good", "markaz1", "markaz2", "markaz3", "markaz4"];
+
+const activeFeatureColumns = featureColumns.filter(({ field, able }) => {
+    // کالا و مراکز مستقل از Able هستند
+    if (entityKeys.includes(field)) {
+        return true;
+    }
+
+    // سایر Featureها همچنان تابع Able حساب هستند
+    return voucherLines?.some(
+        (line) => line.accountFeatures?.[able] === true
+    );
+});
 
   const AccountCodeEditCell = ({ params }) => {
     const [localValue, setLocalValue] = useState(params.value || "");
@@ -47,27 +55,27 @@ export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiv
       ];
 
       // ۱. مدیریت کلید Enter
+
       if (isEnter) {
         const typedValue = localValue?.trim();
         const isEmpty = !typedValue || typedValue === "";
 
-        // سناریو الف: فقط اگر فیلد کاملاً خالی بود -> باز کردن مودال درخت (تب ۱)
         if (isEmpty) {
           e.stopPropagation();
           e.preventDefault();
           params.api.stopCellEditMode({ id: params.id, field: params.field });
 
-              setTimeout(() => {
-                  setActiveTabOverride(1);
-
-                  // چون کاربر سلول خالی را Enter زده،
-                  // اولین و بالاترین حساب درخت باید فوکوس شود.
-                  openAccountModal("", params.id, true);
-              }, 60);
+          setTimeout(() => {
+            setActiveTabOverride(1);
+            openAccountModal("", params.id, true);
+          }, 60);
           return;
         }
         
-        // سناریو ب: فیلد پر است -> اجازه بده رویداد به طور طبیعی عبور کند تا در هوک (processRowUpdate) بررسی شود
+        // 🟢 اصلاح: برای حالت غیرخالی، جلوی انتشار event به گرید را بگیرید 
+        // تا processRowUpdate کارش را بکند اما onCellKeyDown گرید تداخل ایجاد نکند
+        e.stopPropagation();
+        params.api.stopCellEditMode({ id: params.id, field: params.field });
         return;
       }
 
@@ -132,6 +140,110 @@ export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiv
       />
     );
   };
+
+
+
+
+  const EntityCodeEditCell = ({ params, entityKey }) => {
+    const [localValue, setLocalValue] = useState(params.value || "");
+    const picker = entityPickers[entityKey];
+
+    const onKeyDownHandler = (e) => {
+      const isEnter = e.key === 'Enter';
+
+      const ignoredKeys = [
+        "Escape", "Tab", "Shift", "Control", "Alt", "Meta",
+        "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+        "Backspace", "Delete", "CapsLock", "Enter"
+      ];
+
+if (isEnter) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    const typedValue = localValue?.trim();
+    const isEmpty = !typedValue;
+
+    if (isEmpty) {
+        params.api.stopCellEditMode({
+            id: params.id,
+            field: params.field
+        });
+
+        setTimeout(() => {
+            picker.open(params.id, "", true);
+        }, 60);
+
+        return;
+    }
+
+    // مطمئن شو آخرین مقدار واقعاً داخل DataGrid ثبت شده
+    params.api.setEditCellValue({
+        id: params.id,
+        field: params.field,
+        value: typedValue
+    });
+
+    // خروج از edit → processRowUpdate اجرا می‌شود
+    params.api.stopCellEditMode({
+        id: params.id,
+        field: params.field
+    });
+
+    return;
+}
+
+      if (e.key !== 'Enter' && !ignoredKeys.includes(e.key)) {
+        const isNumber = /^[0-9]$/.test(e.key);
+        if (isNumber) return;
+
+        e.stopPropagation();
+        e.preventDefault();
+
+        const typedChar = e.key;
+        params.api.stopCellEditMode({ id: params.id, field: params.field });
+
+        setTimeout(() => {
+          picker.setActiveTab(0);
+          picker.open(params.id, typedChar);
+        }, 60);
+      }
+    };
+
+    return (
+      <TextField
+        fullWidth
+        variant="standard"
+        autoFocus
+        value={localValue}
+        onChange={(e) => {
+          const val = e.target.value;
+          setLocalValue(val);
+          params.api.setEditCellValue({ id: params.id, field: params.field, value: val });
+        }}
+        onKeyDown={onKeyDownHandler}
+        sx={{ "& input": { fontFamily: "Vazir, Tahoma", fontSize: "14px", padding: "0 8px" } }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                size="small"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  picker.open(params.id, localValue);
+                }}
+              >
+                <SearchIcon fontSize="small" sx={{ color: "#1976d2" }} />
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
+    );
+  };
+
+
 
 
   // آرایه اصلی بازگشتی ستون‌ها
@@ -221,17 +333,45 @@ export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiv
      
      }
    },
+   
          // 🟢 Feature columns
-   ...activeFeatureColumns.map(({ field , able, headerName }) => ({
-     field,
-     headerName,
-     flex: 1,
-     editable: (params) =>
-     params.row?.accountFeatures?.[able] === true,
-     
-     // 🟢 برای تشخیص در onCellKeyDown
-     accountFeatureAble: able,
-   })),
+   ...activeFeatureColumns.map(({ field, able, headerName }) => {
+     const isEntityField = entityKeys.includes(field);
+
+     return {
+       field,
+       headerName,
+       flex: 1,
+       editable: (params) => {
+                // کالا و مراکز همیشه قابل ویرایش هستند
+                if (isEntityField) {
+                    return true;
+                }
+
+                // بقیه ستون‌ها همچنان تابع Able حساب هستند
+                return params.row?.accountFeatures?.[able] === true;
+            },
+
+            // فقط برای ستون‌هایی که واقعاً Feature حساب هستند
+            ...(!isEntityField && {
+                accountFeatureAble: able,
+            }),
+
+            ...(isEntityField && {
+                valueFormatter: (value) => (value ? toPersianDigits(value) : ""),
+                renderEditCell: (params) => (
+                    <EntityCodeEditCell params={params} entityKey={field} />
+                ),
+            }),
+       accountFeatureAble: able,
+       ...(isEntityField && {
+         valueFormatter: (value) => (value ? toPersianDigits(value) : ""),
+         renderEditCell: (params) => (
+           <EntityCodeEditCell params={params} entityKey={field} />
+         ),
+       }),
+     };
+   }),
 
     {
       field: "debtorAmount",

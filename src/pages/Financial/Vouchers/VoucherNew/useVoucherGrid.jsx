@@ -7,7 +7,7 @@ import axios from "axios";
 
 
 //  اضافه شدن استیت‌های فیلد متنی و تب‌ها به ورودی‌های هوک برای هدایت سناریوی اینتر و سرچ سریع
-export default function useVoucherGrid(voucher, setVoucher, setSearchTerm, setActiveTabOverride, allAccounts, setExpandedTreeItems,setAllAccounts,setTreeData  ) {
+export default function useVoucherGrid(voucher, setVoucher, setSearchTerm, setActiveTabOverride, allAccounts, setExpandedTreeItems,setAllAccounts,setTreeData, entityPickers) {
 
     const apiRef = useGridApiRef();
 
@@ -152,6 +152,43 @@ const selectAccountFromModal = async (account) => {
 };
 
 
+    // انتخاب نهایی کالا/مرکز از داخل مودالش (چه از تب سرچ، چه از تب درخت)
+    const selectEntityFromModal = useCallback((entityKey, node) => {
+        const picker = entityPickers[entityKey];
+        const rowId = picker?.modal?.activeRowId;
+        if (!rowId || !node) return;
+
+        const updatedLines = voucher.lines.map((line) =>
+            line.id === rowId ? { ...line, [entityKey]: node.code } : line
+        );
+
+        setVoucher((prev) => ({ ...prev, lines: updatedLines }));
+
+        setTimeout(() => {
+            if (apiRef.current && apiRef.current.setCellFocus) {
+                const updatedRow = updatedLines.find((l) => l.id === rowId);
+                const visibleColumns = apiRef.current.getVisibleColumns();
+                const currentIndex = visibleColumns.findIndex((col) => col.field === entityKey);
+                if (currentIndex === -1) return;
+
+                const nextColumn = visibleColumns
+                    .slice(currentIndex + 1)
+                    .find((column) => {
+                        if (!column.accountFeatureAble) return true;
+                        return updatedRow?.accountFeatures?.[column.accountFeatureAble] === true;
+                    });
+
+                if (nextColumn) {
+                    apiRef.current.setCellFocus(rowId, nextColumn.field);
+                    apiRef.current.startCellEditMode({ id: rowId, field: nextColumn.field });
+                } else {
+                    apiRef.current.setCellFocus(rowId, entityKey);
+                }
+            }
+        }, 50);
+    }, [voucher.lines, setVoucher, entityPickers, apiRef]);
+
+
     const closeSnackbar = (event, reason) => {
         if (reason === 'clickaway') return;
         setSnackbar((prev) => ({ ...prev, open: false }));
@@ -199,9 +236,10 @@ const dynamicColumns = useMemo(() => {
         (...args) => openAccountModal(...args),
         setSearchTerm,       
         setActiveTabOverride,
-        voucher.lines
+        voucher.lines,
+        entityPickers
     );
-}, [deleteLine, openAccountModal, setSearchTerm, setActiveTabOverride,voucher.lines]);
+}, [deleteLine, openAccountModal, setSearchTerm, setActiveTabOverride, voucher.lines, entityPickers]);
 
 
 
@@ -499,6 +537,42 @@ if (updatedRow.accountCode && updatedRow.accountCode !== oldRow.accountCode) {
         }
 
 
+                // بررسی و اعتبارسنجی کالا / مرکز۱ تا مرکز۴ (دقیقاً همون منطق حساب، ولی عمومی)
+        const entityKeys = ["good", "markaz1", "markaz2", "markaz3", "markaz4"];
+
+        for (const key of entityKeys) {
+            if (updatedRow[key] && updatedRow[key] !== oldRow[key]) {
+                const typedValue = String(updatedRow[key]).trim();
+                const picker = entityPickers[key];
+
+                const result = await picker.resolveTypedCode(typedValue, newRow.id);
+
+                if (result.status === "invalid" || result.status === "error") {
+                    setSnackbar({
+                        open: true,
+                        message: "کد وارد شده معتبر نیست.",
+                        severity: "error"
+                    });
+                    return oldRow;
+                }
+
+                if (result.status === "parent") {
+                    // resolveTypedCode خودش مودال را با مسیر درخت باز کرده است
+                    setSnackbar({
+                        open: true,
+                        message: `این کد دارای ${result.node.childCount} زیرمجموعه است. لطفاً سطح آخر را انتخاب کنید.`,
+                        severity: "warning"
+                    });
+                    return oldRow;
+                }
+
+                
+                // result.status === "leaf" -> مقدار تایپ‌شده معتبر است، همین می‌ماند
+                updatedRow[key] = result.node.code;
+            }
+        }
+
+
         // ۵. آپدیت نهایی استیت در صورت معتبر بودن حساب
         const updatedLines = voucher.lines.map((line) =>
             line.id === newRow.id ? updatedRow : line
@@ -590,58 +664,46 @@ const onCellKeyDown = useCallback((params, event) => {
         }
 
         // مدیریت کلید Enter عمومی 
-        if (event.key === 'Enter') {
-            //   فیکس اصلی: اگر روی ستون کد حساب بودیم، تمام منطق‌های قدیمی باز کردن دستی مودال را پاک می‌کنیم.
-            //  فقط اجازه می‌دهیم سلول از حالت ادیت خارج شود و کارهای ثبت طبیعی گرید را جلو ببرد.
-            if (params.field === 'accountCode') {
-                if (apiRef.current.getCellMode(params.id, params.field) === 'edit') {
-                    apiRef.current.stopCellEditMode({ id: params.id, field: params.field });
+// در فایل useVoucherGrid.jsx - داخل onCellKeyDown
+
+if (event.key === 'Enter') {
+    // 🟢 بررسی امن برای حالت سلول
+    const isEditing = apiRef.current.getCellMode(params.id, params.field) === 'edit';
+    
+    if (isEditing) {
+        apiRef.current.stopCellEditMode({ id: params.id, field: params.field });
+    }
+
+    event.defaultMuiPrevented = true;
+    
+    if (params.field === 'creditorAmount') {
+        setTimeout(() => {
+            addLine();
+        }, 50);
+        return;
+    }
+
+    if (currentColumnIndex < visibleColumns.length - 1) {
+        const row = apiRef.current.getRow(params.id);
+    
+        const nextColumn = visibleColumns
+          .slice(currentColumnIndex + 1)
+          .find((column) => {
+            if (!column.accountFeatureAble) return true;
+            return row?.accountFeatures?.[column.accountFeatureAble] === true;
+          });
+
+        if (nextColumn) {
+            // 🟢 استفاده از setTimeout برای اطمینان از خروج سلول قبلی از حالت edit
+            setTimeout(() => {
+                if (apiRef.current.getRow(params.id)) {
+                    apiRef.current.setCellFocus(params.id, nextColumn.field);
+                    apiRef.current.startCellEditMode({ id: params.id, field: nextColumn.field });
                 }
-                // قطع اجرای کدهای بعدی جابه‌جایی سطر، تا متد processRowUpdate شانس ثبت و تغییر استیت را داشته باشد
-                return; 
-            }
-
-            // روال عادی کلید اینتر برای سایر ستون‌ها (شرح، بدهکار، بستانکار )
-            if (apiRef.current.getCellMode(params.id, params.field) === 'edit') {
-                apiRef.current.stopCellEditMode({ id: params.id, field: params.field });
-            }
-
-            event.defaultMuiPrevented = true;
-            
-            if (params.field === 'creditorAmount') {
-                setTimeout(() => {
-                    addLine();
-                }, 50);
-                return;
-            }
-
-            if (currentColumnIndex < visibleColumns.length - 1) {
-                // let nextColumn = visibleColumns[currentColumnIndex + 1];
-
-                // if (nextColumn.field === 'accountName') {
-                //     nextColumn = visibleColumns[currentColumnIndex + 2];
-                // }
-                 // 🟢 فقط ستون‌هایی که برای حساب این ردیف فعال هستند
-             const row = apiRef.current.getRow(params.id);
-            
-             const nextColumn = visibleColumns
-               .slice(currentColumnIndex + 1)
-               .find((column) => {
-                 // ستون‌های عادی همیشه قابل ورود هستند
-                 if (!column.accountFeatureAble) return true;
-            
-                 // ستون Feature فقط اگر Able آن حساب true باشد
-                 return row?.accountFeatures?.[column.accountFeatureAble] === true;
-               });
-
-                if (nextColumn) {
-                    setTimeout(() => {
-                        apiRef.current.setCellFocus(params.id, nextColumn.field);
-                        apiRef.current.startCellEditMode({ id: params.id, field: nextColumn.field });
-                    }, 0);
-                }
-            }
+            }, 50);
         }
+    }
+}
 
 
     //  اضافه کردن وابستگی‌های جا افتاده به انتهای تابع onCellKeyDown:
@@ -662,6 +724,7 @@ const onCellKeyDown = useCallback((params, event) => {
         accountModal, 
         closeAccountModal, 
         selectAccountFromModal,
+        selectEntityFromModal
          
     }; 
 }
