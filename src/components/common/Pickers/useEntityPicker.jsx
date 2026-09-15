@@ -29,11 +29,13 @@ export default function useEntityPicker(apiBase, searchExtraBody = EMPTY_EXTRA_B
     const [scrollTargetId, setScrollTargetId] = useState(null);
     const clearScrollTarget = useCallback(() => setScrollTargetId(null), []);
 
-    const open = useCallback((rowId, initialSearch = "", focusFirstRoot = false) => {
+    const open = useCallback((rowId, initialSearch = "", focusFirstRoot = false, resetExpanded = true) => {
         setModal({ open: true, activeRowId: rowId, initialSearch, focusFirstRoot });
         setSearchTerm(initialSearch);
-        // اگر قرار است روی اولین ریشه‌ی درخت فوکوس بشه، همون لحظه‌ی باز شدن باید تب درخت باشه
         setActiveTab(focusFirstRoot ? 1 : 0);
+        if (resetExpanded) {
+            setExpandedItems([]);
+        }
     }, []);
 
     const close = useCallback(() => {
@@ -73,7 +75,7 @@ export default function useEntityPicker(apiBase, searchExtraBody = EMPTY_EXTRA_B
                     `http://ecipc107:8049/api/${apiBase}/SearchTreeView`,
                     { code: "" }
                 );
-                console.log (res);
+
                 const roots = (res.data || []).map((item) => ({
                     ...item,
                     children:
@@ -257,7 +259,7 @@ export default function useEntityPicker(apiBase, searchExtraBody = EMPTY_EXTRA_B
                 });
 
                 setExpandedItems(parentsToOpen);
-                open(rowId, "");
+                open(rowId, "", false, false);
                 setActiveTab(1);
                 setScrollTargetId(String(node.id));
 

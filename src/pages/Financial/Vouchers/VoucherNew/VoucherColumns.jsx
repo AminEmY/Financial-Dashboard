@@ -30,17 +30,11 @@ export const getColumns = (deleteLine, openAccountModal, setSearchTerm, setActiv
 
 const entityKeys = ["good", "markaz1", "markaz2", "markaz3", "markaz4"];
 
-const activeFeatureColumns = featureColumns.filter(({ field, able }) => {
-    // کالا و مراکز مستقل از Able هستند
-    if (entityKeys.includes(field)) {
-        return true;
-    }
-
-    // سایر Featureها همچنان تابع Able حساب هستند
-    return voucherLines?.some(
+const activeFeatureColumns = featureColumns.filter(({ able }) =>
+    voucherLines?.some(
         (line) => line.accountFeatures?.[able] === true
-    );
-});
+    )
+);
 
   const AccountCodeEditCell = ({ params }) => {
     const [localValue, setLocalValue] = useState(params.value || "");

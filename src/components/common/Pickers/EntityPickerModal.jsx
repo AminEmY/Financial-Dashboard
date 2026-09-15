@@ -1,18 +1,29 @@
 import { useEffect, useState, useRef } from "react";
 import { Dialog, DialogTitle, DialogContent, Box, Tabs, Tab, TextField, List, ListItemButton, ListItemText, CircularProgress, Button } from "@mui/material";
-import { SimpleTreeView, TreeItem } from "@mui/x-tree-view";
 import { toPersianDigits } from "../../../utils/formatter";
 import styles from "./EntityPickerModal.module.css";
+import { FixedSizeList } from "react-window";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 
-function findNodeById(nodes, id) {
+
+
+
+// تبدیل درخت تودرتو به یک لیست تخت با عمق (depth)، فقط شامل نودهایی که مسیرشون باز است
+function flattenTree(nodes, depth, expandedItems) {
+    let result = [];
     for (const node of nodes) {
-        if (String(node.id) === String(id)) return node;
-        if (node.children?.length > 0) {
-            const found = findNodeById(node.children, id);
-            if (found) return found;
+        result.push({ node, depth });
+        const idStr = String(node.id);
+        if (expandedItems.includes(idStr) && node.children?.length > 0) {
+            result = result.concat(flattenTree(node.children, depth + 1, expandedItems));
         }
     }
-    return null;
+    return result;
+}
+
+function findFlatIndexById(flatNodes, id) {
+    return flatNodes.findIndex((entry) => String(entry.node.id) === String(id));
 }
 
 
@@ -23,13 +34,41 @@ const EntityPickerModal = ({ title, picker, onSelect }) => {
         modal, close,
         activeTab, setActiveTab,
         searchTerm, setSearchTerm, searchResults, searchLoading,
-        treeData, treeLoading, expandedItems, setExpandedItems,
-        loadChildren, toggleNode,
+        treeData, treeLoading, expandedItems, toggleNode,
         scrollTargetId, clearScrollTarget,
     } = picker;
 
     const [highlightedIndex, setHighlightedIndex] = useState(0);
-    const resultRefs = useRef([]);
+    const virtualListRef = useRef(null);
+    
+    const treeListRef = useRef(null);
+    
+        // محاسبه‌ی لیست تخت درخت، برای رندر virtualized
+    const flatTreeNodes = flattenTree(treeData, 0, expandedItems);
+    
+    const [highlightedTreeIndex, setHighlightedTreeIndex] = useState(0);
+    const treeContainerRef = useRef(null);
+
+    // 🟢 الگوی رسمی ری‌اکت: وقتی scrollTargetId (از بیرون) تغییر کرد، هایلایت را همین‌جا در رندر تنظیم کن
+    const [prevScrollTargetId, setPrevScrollTargetId] = useState(scrollTargetId);
+    if (scrollTargetId !== prevScrollTargetId) {
+        setPrevScrollTargetId(scrollTargetId);
+        if (scrollTargetId) {
+            const index = findFlatIndexById(flatTreeNodes, scrollTargetId);
+            if (index >= 0) {
+                setHighlightedTreeIndex(index);
+            }
+        }
+    }
+
+
+
+    // با تغییر لیست تخت (باز/بسته شدن یه نود)، هایلایت برنمی‌گرده به صفر؛ فقط اگه ایندکس فعلی دیگه معتبر نبود، اصلاحش کن
+    if (highlightedTreeIndex > 0 && highlightedTreeIndex >= flatTreeNodes.length) {
+        setHighlightedTreeIndex(Math.max(0, flatTreeNodes.length - 1));
+    }
+
+
 
     const searchInputRef = (element) => {
         if (element && modal.open) {
@@ -53,8 +92,7 @@ const EntityPickerModal = ({ title, picker, onSelect }) => {
 
     // این یکی می‌مونه چون واقعاً «سینک با سیستم خارجی» (اسکرول DOM) است، نه sync بین دو state
     useEffect(() => {
-        const el = resultRefs.current[highlightedIndex];
-        if (el) el.scrollIntoView({ block: "nearest" });
+        virtualListRef.current?.scrollToItem(highlightedIndex, "smart");
     }, [highlightedIndex]);
 
     const handleSelect = (node) => {
@@ -62,155 +100,52 @@ const EntityPickerModal = ({ title, picker, onSelect }) => {
         close();
     };
 
-    // اسکرول و هایلایت به نودی که از تایپ مستقیم کد پیدا شده (resolveTypedCode)
-    // به‌جای MutationObserver روی کل صفحه، یک polling سبک و محدود (حداکثر ۳ ثانیه)
+    // اسکرول به نودی که از تایپ مستقیم کد پیدا شده (resolveTypedCode)
     useEffect(() => {
         if (!modal.open || activeTab !== 1 || !scrollTargetId) return;
 
-        let attempts = 0;
-        const maxAttempts = 30;
+        const index = findFlatIndexById(flatTreeNodes, scrollTargetId);
+        if (index >= 0) {
+            treeListRef.current?.scrollToItem(index, "smart");
+        }
+        clearScrollTarget();
+    }, [modal.open, activeTab, scrollTargetId, flatTreeNodes, clearScrollTarget]);
 
-        const interval = setInterval(() => {
-            attempts += 1;
-
-            const treeRoot = document.querySelector(".MuiSimpleTreeView-root");
-            const targetElement = treeRoot?.querySelector(`[id$="-${scrollTargetId}"]`);
-            const nodeElement = targetElement?.querySelector(".MuiTreeItem-content") || targetElement;
-
-            if (nodeElement) {
-                clearInterval(interval);
-
-                nodeElement.scrollIntoView({ block: "center", behavior: "smooth" });
-
-                const treeItem = nodeElement.closest('[role="treeitem"]');
-                if (treeItem instanceof HTMLElement) {
-                    treeItem.setAttribute("tabindex", "0");
-                    treeItem.focus();
-                    treeItem.classList.add("Mui-focused");
-                    treeItem.classList.add("Mui-selected");
-                }
-
-                clearScrollTarget();
-            } else if (attempts >= maxAttempts) {
-                clearInterval(interval);
-                clearScrollTarget();
-            }
-        }, 100);
-
-        return () => clearInterval(interval);
-    }, [modal.open, activeTab, scrollTargetId, clearScrollTarget]);
-
-    
-    // فوکوس روی اولین ریشه، فقط وقتی مودال با focusFirstRoot باز شده (مثلاً Enter روی سلول خالی)
+    // فوکوس روی اولین ریشه، فقط وقتی مودال با focusFirstRoot باز شده
     useEffect(() => {
         if (!modal.open || activeTab !== 1 || !modal.focusFirstRoot) return;
-
-        let attempts = 0;
-        const maxAttempts = 30;
-
-        const interval = setInterval(() => {
-            attempts += 1;
-
-            const treeRoot = document.querySelector('.MuiSimpleTreeView-root');
-            const firstRootNode =
-                treeRoot?.querySelector('[role="treeitem"] .MuiTreeItem-content') ||
-                treeRoot?.querySelector('[role="treeitem"]');
-
-            if (firstRootNode instanceof HTMLElement) {
-                clearInterval(interval);
-
-                firstRootNode.setAttribute('tabindex', '0');
-                firstRootNode.focus();
-                firstRootNode.classList.add("Mui-focused");
-                firstRootNode.classList.add("Mui-selected");
-
-                const parentTreeItem = firstRootNode.closest('[role="treeitem"]');
-                if (parentTreeItem instanceof HTMLElement) {
-                    parentTreeItem.setAttribute('tabindex', '0');
-                    parentTreeItem.focus();
-                }
-            } else if (attempts >= maxAttempts) {
-                clearInterval(interval);
-            }
-        }, 100);
-
-        return () => clearInterval(interval);
+        treeListRef.current?.scrollToItem(0, "smart");
+        
     }, [modal.open, activeTab, modal.focusFirstRoot]);
 
 
-    const handleTreeKeyDown = (event) => {
-        if (event.key !== "Enter") return;
-        const focusedElement = document.activeElement;
-        if (!focusedElement || focusedElement.getAttribute("role") !== "treeitem") return;
+    // فوکوس گرفتن خودِ لیست درخت وقتی تب باز می‌شه، تا فوراً کیبورد کار کند
+    useEffect(() => {
+        if (!modal.open || activeTab !== 1) return;
+        const timer = setTimeout(() => {
+            treeContainerRef.current?.focus();
+        }, 60);
+        return () => clearTimeout(timer);
+    }, [modal.open, activeTab]);
 
-        event.preventDefault();
-        event.stopPropagation();
 
-        const itemId = focusedElement.getAttribute("id")?.split("-").pop();
-        if (!itemId) return;
-
-        const targetNode = findNodeById(treeData, itemId);
-        if (targetNode) toggleNode(targetNode, handleSelect);
-    };
-
-    const renderTree = (nodes) =>
-        nodes.map((node) => {
-            const isParent = node.childCount > 0;
-            const hasDummy = node.children?.length === 1 && node.children[0].isDummy;
-
-            return (
-                <TreeItem
-                    key={node.id}
-                    itemId={String(node.id)}
-                    label={
-                        <div
-                            className={styles.TreeLabelContainer}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                toggleNode(node, handleSelect);
-                            }}
-                        >
-                            <span>{node.name}</span>
-                            <span className={styles.TreeCodeSpan}>({toPersianDigits(node.code)})</span>
-                            {!isParent && (
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleSelect(node);
-                                    }}
-                                >
-                                    انتخاب
-                                </Button>
-                            )}
-                        </div>
-                    }
-                >
-                    {hasDummy ? (
-                        <TreeItem itemId={`${node.id}-loading`} label="در حال بارگذاری..." disabled />
-                    ) : (
-                        node.children?.length > 0 ? renderTree(node.children) : null
-                    )}
-                </TreeItem>
-            );
-        });
 
     return (
+
         <Dialog open={modal.open} onClose={close} fullWidth maxWidth="sm" >
-            <DialogTitle>{title}</DialogTitle>
+            <DialogTitle className={styles.ModalTitle}>{title}</DialogTitle>
 
             <Box sx={{ borderBottom: 1, borderColor: "divider" }} dir="rtl">
                 <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)} variant="fullWidth">
-                    <Tab label="جستجو" />
-                    <Tab label="ساختار درختی" />
+                    <Tab label="جستجو" className={styles.TabFont} />
+                    <Tab label="ساختار درختی" className={styles.TabFont} />
                 </Tabs>
             </Box>
 
             <DialogContent dir="rtl">
                 {activeTab === 0 && (
-                    <Box sx={{ pt: 1 }}>
-                        <TextField
+                    <Box sx={{ pt: 2 }} className={styles.TreeWrapper}>
+                        <TextField className={styles.SearchInput}
                             fullWidth
                             inputRef={searchInputRef}
                             placeholder="کد یا نام را برای جستجو تایپ کنید..."
@@ -239,29 +174,43 @@ const EntityPickerModal = ({ title, picker, onSelect }) => {
                             <div className={styles.LoadingContainer}><CircularProgress size={30} /></div>
                         ) : (
                             <List>
-                                {searchResults.map((item, index) => {
+                        {searchResults.length === 0 ? (
+                            <div className={styles.EmptyResult}>چیزی یافت نشد.</div>
+                        ) : (
+                            <FixedSizeList
+                                ref={virtualListRef}
+                                height={320}
+                                width="100%"
+                                itemCount={searchResults.length}
+                                itemSize={58}
+                            >
+                                {({ index, style }) => {
+                                    const item = searchResults[index];
                                     const isParent = item.childCount > 0;
+
                                     return (
-                                        <ListItemButton
-                                            key={item.id ?? item.Id ?? item.code ?? index}
-                                            ref={(el) => { resultRefs.current[index] = el; }}
-                                            selected={index === highlightedIndex}
-                                            disabled={isParent}
-                                            onClick={() => !isParent && handleSelect(item)}
-                                        >
-                                            <ListItemText
-                                                primary={
-                                                    <span>
-                                                        {item.name}
-                                                        {isParent && <small style={{ color: "orange", marginRight: 8 }}>(دارای زیرمجموعه)</small>}
-                                                    </span>
-                                                }
-                                                secondary={`کد: ${toPersianDigits(item.code)}`}
-                                            />
-                                        </ListItemButton>
+                                        <div style={style}>
+                                            <ListItemButton
+                                                className={styles.ResultItem}
+                                                selected={index === highlightedIndex}
+                                                disabled={isParent}
+                                                onClick={() => !isParent && handleSelect(item)}
+                                            >
+                                                <ListItemText
+                                                    primary={
+                                                        <span className={styles.ResultNameText}>
+                                                            {item.name}
+                                                            {isParent && <small style={{ color: "orange", marginRight: 8 }}>(دارای زیرمجموعه)</small>}
+                                                        </span>
+                                                    }
+                                                    secondary={<span className={styles.ResultCodeText}>کد: {toPersianDigits(item.code)}</span>}
+                                                />
+                                            </ListItemButton>
+                                        </div>
                                     );
-                                })}
-                                {searchResults.length === 0 && <div className={styles.EmptyResult}>چیزی یافت نشد.</div>}
+                                }}
+                            </FixedSizeList>
+                        )}
                             </List>
                         )}
                     </Box>
@@ -272,28 +221,107 @@ const EntityPickerModal = ({ title, picker, onSelect }) => {
                         {treeLoading ? (
                             <div className={styles.LoadingContainer}><CircularProgress size={30} /></div>
                         ) : treeData.length > 0 ? (
-                            <SimpleTreeView
-                                expandedItems={expandedItems}
-                                onExpandedItemsChange={async (e, itemIds) => {
-                                    const newId = itemIds.find((id) => !expandedItems.includes(id));
-                                    setExpandedItems(itemIds);
-                                    if (newId) {
-                                        const node = findNodeById(treeData, newId);
-                                        const hasDummy =
-                                            node?.children?.length === 1 && node.children[0].isDummy;
-                                        const hasRealChildren =
-                                            node?.children?.length > 0 && !hasDummy;
-
-                                        // اگر قبلاً فرزندان واقعی گرفته شده (مثلاً توسط toggleNode از کلیک روی لیبل)، دوباره fetch نزن
-                                        if (node && !hasRealChildren) {
-                                            await loadChildren(node);
+                            <div
+                                ref={treeContainerRef}
+                                tabIndex={0}
+                                style={{ outline: "none" }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "ArrowDown") {
+                                        e.preventDefault();
+                                        setHighlightedTreeIndex((prev) =>
+                                            Math.min(prev + 1, flatTreeNodes.length - 1)
+                                        );
+                                    } else if (e.key === "ArrowUp") {
+                                        e.preventDefault();
+                                        setHighlightedTreeIndex((prev) => Math.max(prev - 1, 0));
+                                    } else if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        const entry = flatTreeNodes[highlightedTreeIndex];
+                                        if (entry && !entry.node.isDummy) {
+                                            toggleNode(entry.node, handleSelect);
+                                        }
+                                    } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                                        // جهت راست/چپ فقط برای باز/بسته کردن، تا با اسکرول افقی صفحه تصادم نکند
+                                        e.preventDefault();
+                                        const entry = flatTreeNodes[highlightedTreeIndex];
+                                        if (entry && entry.node.childCount > 0) {
+                                            toggleNode(entry.node, handleSelect);
                                         }
                                     }
                                 }}
-                                onKeyDown={handleTreeKeyDown}
                             >
-                                {renderTree(treeData)}
-                            </SimpleTreeView>
+                                <FixedSizeList
+                                    ref={treeListRef}
+                                    height={360}
+                                    width="100%"
+                                    itemCount={flatTreeNodes.length}
+                                    itemSize={44}
+                                >
+                                    {({ index, style }) => {
+                                        const { node, depth } = flatTreeNodes[index];
+                                        const isParent = node.childCount > 0;
+                                        const isDummy = node.isDummy;
+                                        const isExpanded = expandedItems.includes(String(node.id));
+                                        const isHighlighted = index === highlightedTreeIndex;
+
+                                        if (isDummy) {
+                                            return (
+                                                <div style={{ ...style, paddingRight: depth * 20 + 16, color: "#999", fontSize: 13, display: "flex", alignItems: "center" }}>
+                                                    در حال بارگذاری...
+                                                </div>
+                                            );
+                                        }
+
+                                        return (
+                                            <div
+                                                className={`${styles.TreeRowHover} ${isHighlighted ? styles.TreeRowSelected : ""}`}
+                                                style={{
+                                                    ...style,
+                                                    direction: "rtl",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    paddingRight: depth * 20 + 8,
+                                                    paddingLeft: 8,
+                                                    cursor: "pointer",
+                                                    gap: 8,
+                                                    boxSizing: "border-box",
+                                                }}
+                                                onClick={() => {
+                                                    setHighlightedTreeIndex(index);
+                                                    toggleNode(node, handleSelect);
+                                                }}
+                                            >
+                                                {isParent && (
+                                                    <span className={styles.TreeExpandIcon}>
+                                                        {isExpanded ? (
+                                                            <ExpandMoreIcon fontSize="inherit" />
+                                                        ) : (
+                                                            <ChevronLeftIcon fontSize="inherit" />
+                                                        )}
+                                                    </span>
+                                                )}
+                                                <span className={styles.TreeLabelContainer}>
+                                                    <span>{node.name}</span>
+                                                    <span className={styles.TreeCodeSpan}>({toPersianDigits(node.code)})</span>
+                                                </span>
+                                                {!isParent && (
+                                                    <Button
+                                                        size="small"
+                                                        variant="outlined"
+                                                        className={styles.TreeSelectBtn}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleSelect(node);
+                                                        }}
+                                                    >
+                                                        انتخاب
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        );
+                                    }}
+                                </FixedSizeList>
+                            </div>
                         ) : (
                             <div className={styles.EmptyResult}>ساختار درختی یافت نشد.</div>
                         )}
