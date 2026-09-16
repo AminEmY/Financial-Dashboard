@@ -294,7 +294,7 @@ if (isEnter) {
      align: "right",
      // ⭐️ حل باگ نهایی کرش گرید: استفاده امن از row.sequence یا row.row (برای ردیف‌های تازه‌ساز)
      valueGetter: (value, row) => {
-       const num = row?.sequence ?? row?.row;
+       const num = row?.row ?? row?.sequence;
        return num ? num : "";
      },
      valueFormatter: (value) => {

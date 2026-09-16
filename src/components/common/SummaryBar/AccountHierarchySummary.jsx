@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import Inventory2Icon from "@mui/icons-material/Inventory2";
+import RoomIcon from "@mui/icons-material/Room";
 import { toPersianDigits } from "../../../utils/formatter";
 import styles from "./AccountHierarchySummary.module.css";
 
@@ -9,9 +12,51 @@ const reportCache = {};
 const buildKey = (codes) =>
     codes.map((v) => (v ? String(v).trim() : "")).join("|");
 
-// کامپوننت مستقل نمایش زنجیره‌ی حساب + مراکز + کالای ردیف فوکوس‌شده
-// از API اختصاصی گزارش (ReportWindow) استفاده می‌کنه که خودش label مناسب
-// (کل / معین / مرکز / کالا و ...) رو برمی‌گردونه، پس دیگه محاسبه دستی لازم نیست
+const MARKAZ_COLORS = ["#8d6ba0", "#4a9098", "#c98a4b", "#b06a89"];
+const MARKAZ_BG = ["#f5f0f8", "#eef5f6", "#faf3ea", "#f8eff3"];
+
+// بر اساس برچسب type که خودِ API می‌ده، هر آیتم رو به یک گروه (حساب/کالا/مرکز N) نسبت می‌دیم
+const getCategoryKey = (type) => {
+    if (!type) return "other";
+    if (type.startsWith("کل") || type.startsWith("معین")) return "account";
+    if (type.startsWith("کالا")) return "good";
+    return type; // "مرکز 1" ، "مرکز 2" و ... هرکدوم خودشون یک گروه جدا می‌شن
+};
+
+const getCategoryStyle = (key) => {
+    if (key === "account") {
+        return { label: "حساب", color: "#5b84ab", bg: "#eef3f8", Icon: AccountBalanceIcon };
+    }
+    if (key === "good") {
+        return { label: "کالا", color: "#6a9c78", bg: "#eff6f1", Icon: Inventory2Icon };
+    }
+    const markazNum = parseInt(key.replace(/\D/g, ""), 10);
+    const idx = Number.isFinite(markazNum) ? (markazNum - 1 + 4) % 4 : 0;
+    return {
+        label: toPersianDigits(key),
+        color: MARKAZ_COLORS[idx],
+        bg: MARKAZ_BG[idx],
+        Icon: RoomIcon,
+    };
+};
+
+// آیتم‌های پشت‌سرهم با یک نوع مشابه (کل->معین1->معین2 یا کالا سطح1->2->3) را در یک گروه جمع می‌کند
+const groupItems = (items) => {
+    const groups = [];
+    let current = null;
+
+    items.forEach((item) => {
+        const key = getCategoryKey(item.type);
+        if (!current || current.key !== key) {
+            current = { key, items: [] };
+            groups.push(current);
+        }
+        current.items.push(item);
+    });
+
+    return groups;
+};
+
 const AccountHierarchySummary = ({
     accountCode,
     markaz1Code,
@@ -27,7 +72,6 @@ const AccountHierarchySummary = ({
     const [prevKey, setPrevKey] = useState(key);
     const [items, setItems] = useState(() => (hasAny ? reportCache[key] ?? null : null));
 
-    // 🟢 تنظیم state هنگام تغییر ردیف فوکوس‌شده، مستقیم توی بدنه‌ی رندر (نه useEffect)
     if (key !== prevKey) {
         setPrevKey(key);
         setItems(hasAny ? reportCache[key] ?? null : null);
@@ -35,7 +79,6 @@ const AccountHierarchySummary = ({
 
     const loading = hasAny && items === null;
 
-    // 🟢 useEffect فقط مسئول خودِ فراخوانی async هست؛ setState فقط داخل then/catch
     useEffect(() => {
         if (!hasAny || reportCache[key]) {
             return;
@@ -68,22 +111,39 @@ const AccountHierarchySummary = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [key]);
 
+    const groups = items && items.length > 0 ? groupItems(items) : [];
+
     return (
         <div dir="rtl" className={styles.AccountHierarchyBox}>
             {loading ? (
                 <span className={styles.EmptyAccountText}>در حال دریافت...</span>
-            ) : items && items.length > 0 ? (
-                items.map((item, index) => (
-                    <div className={styles.AccountHierarchyRow} key={`${item.code}-${index}`}>
-                        <span className={styles.SummaryLabel}>{item.type}:</span>
-                        <strong className={styles.AccountInfoText}>
-                            {item.name}
-                            <span className={styles.AccountInfoCode}>
-                                ({toPersianDigits(item.code)})
-                            </span>
-                        </strong>
-                    </div>
-                ))
+            ) : groups.length > 0 ? (
+                groups.map((group, gIndex) => {
+                    const { label, color, bg, Icon } = getCategoryStyle(group.key);
+                    return (
+                        <div
+                            key={`${group.key}-${gIndex}`}
+                            className={styles.Card}
+                            style={{ background: bg, borderTopColor: color }}
+                        >
+                            <div className={styles.CardHeader} style={{ color }}>
+                                <Icon sx={{ fontSize: 15 }} />
+                                <span>{label}</span>
+                            </div>
+                            <div className={styles.CardBody}>
+                                {group.items.map((item, index) => (
+                                    <span className={styles.BreadcrumbItem} key={`${item.code}-${index}`}>
+                                        <span className={styles.ItemName}>{item.name}</span>
+                                        <span className={styles.ItemCode}>({toPersianDigits(item.code)})</span>
+                                        {index < group.items.length - 1 && (
+                                            <span className={styles.Arrow}>‹</span>
+                                        )}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })
             ) : (
                 <span className={styles.EmptyAccountText}>ردیفی انتخاب نشده</span>
             )}
