@@ -3,7 +3,7 @@ import styles from "./VoucherLineGrid.module.css";
 import useVoucherGrid from "./useVoucherGrid";
 import { Button, Snackbar, Alert, Dialog, DialogTitle, DialogContent, TextField, List, ListItemButton, ListItemText, CircularProgress, Tabs, Tab, Box } from "@mui/material";
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
-import { useEffect, useState, useMemo, useCallback,useRef } from "react";
+import { useEffect, useState, useMemo, useCallback,useRef,forwardRef, useImperativeHandle } from "react";
 import axios from "axios";
 import { toPersianDigits } from "../../../../utils/formatter";
 import AccountHierarchySummary from "../../../../components/common/SummaryBar/AccountHierarchySummary"
@@ -36,7 +36,7 @@ function findNodeById(nodes, id) {
   return null;
 }
 
-const VoucherLineGrid = ({ voucher, setVoucher, onSave  }) => {
+const VoucherLineGrid = forwardRef(({ voucher, setVoucher, onSave }, ref) => {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [accounts, setAccounts] = useState([]);
@@ -96,6 +96,21 @@ const VoucherLineGrid = ({ voucher, setVoucher, onSave  }) => {
         selectAccountFromModal,
         selectEntityFromModal
     } = useVoucherGrid(voucher, setVoucher, setSearchTerm, setActiveTabOverride, allAccounts, setExpandedTreeItems, setAllAccounts,setTreeData, entityPickers);
+
+    // امکان فراخوانی از بیرون (VoucherNew.jsx): یک ردیف جدید بساز و برو روی سلول کد حساب
+    useImperativeHandle(ref, () => ({
+        focusFirstCell: () => {
+            addLine();
+            setTimeout(() => {
+                const ids = apiRef.current?.getAllRowIds ? apiRef.current.getAllRowIds() : [];
+                const targetId = ids.length > 0 ? ids[ids.length - 1] : null;
+                if (targetId != null && apiRef.current) {
+                    apiRef.current.setCellFocus(targetId, "accountCode");
+                    apiRef.current.startCellEditMode({ id: targetId, field: "accountCode" });
+                }
+            }, 120);
+        },
+    }), [addLine, apiRef]);
 
     const activeTab = useMemo(() => {
         if (activeTabOverride !== null) return activeTabOverride;
@@ -835,6 +850,7 @@ const handleTreeKeyDown = (event) => {
 
      </>
     );
-}
+
+});
 
 export default VoucherLineGrid;

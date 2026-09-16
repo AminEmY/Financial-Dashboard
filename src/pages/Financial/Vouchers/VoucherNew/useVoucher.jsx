@@ -3,9 +3,11 @@ import axios from "axios";
 import DateObject from "react-date-object";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
+import { toEnglishDigits } from "../../../../utils/formatter";
+
 
 const getTodayPersianDate = () =>
-    new DateObject({ calendar: persian, locale: persian_fa }).format("YYYY/MM/DD");
+    toEnglishDigits(new DateObject({ calendar: persian, locale: persian_fa }).format("YYYY/MM/DD"));
 
 const baseVoucher = {
     number: "",

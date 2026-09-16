@@ -20,6 +20,7 @@
 .HeaderRow2 {
   display: flex;
   gap: 10px;
+  text-align: center;
 }
 
 .HeaderRow2 > .FieldBox {

@@ -1,11 +1,13 @@
+import { useEffect, useRef } from "react";
 import { InputBase, Select, MenuItem } from "@mui/material";
 import DatePicker from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
+import { toEnglishDigits } from "../../../../utils/formatter";
 import styles from "./VoucherNew.module.css";
+import Toolbar from "react-multi-date-picker/plugins/toolbar";
 
-
-const VoucherHeader = ({ voucher, setVoucher }) => {
+const VoucherHeader = ({ voucher, setVoucher, onDescriptionEnter }) => {
 
     const handleChange = (field, value) => {
         setVoucher({
@@ -13,6 +15,18 @@ const VoucherHeader = ({ voucher, setVoucher }) => {
             [field]: value,
         });
     };
+
+    const dateInputRef = useRef(null);
+    const sharhInputRef = useRef(null);
+    const tozihatInputRef = useRef(null);
+
+    // فوکوس خودکار روی تاریخ، همون لحظه‌ی باز شدن تب - بدون نیاز به کلیک موس
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            dateInputRef.current?.focus();
+        }, 100);
+        return () => clearTimeout(timer);
+    }, []);
 
   return (
   <div className={styles.HeaderForm}>
@@ -61,9 +75,20 @@ const VoucherHeader = ({ voucher, setVoucher }) => {
         value={voucher.date || ""}
         format="YYYY/MM/DD"
         calendarPosition="bottom-right"
+        plugins={[
+          <Toolbar
+            key="toolbar"
+            position="bottom"
+            names={{
+              today: "امروز",
+              deselect: "پاک کردن",
+              close: "بستن",
+            }}
+          />
+          ]}
         onChange={(dateObject) => {
           if (dateObject) {
-            handleChange("date", dateObject.format("YYYY/MM/DD"));
+            handleChange("date", toEnglishDigits(dateObject.format("YYYY/MM/DD")));
           }
         }}
         render={(value, openCalendar, handleValueChange) => (
@@ -71,8 +96,15 @@ const VoucherHeader = ({ voucher, setVoucher }) => {
             <span className={styles.FieldLabel}>تاریخ</span>
             <InputBase
               className={styles.FieldInput}
+              inputRef={dateInputRef}
               value={value}
               onChange={handleValueChange}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  sharhInputRef.current?.focus();
+                }
+              }}
               placeholder="1404/01/01"
             />
           </div>
@@ -85,8 +117,15 @@ const VoucherHeader = ({ voucher, setVoucher }) => {
         <span className={styles.FieldLabel}>شرح</span>
         <InputBase
           className={styles.FieldInput}
+          inputRef={sharhInputRef}
           value={voucher.sharh || ""}
           onChange={(e) => handleChange("sharh", e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              tozihatInputRef.current?.focus();
+            }
+          }}
         />
       </div>
 
@@ -94,8 +133,15 @@ const VoucherHeader = ({ voucher, setVoucher }) => {
         <span className={styles.FieldLabel}>توضیحات</span>
         <InputBase
           className={styles.FieldInput}
+          inputRef={tozihatInputRef}
           value={voucher.tozihat || ""}
           onChange={(e) => handleChange("tozihat", e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onDescriptionEnter?.();
+            }
+          }}
         />
       </div>
     </div>

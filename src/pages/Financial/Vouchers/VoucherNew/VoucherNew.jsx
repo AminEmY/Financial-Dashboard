@@ -1,4 +1,4 @@
-import {React, useState, useEffect} from 'react';
+import {React, useState, useEffect, useRef} from 'react';
 import styles from "./VoucherNew.module.css";
 import VoucherHeader from "./VoucherHeader";
 import VoucherLineGrid from "./VoucherLineGrid"
@@ -7,6 +7,7 @@ import axios from "axios";
 import { Snackbar, Alert } from "@mui/material";
 import { validateVoucher , validateVoucherBalance } from "./voucherNewValidations";
 import useTabs from "../../../../context/useTabs";
+import { toEnglishDigits } from "../../../../utils/formatter";
 
 
 const VoucherNew = ({ tab }) => {
@@ -17,6 +18,7 @@ const VoucherNew = ({ tab }) => {
 
   const [saveStatus, setSaveStatus] = useState(null);
 
+  const lineGridRef = useRef(null);
 
   // اگر تب با آیدی یک سند باز شده باشد (کلیک روی سند در لیست)، اطلاعاتش از سرور خوانده می‌شود
   useEffect(() => {
@@ -139,7 +141,7 @@ const VoucherNew = ({ tab }) => {
         const basePayload = {
         state: Number(voucher.state),
         subNumber: Number(voucher.subNumber || 0),
-        date: voucher.date,
+        date: toEnglishDigits(voucher.date),
         sharh: voucher.sharh,
         tozihat: voucher.tozihat,
 
@@ -285,11 +287,16 @@ return (
       </div>
     )}
 
-    <VoucherHeader voucher={voucher} setVoucher={setVoucher}/>
+       <VoucherHeader
+          voucher={voucher}
+          setVoucher={setVoucher}
+          onDescriptionEnter={() => lineGridRef.current?.focusFirstCell()}
+       />
 
   <div>
     
     <VoucherLineGrid 
+      ref={lineGridRef}
       voucher={voucher}
       setVoucher={setVoucher}
       onSave={handleSave}

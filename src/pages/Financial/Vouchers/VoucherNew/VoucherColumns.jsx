@@ -1,9 +1,13 @@
 import { useState } from "react";         
-import { formatNumber, toPersianDigits } from "../../../../utils/formatter";
+import { formatNumber, toPersianDigits, toEnglishDigits } from "../../../../utils/formatter";
 import { GridActionsCellItem } from "@mui/x-data-grid-pro";
 import DeleteIcon from "@mui/icons-material/Delete"; //   آیکون را ایمپورت کن
 import SearchIcon from "@mui/icons-material/Search"; //  آیکون ذره‌بین برای پنجره کمکی
 import { Autocomplete, TextField, IconButton, InputAdornment  } from "@mui/material"; //   ایمپورت‌برای پیشنهاد شرح و انتخاب حساب
+import DatePicker from "react-multi-date-picker";
+import persian from "react-date-object/calendars/persian";
+import persian_fa from "react-date-object/locales/persian_fa";
+import Toolbar from "react-multi-date-picker/plugins/toolbar";
 
 
 
@@ -237,7 +241,47 @@ if (isEnter) {
     );
   };
 
-
+  const DateCheqEditCell = ({ params }) => (
+    <DatePicker
+      calendar={persian}
+      locale={persian_fa}
+      value={params.value || ""}
+      format="YYYY/MM/DD"
+      calendarPosition="bottom-right"
+            plugins={[
+        <Toolbar
+          key="toolbar"
+          position="bottom"
+          names={{
+            today: "امروز",
+            deselect: "پاک کردن",
+            close: "بستن",
+          }}
+        />
+       ]}
+      onChange={(dateObject) => {
+        if (dateObject) {
+          params.api.setEditCellValue({
+            id: params.id,
+            field: params.field,
+            value: toEnglishDigits(dateObject.format("YYYY/MM/DD")),
+          });
+        }
+      }}
+      render={(value, openCalendar, handleValueChange) => (
+        <TextField
+          fullWidth
+          variant="standard"
+          autoFocus
+          value={value}
+          onChange={handleValueChange}
+          onClick={openCalendar}
+          placeholder="1404/01/01"
+          sx={{ "& input": { fontFamily: "Vazir, Tahoma", fontSize: "14px", padding: "0 8px" } }}
+        />
+      )}
+    />
+  );
 
 
   // آرایه اصلی بازگشتی ستون‌ها
@@ -331,38 +375,27 @@ if (isEnter) {
          // 🟢 Feature columns
    ...activeFeatureColumns.map(({ field, able, headerName }) => {
      const isEntityField = entityKeys.includes(field);
+     const isFloatField = field === "tedad1" || field === "tedad2";
+     const isDateCheqField = field === "dateCheq";
 
      return {
        field,
        headerName,
        flex: 1,
-       editable: (params) => {
-                // کالا و مراکز همیشه قابل ویرایش هستند
-                if (isEntityField) {
-                    return true;
-                }
-
-                // بقیه ستون‌ها همچنان تابع Able حساب هستند
-                return params.row?.accountFeatures?.[able] === true;
-            },
-
-            // فقط برای ستون‌هایی که واقعاً Feature حساب هستند
-            ...(!isEntityField && {
-                accountFeatureAble: able,
-            }),
-
-            ...(isEntityField && {
-                valueFormatter: (value) => (value ? toPersianDigits(value) : ""),
-                renderEditCell: (params) => (
-                    <EntityCodeEditCell params={params} entityKey={field} />
-                ),
-            }),
+       editable: (params) => params.row?.accountFeatures?.[able] === true,
        accountFeatureAble: able,
        ...(isEntityField && {
          valueFormatter: (value) => (value ? toPersianDigits(value) : ""),
          renderEditCell: (params) => (
            <EntityCodeEditCell params={params} entityKey={field} />
          ),
+       }),
+       ...(isFloatField && {
+         type: "number",
+       }),
+       ...(isDateCheqField && {
+         valueFormatter: (value) => (value ? toPersianDigits(value) : ""),
+         renderEditCell: (params) => <DateCheqEditCell params={params} />,
        }),
      };
    }),
