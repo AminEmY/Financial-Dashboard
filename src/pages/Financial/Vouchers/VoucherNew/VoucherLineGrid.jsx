@@ -11,6 +11,7 @@ import useEntityPicker from "../../../../components/common/pickers/useEntityPick
 import EntityPickerModal from "../../../../components/common/pickers/EntityPickerModal";
 import { entityPickerConfigs } from "../../../../components/common/pickers/entityPickerConfigs";
 
+
 // تعریف توابع کمکی بازگشتی خارج از کامپوننت برای جلوگیری از خطای Hoisting و رندرهای مجدد
 function findNodeByCode(nodes, code) {
   if (!nodes) return null;
@@ -299,14 +300,14 @@ const handleToggleOrExpandNode = useCallback(async (node) => {
 
           const isExpanded = expandedTreeItems.includes(nodeIdStr);
 
-          console.log("TREE CLICK:", {
-              code: node.code,
-              id: node.id,
-              isExpanded,
-              hasDummy,
-              hasRealChildren,
-              children: node.children
-          });
+          // console.log("TREE CLICK:", {
+          //     code: node.code,
+          //     id: node.id,
+          //     isExpanded,
+          //     hasDummy,
+          //     hasRealChildren,
+          //     children: node.children
+          // });
 
           // =========================================================
           // اگر قبلاً بچه‌های واقعی را گرفته‌ایم:
@@ -335,7 +336,7 @@ const handleToggleOrExpandNode = useCallback(async (node) => {
           // حتی اگر isExpanded=true باشد، باز هم باید API بزنیم
           // =========================================================
 
-          console.log("FETCH CHILDREN:", node.code);
+          // console.log("FETCH CHILDREN:", node.code);
 
           // اول مطمئن شو نود باز است
           setExpandedTreeItems((prev) =>
@@ -345,7 +346,7 @@ const handleToggleOrExpandNode = useCallback(async (node) => {
           );
 
           try {
-console.log("🔵 TREE REQUEST:", node.code);
+// console.log("🔵 TREE REQUEST:", node.code);
 
 const response = await axios.post(
     "http://ecipc107:8049/api/Account/SearchTreeView",
@@ -354,15 +355,11 @@ const response = await axios.post(
 
 const fetchedData = response.data || [];
 
-console.log("🟢 TREE RESPONSE:", node.code, fetchedData);
+// console.log("🟢 TREE RESPONSE:", node.code, fetchedData);
 
              
 
-              console.log(
-                  "API RESULT FOR:",
-                  node.code,
-                  fetchedData
-              );
+              // console.log("API RESULT FOR:", node.code, fetchedData);
 
               // فقط فرزندان مستقیم همین حساب
               const directChildren = fetchedData
@@ -385,11 +382,7 @@ console.log("🟢 TREE RESPONSE:", node.code, fetchedData);
                               : []
                   }));
 
-              console.log(
-                  "DIRECT CHILDREN:",
-                  node.code,
-                  directChildren
-              );
+              // console.log( "DIRECT CHILDREN:", node.code, directChildren );
 
               // =====================================================
               // جایگزین کردن dummy با فرزندان واقعی
@@ -826,15 +819,15 @@ const handleTreeKeyDown = (event) => {
 
           <div className={styles.BalanceBox}>
             <div className={styles.BalanceItem}>
-              <span className={styles.SummaryLabel}>بستانکار:</span>
+              <span className={styles.SummaryLabel}>بستانکار</span>
               <strong className={styles.CreditText}>{totals.totalCredit.toLocaleString()}</strong>
             </div>
             <div className={styles.BalanceItem}>
-              <span className={styles.SummaryLabel}>بدهکار:</span>
+              <span className={styles.SummaryLabel}>بدهکار</span>
               <strong className={styles.DebitText}>{totals.totalDebit.toLocaleString()}</strong>
             </div>
             <div className={styles.BalanceItem}>
-              <span className={styles.SummaryLabel}>مانده:</span>
+              <span className={styles.SummaryLabel}>مانده</span>
               <strong className={totals.isBalanced ? styles.StatusBalanced : styles.StatusUnbalanced}>
                 {totals.isBalanced ? '۰' : totals.difference.toLocaleString()}
               </strong>

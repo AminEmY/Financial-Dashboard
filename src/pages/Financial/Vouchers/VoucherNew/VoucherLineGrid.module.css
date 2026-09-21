@@ -12,6 +12,7 @@
   max-width: 100%;
 }
 
+
 .AddRowContainer {
   height: 40px;
   display: flex;
@@ -238,30 +239,6 @@
   box-shadow: none !important;
 }
 
-.DebitText {
-  color: #2e7d32;
-}
-
-.CreditText {
-  color: #c62828;
-}
-
-/* استایل وضعیت‌های تراز و ناموزون سند */
-.StatusBalanced {
-  color: #2e7d32;
-  background-color: #e8f5e9;
-  padding: 4px 12px;
-  border-radius: 4px;
-}
-
-.StatusUnbalanced {
-  color: #c62828;
-  background-color: #ffebee;
-  padding: 4px 12px;
-  border-radius: 4px;
-}
-
-
 
 
 /* باکس سمت راست: مشخصات حساب ردیف فوکوس‌شده */
@@ -298,6 +275,28 @@
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.DebitText {
+  color: #2e7d32;
+}
+
+.CreditText {
+  color: #c62828;
+}
+
+.StatusBalanced {
+  color: #2e7d32;
+  background-color: #e8f5e9;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+.StatusUnbalanced {
+  color: #c62828;
+  background-color: #ffebee;
+  padding: 4px 12px;
+  border-radius: 4px;
 }
 
 /* باکس سمت راست: زنجیره گروه / کل / معین، هر کدام در یک ردیف */

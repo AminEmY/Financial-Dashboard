@@ -5,7 +5,7 @@ const api = axios.create({
 });// به جای اینکه هر بار بنویسیم آدرسو
 
 
-// 1. Request Interceptor (قبل از ارسال درخواست)
+// 1. Request Interceptor ( - (interceptors.request). این نگهبان درست پیش از اینکه درخواست از مرورگر به سمت سرور برود، آن را متوقف و بررسی می‌کند.قبل از ارسال درخواست)
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
 

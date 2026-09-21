@@ -52,6 +52,7 @@ const rows = vouchers.map((v) => ({
     {
     field: "number",
     headerName: "شماره سند",
+    headerAlign : "right" ,
     flex: 1,
     align: "right",
     renderCell: (params) => (
@@ -70,6 +71,7 @@ const rows = vouchers.map((v) => ({
     {
       field: "date",
       headerName: "تاریخ",
+      headerAlign : "right" ,
       flex: 1,
       align: "right",
       valueFormatter: toPersianDigits,
@@ -77,12 +79,14 @@ const rows = vouchers.map((v) => ({
     {
       field: "description",
       headerName: "شرح",
+      headerAlign : "right" ,
       flex: 2,
       align: "right",
     },
     {
     field: "countOfLines",
     headerName: "تعداد ردیف سند",
+    headerAlign : "right" ,
     flex: 1,
     align: "right",
     // type: "number"
@@ -91,6 +95,7 @@ const rows = vouchers.map((v) => ({
     {
       field: "amount",
       headerName: "مبلغ",
+      headerAlign : "right" ,
       minWidth: 170,
       align:"right",
       valueFormatter: formatNumber,

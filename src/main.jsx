@@ -5,12 +5,17 @@ import App from './App.jsx'
 import { BrowserRouter} from 'react-router-dom'
 import {AuthProvider} from './context/AuthProvider.jsx'
 import TabProvider from "./context/TabProvider";
+import { ThemeProvider } from "@mui/material";
+import { Theme } from "./theme/Theme";
+
+
 
 
 createRoot(document.getElementById('root')).render(
 
 
   <StrictMode>
+    <ThemeProvider theme={Theme}>
     <BrowserRouter>
     <AuthProvider>
         <TabProvider>      
@@ -18,5 +23,6 @@ createRoot(document.getElementById('root')).render(
         </TabProvider> 
     </AuthProvider>
     </BrowserRouter>
+    </ThemeProvider>
   </StrictMode>,
 )

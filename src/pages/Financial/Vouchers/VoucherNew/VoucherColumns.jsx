@@ -290,6 +290,7 @@ if (isEnter) {
     {
      field: "row",
      headerName: "ردیف",
+     headerAlign : "right",
      width: 80,
      align: "right",
      // ⭐️ حل باگ نهایی کرش گرید: استفاده امن از row.sequence یا row.row (برای ردیف‌های تازه‌ساز)
@@ -319,6 +320,7 @@ if (isEnter) {
     {
       field: "accountCode",
       headerName: "کد حساب",
+      headerAlign : "right",
       flex: 1,
       editable: true,
       valueFormatter: (value) => {
@@ -332,6 +334,7 @@ if (isEnter) {
     {
      field: "sharh",
      headerName: "شرح",
+     headerAlign : "right",
      flex: 2.5,
      editable: true,
      renderEditCell: (params) => {
@@ -381,6 +384,7 @@ if (isEnter) {
      return {
        field,
        headerName,
+       headerAlign : "right",
        flex: 1,
        editable: (params) => params.row?.accountFeatures?.[able] === true,
        accountFeatureAble: able,
@@ -403,6 +407,7 @@ if (isEnter) {
     {
       field: "debtorAmount",
       headerName: "بدهکار",
+      headerAlign : "right" ,
       flex: 1,
       editable: true,
       type: "number",
@@ -411,6 +416,7 @@ if (isEnter) {
     {
       field: "creditorAmount",
       headerName: "بستانکار",
+      headerAlign : "right" ,
       flex: 1,
       editable: true,
       type: "number",
@@ -422,6 +428,7 @@ if (isEnter) {
      field: "actions",
      type: "actions",
      headerName: "حذف",
+     headerAlign : "right" ,
      width: 70,
      getActions: (params) => [
        <GridActionsCellItem

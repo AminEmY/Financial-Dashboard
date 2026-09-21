@@ -114,7 +114,7 @@ const selectAccountFromModal = async (account) => {
             }
         );
       const accountFeatures = voucherAccountResponse.data || null;
-        console.log("ACCOUNT FEATURES - MODAL:", account.code, accountFeatures );
+        // console.log("ACCOUNT FEATURES - MODAL:", account.code, accountFeatures );
 
     // ادامه کد قبلی
     const updatedLines = voucher.lines.map((line) => {
@@ -429,12 +429,12 @@ if (updatedRow.accountCode && updatedRow.accountCode !== oldRow.accountCode) {
                 // =====================================================
                 const observer = new MutationObserver((mutations, obs) => {
 
-              console.log("🔥 ACCOUNT TREE OBSERVER RUNNING");
+            //   console.log("🔥 ACCOUNT TREE OBSERVER RUNNING");
 
                     const treeRoot = document.querySelector(
                         ".MuiSimpleTreeView-root"
                     );
-              console.log("🔥 TREE ROOT:", treeRoot);  
+            //   console.log("🔥 TREE ROOT:", treeRoot);  
                     if (!treeRoot) return;
 
                  let nodeElement = null;
@@ -455,8 +455,8 @@ if (updatedRow.accountCode && updatedRow.accountCode !== oldRow.accountCode) {
                      }
                  }
                 
-                 console.log("🎯 TARGET ELEMENT:", targetElement);
-                 console.log("🎯 NODE ELEMENT:", nodeElement);
+                //  console.log("🎯 TARGET ELEMENT:", targetElement);
+                //  console.log("🎯 NODE ELEMENT:", nodeElement);
 
                     if (nodeElement) {
 
@@ -480,11 +480,7 @@ if (updatedRow.accountCode && updatedRow.accountCode !== oldRow.accountCode) {
                                treeItem.classList.add("Mui-focused");
                                treeItem.classList.add("Mui-selected");
                 
-                               console.log(
-                                   "🎯 FOCUS ON ACCOUNT:",
-                                   typedCodeStr,
-                                   document.activeElement
-                               );
+                            //    console.log("🎯 FOCUS ON ACCOUNT:", typedCodeStr, document.activeElement);
                            }
 
 
@@ -497,7 +493,7 @@ if (updatedRow.accountCode && updatedRow.accountCode !== oldRow.accountCode) {
                     childList: true,
                     subtree: true
                 });
-              console.log("🔥 OBSERVER STARTED");
+            //   console.log("🔥 OBSERVER STARTED");
                 setTimeout(() => {
                     observer.disconnect();
                      }, 3000);
