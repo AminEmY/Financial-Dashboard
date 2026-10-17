@@ -1,6 +1,6 @@
 const menuConfig = [
     {
-        title: "داشبورد",
+        title: "میز کار",
         path: "/dashboard",
         pageType: "dashboard",
         closable: false,
@@ -30,6 +30,13 @@ const menuConfig = [
 
                 ],
             },
+
+            {
+                title: "ساختار حساب",
+                path: "/Account",
+                pageType: "account",
+
+            }
 
         ],
     },

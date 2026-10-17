@@ -9,6 +9,7 @@ import Notfound from './pages/Notfound/Notfound'
 import Authentication from './pages/Authentication/Authentication'
 import MainLayout from './layout/MainLayout/MainLayout'
 import ProtectedRoutes from './routes/ProtectedRoutes'
+import Account from './pages/Financial/Account/Account';
 
 
 
@@ -25,6 +26,7 @@ function App() {
       <Route path='/Vouchers' element={<VouchersList/>} />
       <Route path='/Vouchers/:id' element={<VouchersList/>} />
       <Route path='/Vouchers/VoucherNew' element={<VoucherNew/>}/>
+      <Route path='/Account' element={<Account/>}/>
 
       <Route path='/authentication' element={<Authentication/>} />
 

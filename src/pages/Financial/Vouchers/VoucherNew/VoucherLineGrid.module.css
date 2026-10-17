@@ -278,22 +278,22 @@
 }
 
 .DebitText {
-  color: #2e7d32;
+  color: var(--color-success);
 }
 
 .CreditText {
-  color: #c62828;
+  color: var(--color-error);
 }
 
 .StatusBalanced {
-  color: #2e7d32;
+  color: var(--color-success);
   background-color: #e8f5e9;
   padding: 4px 12px;
   border-radius: 4px;
 }
 
 .StatusUnbalanced {
-  color: #c62828;
+  color: var(--color-error);
   background-color: #ffebee;
   padding: 4px 12px;
   border-radius: 4px;

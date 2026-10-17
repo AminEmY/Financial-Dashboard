@@ -35,7 +35,7 @@ const VoucherHeader = ({ voucher, setVoucher, onDescriptionEnter }) => {
 
       {/* شماره سند توسط Backend تولید می‌شود */}
       <div className={styles.FieldBox}>
-        <span className={styles.FieldLabel}>شماره سند</span>
+        <span className={styles.FieldLabel}>شماره سند :</span>
         <InputBase
           className={styles.FieldInput}
           value={voucher.number || ""}
@@ -44,7 +44,7 @@ const VoucherHeader = ({ voucher, setVoucher, onDescriptionEnter }) => {
       </div>
 
       <div className={styles.FieldBox}>
-        <span className={styles.FieldLabel}>شماره فرعی</span>
+        <span className={styles.FieldLabel}>شماره فرعی :</span>
         <InputBase
           className={styles.FieldInput}
           type="number"
@@ -55,7 +55,7 @@ const VoucherHeader = ({ voucher, setVoucher, onDescriptionEnter }) => {
       </div>
 
       <div className={styles.FieldBox}>
-        <span className={styles.FieldLabel}>وضعیت سند</span>
+        <span className={styles.FieldLabel}>وضعیت سند :</span>
         <Select
           className={styles.FieldInput}
           variant="standard"
@@ -93,7 +93,7 @@ const VoucherHeader = ({ voucher, setVoucher, onDescriptionEnter }) => {
         }}
         render={(value, openCalendar, handleValueChange) => (
           <div className={styles.FieldBox} onClick={openCalendar}>
-            <span className={styles.FieldLabel}>تاریخ</span>
+            <span className={styles.FieldLabel}>تاریخ :</span>
             <InputBase
               className={styles.FieldInput}
               inputRef={dateInputRef}
@@ -114,9 +114,9 @@ const VoucherHeader = ({ voucher, setVoucher, onDescriptionEnter }) => {
 
     <div className={styles.HeaderRow2}>
       <div className={styles.FieldBox}>
-        <span className={styles.FieldLabel}>شرح</span>
+        <span className={styles.FieldLabel}>شرح : </span>
         <InputBase
-          className={styles.FieldInput}
+          className={styles.FieldInput2}
           inputRef={sharhInputRef}
           value={voucher.sharh || ""}
           onChange={(e) => handleChange("sharh", e.target.value)}
@@ -130,9 +130,9 @@ const VoucherHeader = ({ voucher, setVoucher, onDescriptionEnter }) => {
       </div>
 
       <div className={styles.FieldBox}>
-        <span className={styles.FieldLabel}>توضیحات</span>
+        <span className={styles.FieldLabel}>توضیحات : </span>
         <InputBase
-          className={styles.FieldInput}
+          className={styles.FieldInput2}
           inputRef={tozihatInputRef}
           value={voucher.tozihat || ""}
           onChange={(e) => handleChange("tozihat", e.target.value)}

@@ -5,8 +5,10 @@ import App from './App.jsx'
 import { BrowserRouter} from 'react-router-dom'
 import {AuthProvider} from './context/AuthProvider.jsx'
 import TabProvider from "./context/TabProvider";
-import { ThemeProvider } from "@mui/material";
+import { ThemeProvider, GlobalStyles } from "@mui/material";
 import { Theme } from "./theme/Theme";
+
+
 
 
 
@@ -15,14 +17,16 @@ createRoot(document.getElementById('root')).render(
 
 
   <StrictMode>
-    <ThemeProvider theme={Theme}>
-    <BrowserRouter>
+    
+    <ThemeProvider theme={Theme}><GlobalStyles styles={Theme.components.MuiCssBaseline.styleOverrides} />
+    <div dir="rtl"><BrowserRouter>
     <AuthProvider>
         <TabProvider>      
             <App/>
         </TabProvider> 
     </AuthProvider>
-    </BrowserRouter>
+    </BrowserRouter></div>
     </ThemeProvider>
+    
   </StrictMode>,
 )

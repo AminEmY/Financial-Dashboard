@@ -8,9 +8,21 @@
   margin-top: 1px;
 }
 
+.PageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.LayoutBar {
+  display: flex;
+  margin-bottom: 4px;
+}
 
 .GridHeight {
-  height: 650px;
+  height: 750px;
   width: 100%;
 }
 

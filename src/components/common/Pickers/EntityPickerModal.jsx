@@ -28,7 +28,7 @@ function findFlatIndexById(flatNodes, id) {
 
 
 // مودال عمومی انتخاب کد؛ با یک picker (خروجی useEntityPicker) و یک onSelect کار می‌کند
-const EntityPickerModal = ({ title, picker, onSelect }) => {
+const EntityPickerModal = ({ title, picker, onSelect , allowAnyLevel = false }) => {
 
     const {
         modal, close,
@@ -187,14 +187,17 @@ const EntityPickerModal = ({ title, picker, onSelect }) => {
                                 {({ index, style }) => {
                                     const item = searchResults[index];
                                     const isParent = item.childCount > 0;
+                                    const isSelectable = !isParent || allowAnyLevel;
+
 
                                     return (
                                         <div style={style}>
                                             <ListItemButton
                                                 className={styles.ResultItem}
+                                                key={item.id ?? item.Id ?? item.code ?? index}
                                                 selected={index === highlightedIndex}
-                                                disabled={isParent}
-                                                onClick={() => !isParent && handleSelect(item)}
+                                                disabled={!isSelectable}
+                                                onClick={() => isSelectable && handleSelect(item)}
                                             >
                                                 <ListItemText
                                                     primary={
@@ -234,10 +237,15 @@ const EntityPickerModal = ({ title, picker, onSelect }) => {
                                     } else if (e.key === "ArrowUp") {
                                         e.preventDefault();
                                         setHighlightedTreeIndex((prev) => Math.max(prev - 1, 0));
-                                    } else if (e.key === "Enter") {
+                                                                        } else if (e.key === "Enter") {
                                         e.preventDefault();
                                         const entry = flatTreeNodes[highlightedTreeIndex];
-                                        if (entry && !entry.node.isDummy) {
+                                        if (!entry || entry.node.isDummy) return;
+
+                                        if (allowAnyLevel) {
+                                            // استثنائاً اینجا: Enter یعنی «همین رو انتخاب کن»، فارغ از پدر/برگ بودن
+                                            handleSelect(entry.node);
+                                        } else {
                                             toggleNode(entry.node, handleSelect);
                                         }
                                     } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
@@ -304,7 +312,7 @@ const EntityPickerModal = ({ title, picker, onSelect }) => {
                                                     <span>{node.name}</span>
                                                     <span className={styles.TreeCodeSpan}>({toPersianDigits(node.code)})</span>
                                                 </span>
-                                                {!isParent && (
+                                                {(!isParent || allowAnyLevel) && (
                                                     <Button
                                                         size="small"
                                                         variant="outlined"

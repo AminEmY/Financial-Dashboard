@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import useTabs from "../../context/useTabs";
 import { useEffect, useRef } from "react";
 import styles from "./GlobalTabs.module.css";
+import CloseUnsavedModal from "../../components/tabs/CloseUnsavedModal"; //  این  اضافه شد
 
 const GlobalTabs = () => {
 
@@ -14,6 +15,7 @@ const GlobalTabs = () => {
     activeTabId,
     activateTab,
     closeTab,
+    closeAllTabs, //  اضافه شد
   } = useTabs();
 
   const handleTabClick = (tab) => {
@@ -27,6 +29,15 @@ const GlobalTabs = () => {
 
     closeTab(tab.id);
   };
+
+  // پشتیبانی از کلیک وسط موس روی تب برای بستن
+const handleAuxClick = (event, tab) => {
+  if (event.button === 1 && tab.closable) { // دکمه 1 یعنی کلیک وسط موس
+    event.preventDefault();
+    closeTab(tab.id);
+  }
+};
+
   useEffect(() => {
     if (!tabsContainerRef.current) return;
 
@@ -43,7 +54,10 @@ const GlobalTabs = () => {
         });
     }
   }, [activeTabId, tabs]);
+
   return (
+
+  <div className={styles.tabsWrapper} style={{ display: "flex", alignItems: "center", width: "100%" }}>
     <div ref={tabsContainerRef} className={styles.tabsContainer}>
       <div className={styles.tabs}>
 
@@ -57,6 +71,7 @@ const GlobalTabs = () => {
                 : ""
             }`}
             onClick={() => handleTabClick(tab)}
+            onAuxClick={(e) => handleAuxClick(e, tab)} // اضافه شد برای کلیک وسط
           >
 
             <span className={styles.tabTitle}>
@@ -76,10 +91,30 @@ const GlobalTabs = () => {
 
           </div>
         ))}
-
       </div>
     </div>
+{/* دکمه بستن همه در همان راستا کنار تب‌ها */}
+      {tabs.filter(t => t.closable).length > 0 && (
+        <button 
+          onClick={closeAllTabs}
+          style={{ 
+            whiteSpace: "nowrap", 
+            marginRight: "8px", 
+            marginLeft: "8px",
+            padding: "4px 8px",
+            cursor: "pointer",
+            fontSize: "12px"
+          }}
+          title="بستن همه تب‌ها"
+        >
+          بستن همه ×
+        </button>
+      )}
+
+      <CloseUnsavedModal />
+    </div>
   );
+    
 };
 
 export default GlobalTabs;

@@ -6,6 +6,7 @@ import useTabs from "../../context/useTabs";
 
 const Sidebar = () => {
 
+
     const [openMenus, setOpenMenus] = useState([]);
 
     const { openTab, activateTab, tabs } = useTabs();

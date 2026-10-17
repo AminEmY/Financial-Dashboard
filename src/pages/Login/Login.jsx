@@ -53,11 +53,11 @@ const handleLogin =()=>{
 
 <div className={styles.container}>       
     <div className={styles.wrapper}>
-    <h1>Welcome, Please Login!</h1>
-    <input value={username} onChange={(event)=>setUserName(event.target.value)} type="text" placeholder="Username" /> 
-    <input value={password} onChange={(event)=>setPassword(event.target.value)} type="password" placeholder="Password" />
-    {loginError && <div className={styles.login_error}>Wrong Username or Password !</div>}
-    <button onClick={handleLogin}  disabled={loading}> {loading ? "Loading ..." : "Login"}</button>
+    <h1>ورود به سامانه</h1>
+    <input value={username} onChange={(event)=>setUserName(event.target.value)} type="text" placeholder="نام کاربری" /> 
+    <input value={password} onChange={(event)=>setPassword(event.target.value)} type="password" placeholder="گذرواژه" />
+    {loginError && <div className={styles.login_error}>نام کاربری یا گذرواژه صحیح نمیباشد</div>}
+    <button onClick={handleLogin}  disabled={loading}> {loading ? "در حال ورود..." : "ورود"}</button>
 
   </div>
 </div>

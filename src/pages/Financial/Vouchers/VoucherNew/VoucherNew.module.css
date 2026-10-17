@@ -14,13 +14,12 @@
 .HeaderRow > .FieldBox,
 .HeaderRow > :global(.rmdp-container) {
   flex: 0 0 160px;
-  width: 160px;
+  width: 100%;
 }
 
 .HeaderRow2 {
   display: flex;
   gap: 10px;
-  text-align: center;
 }
 
 .HeaderRow2 > .FieldBox {
@@ -30,6 +29,7 @@
 .FieldBox {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   height: 36px;
   width: 100%;
   background-color: #f5f6fa;
@@ -37,8 +37,9 @@
   padding: 0 10px;
   box-sizing: border-box;
   cursor: text;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  /* transition: background-color 0.15s ease, box-shadow 0.15s ease; */
   position: relative;
+  gap: 8px;
 }
 
 .FieldBox:hover {
@@ -50,26 +51,56 @@
   box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.16);
 }
 
-.FieldLabel {
-  font-size: 12px;
-  font-family: iransansx;
-  color: #515355;
-  white-space: nowrap;
-  flex-shrink: 0;
+/* اصلاح اختصاصی برای MuiSelect درون هدر سند */
+.FieldBox :global(.MuiSelect-select) {
+  text-align: left !important; /* مقدار انتخابی سمت چپ برود تا با لیبل سمت راست تداخل نکند */
+  padding-left: 20px !important;
+  padding-right: 0 !important;
+  display: flex;
+  align-items: center;
+}
+
+.FieldBox :global(.MuiSelect-icon) {
+  left: 0 !important;
+  right: auto !important;
 }
 
 .FieldBox:focus-within .FieldLabel {
   color: #1976d2;
 }
 
+.FieldLabel {
+  font-size: 12px;
+  font-family: iransansx;
+  color: #515355;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
 .FieldInput {
   flex: 1;
   min-width: 0;
   font-size: 13px;
+  width: 100%;
+}
+
+.FieldInput2 {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  width: 100%;
+  text-align: right;
+}
+
+.FieldInput :global(.MuiSelect-select) {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 36px;
 }
 
 .FieldInput :global(.MuiInputBase-input) {
-  text-align: left;
+  text-align: center;
   padding: 0 !important;
   font-size: 13px;
 }
@@ -114,11 +145,6 @@
     font-weight:bold;
     margin-bottom: 14px;
     margin-top: -15px;
-}
-
-.ShrhToz {
-  flex: 1 1 260px;
-  min-width: 220px;
 }
 
 

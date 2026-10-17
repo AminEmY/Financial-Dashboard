@@ -3,7 +3,7 @@ import { formatNumber, toPersianDigits, toEnglishDigits } from "../../../../util
 import { GridActionsCellItem } from "@mui/x-data-grid-pro";
 import DeleteIcon from "@mui/icons-material/Delete"; //   آیکون را ایمپورت کن
 import SearchIcon from "@mui/icons-material/Search"; //  آیکون ذره‌بین برای پنجره کمکی
-import { Autocomplete, TextField, IconButton, InputAdornment  } from "@mui/material"; //   ایمپورت‌برای پیشنهاد شرح و انتخاب حساب
+import { Box, Autocomplete, TextField, IconButton, InputAdornment  } from "@mui/material"; //   ایمپورت‌برای پیشنهاد شرح و انتخاب حساب
 import DatePicker from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
@@ -112,13 +112,14 @@ const activeFeatureColumns = featureColumns.filter(({ able }) =>
           });
         }}
         onKeyDown={onKeyDownHandler}
-        sx={{
+        sx={(theme) => ({
           "& input": {
-            fontFamily: "Vazir, Tahoma",
-            fontSize: "14px",
-            padding: "0 8px",
-          },
-        }}
+            fontFamily: theme.typography.fontFamily,
+            fontSize: theme.typography.body2.fontSize,
+            padding: theme.spacing(0, 1),
+            color: theme.palette.text.primary,
+              },
+           })}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
@@ -130,7 +131,7 @@ const activeFeatureColumns = featureColumns.filter(({ able }) =>
                   openAccountModal(localValue, params.id);
                 }}
               >
-                <SearchIcon fontSize="small" sx={{ color: "#1976d2" }} />
+                <SearchIcon fontSize="small" color="primary" />
               </IconButton>
             </InputAdornment>
           ),
@@ -220,7 +221,14 @@ if (isEnter) {
           params.api.setEditCellValue({ id: params.id, field: params.field, value: val });
         }}
         onKeyDown={onKeyDownHandler}
-        sx={{ "& input": { fontFamily: "Vazir, Tahoma", fontSize: "14px", padding: "0 8px" } }}
+        sx={(theme) => ({
+          "& input": {
+            fontFamily: theme.typography.fontFamily,
+            fontSize: theme.typography.body2.fontSize,
+            padding: theme.spacing(0, 1),
+            color: theme.palette.text.primary,
+          },
+        })}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
@@ -232,7 +240,7 @@ if (isEnter) {
                   picker.open(params.id, localValue);
                 }}
               >
-                <SearchIcon fontSize="small" sx={{ color: "#1976d2" }} />
+                <SearchIcon fontSize="small" color="primary" />
               </IconButton>
             </InputAdornment>
           ),
@@ -277,7 +285,14 @@ if (isEnter) {
           onChange={handleValueChange}
           onClick={openCalendar}
           placeholder="1404/01/01"
-          sx={{ "& input": { fontFamily: "Vazir, Tahoma", fontSize: "14px", padding: "0 8px" } }}
+          sx={(theme) => ({
+            "& input": {
+              fontFamily: theme.typography.fontFamily,
+              fontSize: theme.typography.body2.fontSize,
+              padding: theme.spacing(0, 1),
+              color: theme.palette.text.primary,
+            },
+          })}
         />
       )}
     />
@@ -303,17 +318,18 @@ if (isEnter) {
        return toPersianDigits(value);
      },
      renderCell: (params) => (
-       <div
-         style={{
-           width: "100%",
-           textAlign: "right",
-           paddingRight: 8,
-         }}
-       >
-         {params.value !== "" && params.value !== undefined && params.value !== null
-           ? toPersianDigits(params.value)
-           : ""}
-       </div>
+// 🟢 تغییر: استفاده از Box به جای div و سیستم Spacing تم (pr: 1)
+        <Box
+          sx={{
+            width: "100%",
+            textAlign: "right",
+            pr: 1,
+          }}
+        >
+          {params.value !== "" && params.value !== undefined && params.value !== null
+            ? toPersianDigits(params.value)
+            : ""}
+        </Box>
      ),
      
     },
@@ -362,10 +378,18 @@ if (isEnter) {
                fullWidth
                variant="standard"
                autoFocus
-               sx={{ 
-                 "& .MuiInputBase-root": { height: '100%', padding: '0 8px' },
-                 "& input": { fontFamily: 'Vazir, Tahoma', fontSize: '14px', direction: 'rtl' }
-               }}
+               sx={(theme) => ({
+                  "& .MuiInputBase-root": {
+                    height: "100%",
+                    padding: theme.spacing(0, 1),
+                  },
+                  "& input": {
+                    fontFamily: theme.typography.fontFamily,
+                    fontSize: theme.typography.body2.fontSize,
+                    direction: "rtl",
+                    color: theme.palette.text.primary,
+                  },
+                })}
              />
            )}
            style={{ width: '100%' }}

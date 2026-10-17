@@ -6,7 +6,7 @@
 
     padding:15px;
 
-    background:#0f172a;
+    background-color: var(--sidebar-bg); /* حتماً background-color بگذارید */
 
     color:white;
 
@@ -44,7 +44,7 @@
 
     cursor:pointer;
 
-    background:#1e293b;
+    background: var(--sidebar-surface); /* استفاده از متغیر تم */
 
     color:#f8fafc;
 
@@ -57,7 +57,7 @@
 
 .menuParent:hover {
 
-    background:#334155;
+    background: var(--sidebar-surface-hover); /* استفاده از متغیر تم */
 
 }
 
@@ -95,7 +95,7 @@
 
     border-radius:8px;
 
-    color:#cbd5e1;
+    color: var(--sidebar-text); /* افزودن رنگ متن واضح برای زیرمنوها */
 
     text-decoration:none;
 
@@ -106,7 +106,7 @@
 
 .link:hover {
 
-    background:#1e293b;
+    background: var(--sidebar-surface); /* استفاده از متغیر تم */
 
     color:white;
 
@@ -147,11 +147,7 @@
 
     border-radius:8px;
 
-    background:linear-gradient(
-        90deg,
-        #1d4ed8,
-        #2563eb
-    );
+    background: var(--sidebar-active); /* استفاده از متغیر اصلی تم (Primary) */
 
     color:white;
 
@@ -160,7 +156,7 @@
     text-decoration:none;
 
     box-shadow:
-        0 3px 10px rgba(37,99,235,0.35);
+        0 3px 10px rgba(79,70,229,0.35);
 
 }
 

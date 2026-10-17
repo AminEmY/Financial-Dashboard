@@ -1,0 +1,121 @@
+import { useState, useRef, useCallback } from "react";
+
+const KEY_PREFIX = "gridLayouts:";
+
+const readStore = (gridKey) => {
+  try {
+    const raw = localStorage.getItem(KEY_PREFIX + gridKey);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return { current: parsed.current ?? null, layouts: parsed.layouts ?? [] };
+  } catch {
+    return { current: null, layouts: [] };
+  }
+};
+
+// محاسبه‌ی دستی عرض ستونِ اصلی (sharh یا آخرین ستون نمایان) تا فضای خالی باقی‌نماند؛
+// چون exportState/restoreState عرض‌های دستی قدیمی (columnDimensions) را هم ذخیره می‌کنند
+// و با تغییر تعداد ستون‌های نمایان، این عرض‌ها دیگر با عرض واقعی گرید جمع نمی‌شوند.
+const recalculateMainColumnWidth = (apiRef) => {
+  requestAnimationFrame(() => {
+    if (!apiRef.current) return;
+
+    const gridWidth = apiRef.current.rootElementRef?.current?.clientWidth || 0;
+    const visibleCols = apiRef.current.getVisibleColumns();
+    if (gridWidth === 0 || visibleCols.length === 0) return;
+
+    const mainCol =
+      visibleCols.find((c) => c.field === "sharh") || visibleCols[visibleCols.length - 1];
+
+    let otherWidths = 0;
+    visibleCols.forEach((col) => {
+      if (col.field !== mainCol?.field) {
+        otherWidths += col.computedWidth || col.width || 100;
+      }
+    });
+
+    if (mainCol) {
+      const remainingWidth = Math.max(mainCol.minWidth || 150, gridWidth - otherWidths - 10);
+      apiRef.current.setColumnWidth(mainCol.field, remainingWidth);
+    }
+  });
+};
+
+// gridKey: یک اسم یکتا برای هر لیست (مثلاً "vouchersList")
+// defaultState: وضعیت پیش‌فرض گرید (ستون‌های نمایان و ...)
+export default function useGridLayouts(gridKey, apiRef, defaultState) {
+  const [layouts, setLayouts] = useState(() => readStore(gridKey).layouts);
+  const [initialState] = useState(() => readStore(gridKey).current ?? defaultState);
+  const saveTimer = useRef(null);
+
+  const write = useCallback((patch) => {
+    const next = { ...readStore(gridKey), ...patch };
+    try {
+      localStorage.setItem(KEY_PREFIX + gridKey, JSON.stringify(next));
+    } catch {
+      // حافظه پر است یا مرورگر در حالت خصوصی است
+    }
+    return next;
+  }, [gridKey]);
+
+  // ذخیره‌ی خودکار وضعیت فعلی، با تاخیر کوتاه تا با هر تغییر ریز چندبار ننویسد
+  const persistCurrent = useCallback(() => {
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      if (apiRef.current) write({ current: apiRef.current.exportState() });
+    }, 300);
+  }, [apiRef, write]);
+
+  const saveLayout = useCallback((name) => {
+    const clean = name.trim();
+    if (!clean || !apiRef.current) return;
+    const others = readStore(gridKey).layouts.filter((l) => l.name !== clean);
+    const next = write({
+      layouts: [...others, { name: clean, state: apiRef.current.exportState() }],
+    });
+    setLayouts(next.layouts);
+  }, [apiRef, gridKey, write]);
+
+const applyLayout = useCallback((name) => {
+    const layout = readStore(gridKey).layouts.find((l) => l.name === name);
+    if (layout && apiRef.current) {
+      const cleanState = JSON.parse(JSON.stringify(layout.state));
+
+      // ➕ پاک کردن تمام عرض‌های ثابت ذخیره‌شده تا ستون‌ها به حالت flex برگردند
+      if (cleanState?.columns) {
+        cleanState.columns.columnDimensions = {};
+      }
+
+      apiRef.current.restoreState(cleanState);
+      write({ current: cleanState });
+
+      // ➕ محاسبه هوشمند عرض ستون‌ها برای پر کردن ۱۰۰٪ فضای خالی گرید
+      recalculateMainColumnWidth(apiRef);
+    }
+  }, [apiRef, gridKey, write]);
+
+  const deleteLayout = useCallback((name) => {
+    const next = write({
+      layouts: readStore(gridKey).layouts.filter((l) => l.name !== name),
+    });
+    setLayouts(next.layouts);
+  }, [gridKey, write]);
+
+const resetToDefault = useCallback(() => {
+    if (apiRef.current) {
+      const cleanDefaultState = JSON.parse(JSON.stringify(defaultState));
+
+      // ➕ پاک کردن عرض‌های ثبت‌شده قبلی
+      if (cleanDefaultState?.columns) {
+        cleanDefaultState.columns.columnDimensions = {};
+      }
+
+      apiRef.current.restoreState(cleanDefaultState);
+      write({ current: null });
+
+      // ➕ محاسبه مجدد عرض جدول در حالت پیش‌فرض
+      recalculateMainColumnWidth(apiRef);
+    }
+  }, [apiRef, defaultState, write]);
+
+  return { initialState, layouts, persistCurrent, saveLayout, applyLayout, deleteLayout, resetToDefault };
+}

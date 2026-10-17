@@ -1,4 +1,4 @@
-import {React, useState, useEffect, useRef} from 'react';
+import {React, useState, useEffect, useRef, useCallback} from 'react';
 import styles from "./VoucherNew.module.css";
 import VoucherHeader from "./VoucherHeader";
 import VoucherLineGrid from "./VoucherLineGrid"
@@ -15,6 +15,7 @@ const VoucherNew = ({ tab }) => {
   const { voucher, setVoucher, loading, loadError, loadVoucherById } = useVoucher();
 
   const { updateTab } = useTabs();
+
 
   const [saveStatus, setSaveStatus] = useState(null);
 
@@ -67,7 +68,7 @@ const VoucherNew = ({ tab }) => {
 
 
 
-  const handleSave = async () => {
+  const handleSave = useCallback( async () => {
     
       const validationErrors = validateVoucher(voucher);
 
@@ -212,6 +213,9 @@ const VoucherNew = ({ tab }) => {
               // هم isNew و deletedLineIds به‌درستی ریست می‌شن، بدون نیاز به مدیریت دستی این حالت‌ها
               await loadVoucherById(result.id);
 
+          // ✅ بعد از ذخیره موفق، تغییرات ذخیره‌نشده را پاک می‌کنیم
+              updateTab(tab.id, { isDirty: false });
+
               if (!voucher.id) {
                   updateTab(tab.id, {
                     title: "ویرایش سند",
@@ -267,8 +271,62 @@ const VoucherNew = ({ tab }) => {
           );
       }
   
-  };
-    
+  }, [voucher, tab?.id, updateTab, loadVoucherById]);
+
+  
+// مقایسه هوشمند تغییرات برای جلوگیری از فعال شدن بی‌دلیل isDirty
+  const isFirstMount = useRef(true);
+  const initialVoucherRef = useRef(null); // نگهداری نسخه اولیه یا لود شده سند
+
+  const handleSaveRef = useRef(handleSave);
+  useEffect(() => {
+    handleSaveRef.current = handleSave;
+  });
+
+  const updateTabRef = useRef(updateTab);
+  useEffect(() => {
+    updateTabRef.current = updateTab;
+  });
+
+  // وقتی سند جدید باز می‌شود یا از سرور لود می‌شود، نسخه اولیه را ثبـت می‌کنیم
+  useEffect(() => {
+    if (voucher && !initialVoucherRef.current) {
+      initialVoucherRef.current = JSON.stringify(voucher);
+    }
+  }, [voucher]);
+
+  // هر بار که آیدی تب عوض می‌شود، مرجع اولیه را ریست می‌کنیم تا برای سند جدید آماده شود
+  useEffect(() => {
+    initialVoucherRef.current = null;
+  }, [tab?.id, tab?.data?.id]);
+
+  // بررسی تغییرات واقعی
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+
+    // اگر هنوز نسخه اولیه ست نشده، کاری نکن
+    if (!initialVoucherRef.current) {
+      return;
+    }
+
+    // مقایسه سند فعلی با نسخه اولیه
+    const currentVoucherString = JSON.stringify(voucher);
+    const hasChanged = currentVoucherString !== initialVoucherRef.current;
+
+    if (tab?.id && updateTabRef.current) {
+      updateTabRef.current(tab.id, {
+        isDirty: hasChanged, // فقط زمانی که واقعاً تفاوت وجود داشته باشد true می‌شود
+        data: {
+          ...tab?.data,
+          onSave: () => handleSaveRef.current(),
+        },
+      });
+    }
+  }, [voucher, tab?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
     // ترکیب خطای بارگذاری سند با snackbar خطا، بدون نیاز به useEffect و setState اضافه
   const isErrorSnackbarOpen = snackbar.open || Boolean(loadError);

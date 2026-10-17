@@ -1,6 +1,7 @@
 import Dashboard from "../../pages/Dashboard/Dashboard";
 import VouchersList from "../../pages/Financial/Vouchers/VouchersList";
 import VoucherNew from "../../pages/Financial/Vouchers/VoucherNew/VoucherNew";
+import Account from "../../pages/Financial/Account/Account"
 
 
 const TabContent = ({ tab }) => {
@@ -18,6 +19,9 @@ const TabContent = ({ tab }) => {
 
     case "voucher-detail":
       return <VoucherNew tab={tab} />;
+
+    case "account":
+      return <Account tab={tab} />;
 
     default:
       return <div>صفحه پیدا نشد</div>;

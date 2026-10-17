@@ -4,6 +4,7 @@ import GlobalTabs from "../../components/Tabs/GlobalTabs";
 import TabContent from "../../components/Tabs/TabContent";
 import useTabs from "../../context/useTabs";
 import styles from "./MainLayout.module.css";
+import CloseUnsavedModal from "../../components/tabs/CloseUnsavedModal"; //  این  اضافه شد
 
 const MainLayout = () => {
   const { tabs, activeTabId } = useTabs();
@@ -37,6 +38,7 @@ const MainLayout = () => {
         </div>
 
       </div>
+      <CloseUnsavedModal />
 
     </div>
   );
