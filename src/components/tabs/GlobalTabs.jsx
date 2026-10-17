@@ -96,15 +96,8 @@ const handleAuxClick = (event, tab) => {
 {/* دکمه بستن همه در همان راستا کنار تب‌ها */}
       {tabs.filter(t => t.closable).length > 0 && (
         <button 
+          className={styles.closeAllButton}
           onClick={closeAllTabs}
-          style={{ 
-            whiteSpace: "nowrap", 
-            marginRight: "8px", 
-            marginLeft: "8px",
-            padding: "4px 8px",
-            cursor: "pointer",
-            fontSize: "12px"
-          }}
           title="بستن همه تب‌ها"
         >
           بستن همه ×
