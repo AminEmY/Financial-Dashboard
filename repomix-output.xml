@@ -148,6 +148,26 @@ vite.config.js
 <files>
 This section contains the contents of the repository's files.
 
+<file path="public/vite.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="31.88" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 257"><defs><linearGradient id="IconifyId1813088fe1fbc01fb466" x1="-.828%" x2="57.636%" y1="7.652%" y2="78.411%"><stop offset="0%" stop-color="#41D1FF"></stop><stop offset="100%" stop-color="#BD34FE"></stop></linearGradient><linearGradient id="IconifyId1813088fe1fbc01fb467" x1="43.376%" x2="50.316%" y1="2.242%" y2="89.03%"><stop offset="0%" stop-color="#FFEA83"></stop><stop offset="8.333%" stop-color="#FFDD35"></stop><stop offset="100%" stop-color="#FFA800"></stop></linearGradient></defs><path fill="url(#IconifyId1813088fe1fbc01fb466)" d="M255.153 37.938L134.897 252.976c-2.483 4.44-8.862 4.466-11.382.048L.875 37.958c-2.746-4.814 1.371-10.646 6.827-9.67l120.385 21.517a6.537 6.537 0 0 0 2.322-.004l117.867-21.483c5.438-.991 9.574 4.796 6.877 9.62Z"></path><path fill="url(#IconifyId1813088fe1fbc01fb467)" d="M185.432.063L96.44 17.501a3.268 3.268 0 0 0-2.634 3.014l-5.474 92.456a3.268 3.268 0 0 0 3.997 3.378l24.777-5.718c2.318-.535 4.413 1.507 3.936 3.838l-7.361 36.047c-.495 2.426 1.782 4.5 4.151 3.78l15.304-4.649c2.372-.72 4.652 1.36 4.15 3.788l-11.698 56.621c-.732 3.542 3.979 5.473 5.943 2.437l1.313-2.028l72.516-144.72c1.215-2.423-.88-5.186-3.54-4.672l-25.505 4.922c-2.396.462-4.435-1.77-3.759-4.114l16.646-57.705c.677-2.35-1.37-4.583-3.769-4.113Z"></path></svg>
+</file>
+
+<file path="src/assets/logo/erp-logo.svg">
+<svg width="640" height="360" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>ERP software logo</title>
+  <desc>Abstract mark of three interlocking rounded squares in navy, teal, and amber, representing connected modules, above the wordmark ERP.</desc>
+
+  <g transform="translate(320,140)">
+    <rect x="-90" y="-90" width="110" height="110" rx="20" fill="#0F3D5C" opacity="0.92"/>
+    <rect x="-20" y="-90" width="110" height="110" rx="20" fill="#12849E" opacity="0.92"/>
+    <rect x="-55" y="-20" width="110" height="110" rx="20" fill="#F0A63B" opacity="0.95"/>
+  </g>
+
+  <text x="320" y="300" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="52" font-weight="700" letter-spacing="6" fill="#0F3D5C">ERP</text>
+  <text x="320" y="330" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="15" letter-spacing="3" fill="#5B7A8C">CONNECTED BUSINESS SUITE</text>
+</svg>
+</file>
+
 <file path="src/components/common/list/FilterableHeader.jsx">
 const FilterableHeader = ({ headerName, field, value, onChange }) => (
   <div
@@ -688,54 +708,72 @@ const AccountCodeField = ({ value, onChange, onSelect, onMismatch, allowAnyLevel
 export default AccountCodeField;
 </file>
 
-<file path="src/components/tabs/CloseUnsavedModal.jsx">
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from "@mui/material";
-import useTabs from "../../context/useTabs";
-
-const CloseUnsavedModal = () => {
-  const { tabs, pendingCloseTabId, setPendingCloseTabId, closeTab } = useTabs();
-  const targetTab = tabs.find(t => t.id === pendingCloseTabId);
-
-  if (!pendingCloseTabId) return null;
-
-  return (
-    <Dialog open={true} onClose={() => setPendingCloseTabId(null)} dir="rtl">
-      <DialogTitle>تغییرات ذخیره‌نشده</DialogTitle>
-      <DialogContent>
-        <Typography>
-          اطلاعات سند در تب &quot;{targetTab?.title}&quot; تغییر کرده است. آیا می‌خواهید تغییرات ذخیره شوند؟
-        </Typography>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-        <Button onClick={() => setPendingCloseTabId(null)} color="inherit">
-          انصراف
-        </Button>
-        <Button 
-          onClick={() => closeTab(pendingCloseTabId, true)} 
-          color="error" 
-          variant="outlined"
-        >
-          بستن بدون ذخیره
-        </Button>
-        <Button 
-          onClick={() => {
-            // اگر متد ذخیره از طریق دیتا روی تب پاس داده شده باشد، اینجا صدا زده می‌شود
-            if (targetTab?.data?.onSave) {
-              targetTab.data.onSave();
-            }
-            closeTab(pendingCloseTabId, true);
-          }} 
-          variant="contained" 
-          color="primary"
-        >
-          ذخیره و بستن
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
+<file path="src/components/common/Pickers/entityPickerConfigs.jsx">
+// تنظیمات هر فیلد: عنوان مودال + بخش اول آدرس API
+export const entityPickerConfigs = {
+    good:    { 
+        title: "انتخاب کالا",
+        apiBase: "Good",
+        searchExtraBody: {
+            onlyBomDar: false,
+            onlyLastLevel: true,
+            depotCode: "",
+            columns: "code,name",
+        },
+    },
+    markaz1: { title: "انتخاب مرکز ۱", apiBase: "Markaz1" },
+    markaz2: { title: "انتخاب مرکز ۲", apiBase: "Markaz2" },
+    markaz3: { title: "انتخاب مرکز ۳", apiBase: "Markaz3" },
+    markaz4: { title: "انتخاب مرکز ۴", apiBase: "Markaz4" },
 };
+</file>
 
-export default CloseUnsavedModal;
+<file path="src/context/AuthContext.jsx">
+import { createContext } from "react";
+
+export const AuthContext = createContext(); //«یه فضای مشترک بساز که بتونیم اطلاعات لاگین رو توش نگه داریم»
+
+
+//این یه کامپوننته میاد دور کل اپلیکشن رو میگیره مثل مادر!
+</file>
+
+<file path="src/context/TabContext.jsx">
+import { createContext } from "react";
+
+const TabContext = createContext();
+
+export default TabContext;
+</file>
+
+<file path="src/pages/Authentication/Authentication.jsx">
+import React from 'react';
+
+
+
+const Authentication = () => {
+    return ( <div></div> );
+}
+ 
+export default Authentication;
+</file>
+
+<file path="src/pages/Authentication/Authentication.module.css">
+
+</file>
+
+<file path="src/pages/Dashboard/Dashboard.jsx">
+import React from 'react';
+
+
+const Dashboard = () => {
+    return ( <div></div> );
+}
+ 
+export default Dashboard;
+</file>
+
+<file path="src/pages/Dashboard/Dashboard.module.css">
+
 </file>
 
 <file path="src/pages/Financial/Account/Account.jsx">
@@ -1121,289 +1159,6 @@ const FourStateCheckbox = ({ value, onChange, label }) => {
 export default FourStateCheckbox;
 </file>
 
-<file path="public/vite.svg">
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="31.88" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 257"><defs><linearGradient id="IconifyId1813088fe1fbc01fb466" x1="-.828%" x2="57.636%" y1="7.652%" y2="78.411%"><stop offset="0%" stop-color="#41D1FF"></stop><stop offset="100%" stop-color="#BD34FE"></stop></linearGradient><linearGradient id="IconifyId1813088fe1fbc01fb467" x1="43.376%" x2="50.316%" y1="2.242%" y2="89.03%"><stop offset="0%" stop-color="#FFEA83"></stop><stop offset="8.333%" stop-color="#FFDD35"></stop><stop offset="100%" stop-color="#FFA800"></stop></linearGradient></defs><path fill="url(#IconifyId1813088fe1fbc01fb466)" d="M255.153 37.938L134.897 252.976c-2.483 4.44-8.862 4.466-11.382.048L.875 37.958c-2.746-4.814 1.371-10.646 6.827-9.67l120.385 21.517a6.537 6.537 0 0 0 2.322-.004l117.867-21.483c5.438-.991 9.574 4.796 6.877 9.62Z"></path><path fill="url(#IconifyId1813088fe1fbc01fb467)" d="M185.432.063L96.44 17.501a3.268 3.268 0 0 0-2.634 3.014l-5.474 92.456a3.268 3.268 0 0 0 3.997 3.378l24.777-5.718c2.318-.535 4.413 1.507 3.936 3.838l-7.361 36.047c-.495 2.426 1.782 4.5 4.151 3.78l15.304-4.649c2.372-.72 4.652 1.36 4.15 3.788l-11.698 56.621c-.732 3.542 3.979 5.473 5.943 2.437l1.313-2.028l72.516-144.72c1.215-2.423-.88-5.186-3.54-4.672l-25.505 4.922c-2.396.462-4.435-1.77-3.759-4.114l16.646-57.705c.677-2.35-1.37-4.583-3.769-4.113Z"></path></svg>
-</file>
-
-<file path="src/assets/logo/erp-logo.svg">
-<svg width="640" height="360" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg" role="img">
-  <title>ERP software logo</title>
-  <desc>Abstract mark of three interlocking rounded squares in navy, teal, and amber, representing connected modules, above the wordmark ERP.</desc>
-
-  <g transform="translate(320,140)">
-    <rect x="-90" y="-90" width="110" height="110" rx="20" fill="#0F3D5C" opacity="0.92"/>
-    <rect x="-20" y="-90" width="110" height="110" rx="20" fill="#12849E" opacity="0.92"/>
-    <rect x="-55" y="-20" width="110" height="110" rx="20" fill="#F0A63B" opacity="0.95"/>
-  </g>
-
-  <text x="320" y="300" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="52" font-weight="700" letter-spacing="6" fill="#0F3D5C">ERP</text>
-  <text x="320" y="330" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="15" letter-spacing="3" fill="#5B7A8C">CONNECTED BUSINESS SUITE</text>
-</svg>
-</file>
-
-<file path="src/components/common/Pickers/entityPickerConfigs.jsx">
-// تنظیمات هر فیلد: عنوان مودال + بخش اول آدرس API
-export const entityPickerConfigs = {
-    good:    { 
-        title: "انتخاب کالا",
-        apiBase: "Good",
-        searchExtraBody: {
-            onlyBomDar: false,
-            onlyLastLevel: true,
-            depotCode: "",
-            columns: "code,name",
-        },
-    },
-    markaz1: { title: "انتخاب مرکز ۱", apiBase: "Markaz1" },
-    markaz2: { title: "انتخاب مرکز ۲", apiBase: "Markaz2" },
-    markaz3: { title: "انتخاب مرکز ۳", apiBase: "Markaz3" },
-    markaz4: { title: "انتخاب مرکز ۴", apiBase: "Markaz4" },
-};
-</file>
-
-<file path="src/components/tabs/GlobalTabs.jsx">
-import { useNavigate } from "react-router-dom";
-import useTabs from "../../context/useTabs";
-import { useEffect, useRef } from "react";
-import styles from "./GlobalTabs.module.css";
-import CloseUnsavedModal from "../../components/tabs/CloseUnsavedModal"; //  این  اضافه شد
-
-const GlobalTabs = () => {
-
-  const tabsContainerRef = useRef(null);
-
-  const navigate = useNavigate();
-
-  const {
-    tabs,
-    activeTabId,
-    activateTab,
-    closeTab,
-    closeAllTabs, //  اضافه شد
-  } = useTabs();
-
-  const handleTabClick = (tab) => {
-    activateTab(tab.id);
-
-    navigate(tab.path);
-  };
-
-  const handleCloseTab = (event, tab) => {
-    event.stopPropagation();
-
-    closeTab(tab.id);
-  };
-
-  // پشتیبانی از کلیک وسط موس روی تب برای بستن
-const handleAuxClick = (event, tab) => {
-  if (event.button === 1 && tab.closable) { // دکمه 1 یعنی کلیک وسط موس
-    event.preventDefault();
-    closeTab(tab.id);
-  }
-};
-
-  useEffect(() => {
-    if (!tabsContainerRef.current) return;
-
-    const activeElement =
-        tabsContainerRef.current.querySelector(
-            `[data-tab-id="${activeTabId}"]`
-        );
-
-    if (activeElement) {
-        activeElement.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
-            inline: "nearest",
-        });
-    }
-  }, [activeTabId, tabs]);
-
-  return (
-
-  <div className={styles.tabsWrapper} style={{ display: "flex", alignItems: "center", width: "100%" }}>
-    <div ref={tabsContainerRef} className={styles.tabsContainer}>
-      <div className={styles.tabs}>
-
-        {tabs.map((tab) => (
-          <div
-            key={tab.id}
-            data-tab-id={tab.id}
-            className={`${styles.tab} ${
-              activeTabId === tab.id
-                ? styles.active
-                : ""
-            }`}
-            onClick={() => handleTabClick(tab)}
-            onAuxClick={(e) => handleAuxClick(e, tab)} // اضافه شد برای کلیک وسط
-          >
-
-            <span className={styles.tabTitle}>
-              {tab.title}
-            </span>
-
-            {tab.closable && (
-              <button
-                className={styles.closeButton}
-                onClick={(event) =>
-                  handleCloseTab(event, tab)
-                }
-              >
-                ×
-              </button>
-            )}
-
-          </div>
-        ))}
-      </div>
-    </div>
-{/* دکمه بستن همه در همان راستا کنار تب‌ها */}
-      {tabs.filter(t => t.closable).length > 0 && (
-        <button 
-          onClick={closeAllTabs}
-          style={{ 
-            whiteSpace: "nowrap", 
-            marginRight: "8px", 
-            marginLeft: "8px",
-            padding: "4px 8px",
-            cursor: "pointer",
-            fontSize: "12px"
-          }}
-          title="بستن همه تب‌ها"
-        >
-          بستن همه ×
-        </button>
-      )}
-
-      <CloseUnsavedModal />
-    </div>
-  );
-    
-};
-
-export default GlobalTabs;
-</file>
-
-<file path="src/components/tabs/GlobalTabs.module.css">
-.tabsContainer {
-    width: 100%;
-    background: var(--color-background);
-    border-bottom: 1px solid var(--color-border);
-    overflow-x: auto;
-}
-
-.tabs {
-    display: flex;
-    align-items: flex-end;
-    min-width: max-content;
-    direction: rtl;
-    padding: 0px 10px 0;
-    gap: 3px;
-}
-
-.tab {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    min-width: 110px;
-    max-width: 180px;
-    padding: 6px 10px;
-    background: var(--color-border);
-    color: var(--color-text-secondary);
-    border-radius: 6px 6px 0 0;
-    cursor: pointer;
-    transition: 0.2s;
-    user-select: none;
-    font-size: 13px;
-    line-height: 1.3;
-}
-
-.tab:hover {
-    background: var(--color-primary-selected);
-}
-
-.active {
-    background: var(--color-paper);
-    color: var(--color-primary);
-    font-weight: 600;
-    border: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-paper);
-}
-
-.tabTitle {
-    flex: 1;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.closeButton {
-    width: 18px;
-    height: 18px;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--color-text-secondary);
-    font-size: 16px;
-    line-height: 16px;
-    cursor: pointer;
-}
-
-.closeButton:hover {
-    background: #fee2e2;
-    color: var(--color-error);
-}
-</file>
-
-<file path="src/context/AuthContext.jsx">
-import { createContext } from "react";
-
-export const AuthContext = createContext(); //«یه فضای مشترک بساز که بتونیم اطلاعات لاگین رو توش نگه داریم»
-
-
-//این یه کامپوننته میاد دور کل اپلیکشن رو میگیره مثل مادر!
-</file>
-
-<file path="src/context/TabContext.jsx">
-import { createContext } from "react";
-
-const TabContext = createContext();
-
-export default TabContext;
-</file>
-
-<file path="src/pages/Authentication/Authentication.jsx">
-import React from 'react';
-
-
-
-const Authentication = () => {
-    return ( <div></div> );
-}
- 
-export default Authentication;
-</file>
-
-<file path="src/pages/Authentication/Authentication.module.css">
-
-</file>
-
-<file path="src/pages/Dashboard/Dashboard.jsx">
-import React from 'react';
-
-
-const Dashboard = () => {
-    return ( <div></div> );
-}
- 
-export default Dashboard;
-</file>
-
-<file path="src/pages/Dashboard/Dashboard.module.css">
-
-</file>
-
 <file path="src/pages/Financial/Vouchers/VoucherNew/voucherNewValidations.jsx">
 // voucherNewValidations.jsx
 
@@ -1561,76 +1316,6 @@ export const validateVoucherBalance = (voucher) => {
 };
 </file>
 
-<file path="src/pages/Login/Login.jsx">
-import React, { useState } from "react";
-import styles from "./Login.module.css";
-// import axios from "axios"; با api هندل میکنیم
-// import api from "../../api/axios"; // axios interceptors // حذف شد چون سرویسیش کردیم
-import {loginUser} from '../../services/authService' ; // ای پی آی رو از لاگین جدا کنیم که تغییرم کرد همجا نگردیم دنبالش
-import { useNavigate } from "react-router-dom";
-import { useContext } from "react";
-import {AuthContext} from '../../context/AuthContext';
-
-
-
-
-const Login = () => {
-
-
-const { login } = useContext(AuthContext);
-const [username , setUserName]=useState("");
-const [password , setPassword]=useState("");
-const [loginError , setLoginError]=useState(false)
-const navigate = useNavigate();
-const [loading , setLoading] = useState(false); 
-
-const handleLogin =()=>{
-      setLoading(true);
-    // let params ={username,password}
-    // axios.post('https://dummyjson.com/auth/login', params)
-    // 
-    // api.post("/auth/login", params) // این رو حذف کردیم که ای پی آی نباشه تو یو آی و در صورت تغییر دنبالش نگردیم سرویسی باشه
-
-    loginUser(username,password)   
-    .then((res)=>{
-        
-        // localStorage.setItem("token",res.data.data.token);
-        login(res.data.accessToken,res.data)
-        navigate("/dashboard");
-        setLoginError(false);
-        //  console.log(res)
-
-    })
-    .catch((error)=>{
-        setLoginError(true);
-        console.log(error);
-        
-        
-    })
-    .finally(() => {
-      setLoading(false);
-    });;//هم در موفقیت اجرا میشه هم در خطا پس دیگه لازم نیست توی هر دو جا بنویسیم
-}
-
-
-    return( 
-
-<div className={styles.container}>       
-    <div className={styles.wrapper}>
-    <h1>ورود به سامانه</h1>
-    <input value={username} onChange={(event)=>setUserName(event.target.value)} type="text" placeholder="نام کاربری" /> 
-    <input value={password} onChange={(event)=>setPassword(event.target.value)} type="password" placeholder="گذرواژه" />
-    {loginError && <div className={styles.login_error}>نام کاربری یا گذرواژه صحیح نمیباشد</div>}
-    <button onClick={handleLogin}  disabled={loading}> {loading ? "در حال ورود..." : "ورود"}</button>
-
-  </div>
-</div>
-  );
-};
-
-export default Login;
-</file>
-
 <file path="src/pages/Login/Login.module.css">
 .container {
     height: calc(100vh - 64px); /* ارتفاع navbar */
@@ -1758,588 +1443,6 @@ const ProtectedRoute = ({ children }) => {
 };
 
 export default ProtectedRoute;
-</file>
-
-<file path="src/theme/Theme.jsx">
-import { createTheme, alpha } from "@mui/material/styles";
-import { InputAdornment } from "@mui/material";
-
-
-const colors = {
-  primary: "#4F46E5",
-  primaryHover: "#4338CA",
-  primaryLight: "#818CF8",
-  primarySelected: "#EEF2FF",
-
-  sidebar: "#20212B",
-  sidebarSurface: "#292B38",
-
-  background: "#F8FAFC",
-  paper: "#FFFFFF",
-
-  textPrimary: "#1F2937",
-  textSecondary: "#64748B",
-  textDisabled: "#94A3B8",
-
-  border: "#E2E8F0",
-
-  error: "#EF4444",
-  warning: "#F59E0B",
-  success: "#10B981",
-};
-
-
-// props مشترک همه‌ی فیلدهای یکدست: کپشن ثابت کنار مقدار (مثل «شماره سند» بالای سند)
-// ظاهرش کامل از theme.fieldBox و MuiFilledInput پایین همین فایل می‌آید
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const fieldProps = (label, inputExtra = {}) => ({
-  variant: "filled",
-  hiddenLabel: true,
-  size: "small",
-  fullWidth: true,
-  slotProps: {
-    htmlInput: { "aria-label": label },
-    input: {
-      disableUnderline: true,
-      startAdornment: <InputAdornment position="start">{label}</InputAdornment>,
-      ...inputExtra,
-    },
-  },
-});
-
-
-export const Theme = createTheme({
-  direction: "rtl",
-
-  palette: {
-    primary: {
-      main: '#4F46E5',         // Primary انتخابی شما
-      light: '#E0E7FF',        // Selected انتخابی شما
-      dark: '#3730A3',         // برای حالت Hover و متن‌های روی Selected
-      contrastText: '#FFFFFF',
-    },
-    background: {
-      default: '#F9FAFB',      // Background اصلی صفحه
-      paper: '#FFFFFF',        // بدنه کارت‌ها و DataGrid
-    },
-    text: {
-      primary: '#111827',
-      secondary: '#6B7280',
-    },
-    divider: '#E5E7EB',        // کادرها و جداکننده‌ها
-    action: {
-      hover: '#F8FAFC',        // رنگ موس روی سطرهای جدول
-      selected: '#E0E7FF',     // رنگ سطر انتخاب‌شده
-    },
-    // رنگ‌های اختصاصی سایدبار و سیستم مالی
-    sidebar: {
-      bg: "#181824",         // Charcoal تیره برای پس‌زمینه سایدبار
-      surface: "#222232",    // پس‌زمینه منوهای والد
-      activeBg: "#4F46E5",   // Electric Indigo برای آیتم فعال
-      text: "#94A3B8",
-      activeText: "#FFFFFF",
-    },
-    financial: {
-      debit: '#10B981',        // سبز بدهکار
-      credit: '#EF4444',       // قرمز بستانکار
-    },
-  },
-
-
-
-    // توکن‌های ظاهری فیلدهای یکدست (AppTextField / AppSelect) — با تغییر اینجا، همه‌ی فیلدهای برنامه عوض می‌شن
-  fieldBox: {
-    height: 38,
-    radius: 8,
-    background: "#f5f6fa",
-    hoverBackground: "#edeff5",
-    focusBackground: "#ffffff",
-    disabledBackground: "#eef0f4",
-    labelColor: "#515355",
-    labelFontSize: 12,
-    fontSize: 13,
-  },
-
-  typography: {
-    fontFamily: '"IRANSansX", "Tahoma", "Arial", sans-serif',
-    fontSize: 13,
-    h1: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
-    h2: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
-    h3: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
-    h4: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
-    h5: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 600 },
-    h6: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 600 },
-    subtitle1: { fontFamily: '"IRANSansX", sans-serif' },
-    subtitle2: { fontFamily: '"IRANSansX", sans-serif' },
-    body1: { fontFamily: '"IRANSansX", sans-serif', fontSize: "0.875rem" },
-    body2: { fontFamily: '"IRANSansX", sans-serif', fontSize: "0.8125rem" },
-    button: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 600, textTransform: "none" },
-    caption: { fontFamily: '"IRANSansX", sans-serif' },
-    overline: { fontFamily: '"IRANSansX", sans-serif' },
-  },
-
-  shape: {
-    borderRadius: 8,
-  },
-
-  components: {
-    // تنظیمات جهانی پایه
-
-MuiCssBaseline: {
-  styleOverrides: {
-    ":root": {
-      "--color-primary": colors.primary,
-      "--color-primary-hover": colors.primaryHover,
-      "--color-primary-light": colors.primaryLight,
-      "--color-primary-selected": colors.primarySelected,
-
-/* اصلاح دقیق نام متغیرهایی که در Sidebar.module.css خوانده می‌شوند */
-      "--sidebar-bg": colors.sidebar,             /* #20212B */
-      "--sidebar-surface": colors.sidebarSurface, /* #2D2E3A */
-      "--sidebar-surface-hover": "#383948",
-      "--sidebar-text": "#9CA3AF",                /* رنگ متن آیتم‌های معمولی */
-      "--sidebar-text-hover": "#FFFFFF",
-      "--sidebar-active": colors.primary,         /* #4F46E5 */
-
-      "--color-background": colors.background,
-      "--color-paper": colors.paper,
-
-      "--color-text-primary": colors.textPrimary,
-      "--color-text-secondary": colors.textSecondary,
-      "--color-text-disabled": colors.textDisabled,
-
-      "--color-border": colors.border,
-
-      "--color-error": colors.error,
-      "--color-warning": colors.warning,
-      "--color-success": colors.success,
-    },
-
-    body: {
-      fontFamily: '"IRANSansX", sans-serif',
-      backgroundColor: colors.background,
-      direction: "rtl",
-    },
-  },
-},
-
-
-    // دکمه‌ها
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          borderRadius: 6,
-          boxShadow: "none",
-          "&:hover": {
-            boxShadow: "none",
-          },
-        },
-      },
-    },
-
-    // فیلدهای ورودی (TextField / Input)
-    MuiInputBase: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          fontSize: "13px",
-          minHeight: 36,
-        },
-        input: {
-          fontFamily: '"IRANSansX", sans-serif',
-          textAlign:"right",
-          padding: "8px 10px",
-        },
-      },
-    },
-    MuiInputLabel: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          fontSize: "13px",
-          right: 14,
-          left: "auto",
-          transformOrigin: "top right",
-          "&.MuiInputLabel-shrink": {
-            transform: "translate(0, -9px) scale(0.75)",
-            backgroundColor: "#ffffff",
-            padding: "0 4px",
-      },
-        },
-      },
-    },
-    MuiOutlinedInput: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          fontSize: "0.875rem",
-          borderRadius: 8,
-          backgroundColor: "#ffffff",
-
-          "&:hover .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#94a3b8",
-          },
-
-          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#2563eb",
-            borderWidth: "1px",
-          },
-        },
-
-          notchedOutline: {
-            borderColor: "#cbd5e1",
-            textAlign: "right",
-          },
-          input: {
-            fontFamily: '"IRANSansX", sans-serif',
-            padding: "8.5px 12px",
-          },
-      },
-    },
-
-    MuiFormLabel: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif"',
-          fontSize: "0.8125rem",
-
-          "&.Mui-focused": {
-            color: "#2563eb",
-          },
-        },
-      },
-    },
-
-MuiSelect: {
-  styleOverrides: {
-    select: {
-      paddingLeft: "32px !important", // ایجاد فضای کافی برای متن تا زیر فلش نرود
-      display: "flex",
-      alignItems: "center",
-    },
-    icon: {
-      left: "6px !important",
-      right: "auto !important",
-    },
-  },
-},
-
-        // فیلد یکدست برنامه (variant="filled" + fieldProps) — تنها منبع ظاهر فیلدها
-    MuiFilledInput: {
-      styleOverrides: {
-        root: ({ theme }) => {
-          const f = theme.fieldBox;
-          return {
-            minHeight: f.height,
-            padding: "0 5px",
-            gap: 10,
-            borderRadius: f.radius,
-            backgroundColor: f.background,
-            transition: "background-color 0.15s ease, box-shadow 0.15s ease",
-            "&:hover": { backgroundColor: f.hoverBackground },
-            "&.Mui-focused": {
-              backgroundColor: f.focusBackground,
-              boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.16)}`,
-            },
-            "&.Mui-disabled": { backgroundColor: f.disabledBackground, opacity: 0.6 },
-
-            // کپشن (startAdornment)
-            "& .MuiInputAdornment-positionStart": {
-              margin: 0,
-              height: "auto",
-              maxHeight: "none",
-              whiteSpace: "nowrap",
-              fontSize: f.labelFontSize,
-              color: f.labelColor,
-              "& .MuiTypography-root": { fontSize: "inherit", color: "inherit", fontFamily: "inherit" },
-            },
-            "&.Mui-focused .MuiInputAdornment-positionStart": { color: theme.palette.primary.main },
-            "& .MuiInputAdornment-positionEnd": { margin: 0 ,
-                         "& .MuiIconButton-root": {
-                             padding: "2px !important", // کاهش پدینگ آیکون‌های داخل فیلد
-                                                   }, },
-            // سلکت: جای فلش کنار لبه‌ی چپ، متن هرگز زیر آن نمی‌رود
-            "& .MuiSelect-select": {
-              padding: "0 15px 0 0 !important",
-              minHeight: "auto",
-              textAlign: "right",
-            },
-            "& .MuiSelect-icon": { left: "1px !important", right: "auto !important", fontSize: 18 },
-          };
-        },
-        input: { padding: "0 !important", textAlign: "right", fontSize: 13 },
-      },
-    },
-
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          "&.MuiAutocomplete-paper": {
-            marginTop: 4,
-            borderRadius: 8,
-          },
-        },
-      },
-    },
-
-    MuiMenuItem: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          fontSize: "13px",
-          justifyContent: "center",
-          textAlign: "center",
-
-
-          "&.Mui-selected": {
-            backgroundColor: "#eff6ff",
-          },
-
-          "&.Mui-selected:hover": {
-            backgroundColor: "#dbeafe",
-          },
-        },
-      },
-   },
-      MuiAccordion: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          border: "1px solid #e2e8f0",
-          borderRadius: 10,
-          boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)",
-          backgroundColor: "#ffffff",
-
-          "&:before": {
-            display: "none",
-          },
-
-          "&:first-of-type": {
-            borderTopLeftRadius: 8,
-            borderTopRightRadius: 8,
-          },
-
-          "&:last-of-type": {
-            borderBottomLeftRadius: 8,
-            borderBottomRightRadius: 8,
-          },
-        },
-      },
-    },
-
-    MuiAccordionSummary: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif"',
-          minHeight: 42,
-          padding: "0 12px",
-
-          "&.Mui-expanded": {
-            minHeight: 42,
-          },
-        },
-
-        content: {
-          margin: "8px 0",
-
-          "&.Mui-expanded": {
-            margin: "8px 0",
-          },
-        },
-      },
-    },
-
-    MuiAccordionDetails: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          padding: "12px",
-          borderTop: "1px solid #e2e8f0",
-        },
-      },
-    },
-
-    
-
-    // دیالوگ‌ها و مودال‌ها (مثل EntityPickerModal)
-    MuiDialogTitle: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          fontWeight: 700,
-          fontSize: "1rem",
-          textAlign: "right",
-        },
-      },
-    },
-    MuiDialogContent: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-        },
-      },
-    },
-
-    // تب‌ها (Tabs / Tab)
-    MuiTab: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          fontWeight: 600,
-          fontSize: "0.8125rem",
-        },
-      },
-    },
-
-    // استایل‌های عمومی جداول DataGridPro
-    MuiDataGrid: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          direction: "rtl",
-          border: "1px solid #cbd5e1",
-          borderRadius: 8,
-
-
-    // ۱. استایل کلی نوار هدر
-        '& .MuiDataGrid-columnHeaders': {
-          backgroundColor: "#e7edf3 !important", // پس‌زمینه نوار اصلی هدر
-          borderBottom: "2px solid #94a3b8 !important",
-          color: "#0f172a !important",
-          fontWeight: "700 !important",
-          paddingY: '3px',
-        },
-
-        // ۲. تبدیل هر هدر به یک کارت شیشه‌ای با لبه‌های گرد و سایه ملایم
-        '& .MuiDataGrid-columnHeader': {
-          position: 'relative',
-          backgroundColor: '#e7edf3', // سفید شفاف/شیک
-          marginRight: '2px', // فاصله نازک بین کارت‌ها (برای RTL به marginLeft تغییر دهید در صورت لزوم)
-          marginLeft: '2px',
-          borderRadius: '6px', // لبه‌های گرد برای حالت سه بعدی کارت
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)', // سایه ملایم زیر هر کارت هدر
-          border: '1px solid #989ca0',
-          transition: 'all 0.2s ease-in-out',
-
-          // افکت هوور روی کل کارت هدر
-          '&:hover': {
-            backgroundColor: '#cacbe9',
-            borderColor: '#94a3b8',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
-          },
-        },
-
-        // ۳. بازطراحی کامل columnSeparator به دستگیره جادویی و حرفه‌ای
-        '& .MuiDataGrid-columnSeparator': {
-          width: '18px', // پهنای عالی برای راحتی دراگ کردن با ماوس
-          justifyContent: 'center',
-          left: -8, // قرارگیری دقیق روی مرز جداکننده در RTL
-          right: 'auto',
-          zIndex: 10,
-
-          // حذف آیکون خطی معمولی پیش‌فرض MUI
-          '& .MuiDataGrid-iconSeparator': {
-            display: 'none', // ❌ حذف آیکون پیش‌فرض
-          },
-
-          // ساخت دستگیره دراگ به شکل ۳ نقطه نازک مدرن (Grip Dots)
-          '&::after': {
-            content: '""',
-            width: '4px',
-            height: '14px',
-            borderRadius: '2px',
-            // ایجاد حالت ۳ نقطه جداکننده سنتی ابزارها با استفاده از radial-gradient
-            backgroundColor: '#cbd5e1',
-            boxShadow: '0 -5px 0 #cbd5e1, 0 5px 0 #cbd5e1', // ایجاد دو نقطه در بالا و پایین نقطه وسط
-            transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          },
-
-          // افکت فوق‌العاده جذاب هنگام هوور روی جداکننده جهت تغییر عرض ستون
-          '&:hover::after': {
-            backgroundColor: '#0284c7', // تغییر رنگ نقطه مرکزی به آبی درخشان
-            boxShadow: '0 -6px 0 #0284c7, 0 6px 0 #0284c7, 0 0 10px rgba(2, 132, 199, 0.6)', // درخشش ۳ نقطه
-            transform: 'scale(1.25)', // بزرگ‌نمایی حالت اکشن
-          },
-          },
-              
-          "& .MuiDataGrid-columnHeaderTitleContainer": {
-            justifyContent: "flex-end !important",
-          },
-
-          "& .MuiDataGrid-columnHeaderTitleContainerContent": { 
-            width: "100% !important", 
-            display: "block !important", 
-          },
-          
-          "& .MuiDataGrid-columnHeaderTitle": { 
-            width: "100%",
-            fontFamily: '"IRANSansX", sans-serif',
-            fontWeight: 700,
-            fontSize: "0.8125rem", 
-            textAlign:"center"
-          },
-
-          "& .MuiDataGrid-iconButtonContainer": {
-            display: "none !important",
-          },
-
-          "& .MuiDataGrid-sortIcon": {
-            opacity: 0,
-            transition: "opacity 0.15s ease",
-          },
-
-          "& .MuiDataGrid-columnHeader:hover .MuiDataGrid-sortIcon": {
-            opacity: 1,
-          },
-
-          
-          "& .MuiDataGrid-cell": {
-            fontFamily: '"IRANSansX", sans-serif',
-            borderLeft: "1px solid #e2e8f0",
-            fontSize: "0.85rem",
-
-          },
-
-          // زیر اسکرول نیفته متن
-          "& .MuiDataGrid-cell--textRight": {
-            paddingRight: "22px",
-          },
-
-                    //  رنگ یکی درمیون ردیف‌ها (زبرا)
-          "& .MuiDataGrid-row:nth-of-type(even)": {
-            backgroundColor: "#f5f7f8",
-          },
-          
-          "& .MuiDataGrid-row.Mui-selected": {
-            backgroundColor: "#e5e5ff !important",
-          },
-
-          // "& .MuiDataGrid-row.Mui-selected:hover": {
-          //   backgroundColor: "#90caf9 !important",
-          // },
-
-          //  هاور ملایم روی ردیف زیر ماوس
-          "& .MuiDataGrid-row:hover": {
-            backgroundColor: "#f2f2fd !important",
-          },
-
-          //  کوچیک‌کردن نوار ابزار بالای گرید (سرچ/فیلتر/ستون‌ها)
-          "& .MuiDataGrid-toolbar": {
-            minHeight: "30px",
-            // borderBottom: "2px solid #dce4f0 !important",         
-           },
-
-          //  "& .MuiInputBase-input-MuiOutlinedInput-input":{
-
-          //   textAlign:"center"
-          //  }
-        },
-      },
-    },
-  },
-});
 </file>
 
 <file path="src/App.css">
@@ -2488,22 +1591,6 @@ export default defineConfig([
 ])
 </file>
 
-<file path="index.html">
-<!doctype html>
-<html lang="fa" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>سامانه جامع مدیریت منابع </title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
-</file>
-
 <file path="vite.config.js">
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -2549,352 +1636,6 @@ api.interceptors.response.use(
 );
 
 export default api;
-</file>
-
-<file path="src/components/common/Pickers/EntityPickerModal.jsx">
-import { useEffect, useState, useRef } from "react";
-import { Dialog, DialogTitle, DialogContent, Box, Tabs, Tab, TextField, List, ListItemButton, ListItemText, CircularProgress, Button } from "@mui/material";
-import { toPersianDigits } from "../../../utils/formatter";
-import styles from "./EntityPickerModal.module.css";
-import { FixedSizeList } from "react-window";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-
-
-
-
-// تبدیل درخت تودرتو به یک لیست تخت با عمق (depth)، فقط شامل نودهایی که مسیرشون باز است
-function flattenTree(nodes, depth, expandedItems) {
-    let result = [];
-    for (const node of nodes) {
-        result.push({ node, depth });
-        const idStr = String(node.id);
-        if (expandedItems.includes(idStr) && node.children?.length > 0) {
-            result = result.concat(flattenTree(node.children, depth + 1, expandedItems));
-        }
-    }
-    return result;
-}
-
-function findFlatIndexById(flatNodes, id) {
-    return flatNodes.findIndex((entry) => String(entry.node.id) === String(id));
-}
-
-
-// مودال عمومی انتخاب کد؛ با یک picker (خروجی useEntityPicker) و یک onSelect کار می‌کند
-const EntityPickerModal = ({ title, picker, onSelect , allowAnyLevel = false }) => {
-
-    const {
-        modal, close,
-        activeTab, setActiveTab,
-        searchTerm, setSearchTerm, searchResults, searchLoading,
-        treeData, treeLoading, expandedItems, toggleNode,
-        scrollTargetId, clearScrollTarget,
-    } = picker;
-
-    const [highlightedIndex, setHighlightedIndex] = useState(0);
-    const virtualListRef = useRef(null);
-    
-    const treeListRef = useRef(null);
-    
-        // محاسبه‌ی لیست تخت درخت، برای رندر virtualized
-    const flatTreeNodes = flattenTree(treeData, 0, expandedItems);
-    
-    const [highlightedTreeIndex, setHighlightedTreeIndex] = useState(0);
-    const treeContainerRef = useRef(null);
-
-    // 🟢 الگوی رسمی ری‌اکت: وقتی scrollTargetId (از بیرون) تغییر کرد، هایلایت را همین‌جا در رندر تنظیم کن
-    const [prevScrollTargetId, setPrevScrollTargetId] = useState(scrollTargetId);
-    if (scrollTargetId !== prevScrollTargetId) {
-        setPrevScrollTargetId(scrollTargetId);
-        if (scrollTargetId) {
-            const index = findFlatIndexById(flatTreeNodes, scrollTargetId);
-            if (index >= 0) {
-                setHighlightedTreeIndex(index);
-            }
-        }
-    }
-
-
-
-    // با تغییر لیست تخت (باز/بسته شدن یه نود)، هایلایت برنمی‌گرده به صفر؛ فقط اگه ایندکس فعلی دیگه معتبر نبود، اصلاحش کن
-    if (highlightedTreeIndex > 0 && highlightedTreeIndex >= flatTreeNodes.length) {
-        setHighlightedTreeIndex(Math.max(0, flatTreeNodes.length - 1));
-    }
-
-
-
-    const searchInputRef = (element) => {
-        if (element && modal.open) {
-            setTimeout(() => {
-                element.focus();
-                const length = element.value ? element.value.length : 0;
-                if (length > 0 && typeof element.setSelectionRange === "function") {
-                    element.setSelectionRange(length, length);
-                }
-            }, 60);
-        }
-    };
-
-
-    // 🟢 الگوی رسمی ری‌اکت برای «تنظیم state هنگام تغییر یک prop» — بدون useEffect
-    const [prevSearchResults, setPrevSearchResults] = useState(searchResults);
-    if (searchResults !== prevSearchResults) {
-        setPrevSearchResults(searchResults);
-        setHighlightedIndex(0);
-    }
-
-    // این یکی می‌مونه چون واقعاً «سینک با سیستم خارجی» (اسکرول DOM) است، نه sync بین دو state
-    useEffect(() => {
-        virtualListRef.current?.scrollToItem(highlightedIndex, "smart");
-    }, [highlightedIndex]);
-
-    const handleSelect = (node) => {
-        onSelect(node);
-        close();
-    };
-
-    // اسکرول به نودی که از تایپ مستقیم کد پیدا شده (resolveTypedCode)
-    useEffect(() => {
-        if (!modal.open || activeTab !== 1 || !scrollTargetId) return;
-
-        const index = findFlatIndexById(flatTreeNodes, scrollTargetId);
-        if (index >= 0) {
-            treeListRef.current?.scrollToItem(index, "smart");
-        }
-        clearScrollTarget();
-    }, [modal.open, activeTab, scrollTargetId, flatTreeNodes, clearScrollTarget]);
-
-    // فوکوس روی اولین ریشه، فقط وقتی مودال با focusFirstRoot باز شده
-    useEffect(() => {
-        if (!modal.open || activeTab !== 1 || !modal.focusFirstRoot) return;
-        treeListRef.current?.scrollToItem(0, "smart");
-        
-    }, [modal.open, activeTab, modal.focusFirstRoot]);
-
-
-    // فوکوس گرفتن خودِ لیست درخت وقتی تب باز می‌شه، تا فوراً کیبورد کار کند
-    useEffect(() => {
-        if (!modal.open || activeTab !== 1) return;
-        const timer = setTimeout(() => {
-            treeContainerRef.current?.focus();
-        }, 60);
-        return () => clearTimeout(timer);
-    }, [modal.open, activeTab]);
-
-
-
-    return (
-
-        <Dialog open={modal.open} onClose={close} fullWidth maxWidth="sm" >
-            <DialogTitle className={styles.ModalTitle}>{title}</DialogTitle>
-
-            <Box sx={{ borderBottom: 1, borderColor: "divider" }} dir="rtl">
-                <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)} variant="fullWidth">
-                    <Tab label="جستجو" className={styles.TabFont} />
-                    <Tab label="ساختار درختی" className={styles.TabFont} />
-                </Tabs>
-            </Box>
-
-            <DialogContent dir="rtl">
-                {activeTab === 0 && (
-                    <Box sx={{ pt: 2 }} className={styles.TreeWrapper}>
-                        <TextField className={styles.SearchInput}
-                            fullWidth
-                            inputRef={searchInputRef}
-                            placeholder="کد یا نام را برای جستجو تایپ کنید..."
-                            size="small"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "ArrowDown") {
-                                    e.preventDefault();
-                                    setHighlightedIndex((prev) =>
-                                        Math.min(prev + 1, searchResults.length - 1)
-                                    );
-                                } else if (e.key === "ArrowUp") {
-                                    e.preventDefault();
-                                    setHighlightedIndex((prev) => Math.max(prev - 1, 0));
-                                } else if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    const item = searchResults[highlightedIndex];
-                                    if (item && !(item.childCount > 0)) {
-                                        handleSelect(item);
-                                    }
-                                }
-                            }}
-                        />
-                        {searchLoading ? (
-                            <div className={styles.LoadingContainer}><CircularProgress size={30} /></div>
-                        ) : (
-                            <List>
-                        {searchResults.length === 0 ? (
-                            <div className={styles.EmptyResult}>چیزی یافت نشد.</div>
-                        ) : (
-                            <FixedSizeList
-                                ref={virtualListRef}
-                                height={320}
-                                width="100%"
-                                itemCount={searchResults.length}
-                                itemSize={58}
-                            >
-                                {({ index, style }) => {
-                                    const item = searchResults[index];
-                                    const isParent = item.childCount > 0;
-                                    const isSelectable = !isParent || allowAnyLevel;
-
-
-                                    return (
-                                        <div style={style}>
-                                            <ListItemButton
-                                                className={styles.ResultItem}
-                                                key={item.id ?? item.Id ?? item.code ?? index}
-                                                selected={index === highlightedIndex}
-                                                disabled={!isSelectable}
-                                                onClick={() => isSelectable && handleSelect(item)}
-                                            >
-                                                <ListItemText
-                                                    primary={
-                                                        <span className={styles.ResultNameText}>
-                                                            {item.name}
-                                                            {isParent && <small style={{ color: "orange", marginRight: 8 }}>(دارای زیرمجموعه)</small>}
-                                                        </span>
-                                                    }
-                                                    secondary={<span className={styles.ResultCodeText}>کد: {toPersianDigits(item.code)}</span>}
-                                                />
-                                            </ListItemButton>
-                                        </div>
-                                    );
-                                }}
-                            </FixedSizeList>
-                        )}
-                            </List>
-                        )}
-                    </Box>
-                )}
-
-                {activeTab === 1 && (
-                    <Box sx={{ pt: 2 }} className={styles.TreeWrapper}>
-                        {treeLoading ? (
-                            <div className={styles.LoadingContainer}><CircularProgress size={30} /></div>
-                        ) : treeData.length > 0 ? (
-                            <div
-                                ref={treeContainerRef}
-                                tabIndex={0}
-                                style={{ outline: "none" }}
-                                onKeyDown={(e) => {
-                                    if (e.key === "ArrowDown") {
-                                        e.preventDefault();
-                                        setHighlightedTreeIndex((prev) =>
-                                            Math.min(prev + 1, flatTreeNodes.length - 1)
-                                        );
-                                    } else if (e.key === "ArrowUp") {
-                                        e.preventDefault();
-                                        setHighlightedTreeIndex((prev) => Math.max(prev - 1, 0));
-                                                                        } else if (e.key === "Enter") {
-                                        e.preventDefault();
-                                        const entry = flatTreeNodes[highlightedTreeIndex];
-                                        if (!entry || entry.node.isDummy) return;
-
-                                        if (allowAnyLevel) {
-                                            // استثنائاً اینجا: Enter یعنی «همین رو انتخاب کن»، فارغ از پدر/برگ بودن
-                                            handleSelect(entry.node);
-                                        } else {
-                                            toggleNode(entry.node, handleSelect);
-                                        }
-                                    } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-                                        // جهت راست/چپ فقط برای باز/بسته کردن، تا با اسکرول افقی صفحه تصادم نکند
-                                        e.preventDefault();
-                                        const entry = flatTreeNodes[highlightedTreeIndex];
-                                        if (entry && entry.node.childCount > 0) {
-                                            toggleNode(entry.node, handleSelect);
-                                        }
-                                    }
-                                }}
-                            >
-                                <FixedSizeList
-                                    ref={treeListRef}
-                                    height={360}
-                                    width="100%"
-                                    itemCount={flatTreeNodes.length}
-                                    itemSize={44}
-                                >
-                                    {({ index, style }) => {
-                                        const { node, depth } = flatTreeNodes[index];
-                                        const isParent = node.childCount > 0;
-                                        const isDummy = node.isDummy;
-                                        const isExpanded = expandedItems.includes(String(node.id));
-                                        const isHighlighted = index === highlightedTreeIndex;
-
-                                        if (isDummy) {
-                                            return (
-                                                <div style={{ ...style, paddingRight: depth * 20 + 16, color: "#999", fontSize: 13, display: "flex", alignItems: "center" }}>
-                                                    در حال بارگذاری...
-                                                </div>
-                                            );
-                                        }
-
-                                        return (
-                                            <div
-                                                className={`${styles.TreeRowHover} ${isHighlighted ? styles.TreeRowSelected : ""}`}
-                                                style={{
-                                                    ...style,
-                                                    direction: "rtl",
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    paddingRight: depth * 20 + 8,
-                                                    paddingLeft: 8,
-                                                    cursor: "pointer",
-                                                    gap: 8,
-                                                    boxSizing: "border-box",
-                                                }}
-                                                onClick={() => {
-                                                    setHighlightedTreeIndex(index);
-                                                    toggleNode(node, handleSelect);
-                                                }}
-                                            >
-                                                {isParent && (
-                                                    <span className={styles.TreeExpandIcon}>
-                                                        {isExpanded ? (
-                                                            <ExpandMoreIcon fontSize="inherit" />
-                                                        ) : (
-                                                            <ChevronLeftIcon fontSize="inherit" />
-                                                        )}
-                                                    </span>
-                                                )}
-                                                <span className={styles.TreeLabelContainer}>
-                                                    <span>{node.name}</span>
-                                                    <span className={styles.TreeCodeSpan}>({toPersianDigits(node.code)})</span>
-                                                </span>
-                                                {(!isParent || allowAnyLevel) && (
-                                                    <Button
-                                                        size="small"
-                                                        variant="outlined"
-                                                        className={styles.TreeSelectBtn}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleSelect(node);
-                                                        }}
-                                                    >
-                                                        انتخاب
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        );
-                                    }}
-                                </FixedSizeList>
-                            </div>
-                        ) : (
-                            <div className={styles.EmptyResult}>ساختار درختی یافت نشد.</div>
-                        )}
-                    </Box>
-                )}
-            </DialogContent>
-        </Dialog>
-    );
-};
-
-export default EntityPickerModal;
 </file>
 
 <file path="src/components/common/Pickers/EntityPickerModal.module.css">
@@ -3512,6 +2253,1355 @@ export default AccountHierarchySummary;
 }
 </file>
 
+<file path="src/components/tabs/CloseUnsavedModal.jsx">
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from "@mui/material";
+import useTabs from "../../context/useTabs";
+
+const CloseUnsavedModal = () => {
+  const { tabs, pendingCloseTabId, setPendingCloseTabId, closeTab } = useTabs();
+  const targetTab = tabs.find(t => t.id === pendingCloseTabId);
+
+  if (!pendingCloseTabId) return null;
+
+  return (
+    <Dialog open={true} onClose={() => setPendingCloseTabId(null)} dir="rtl">
+      <DialogTitle>تغییرات ذخیره‌نشده</DialogTitle>
+      <DialogContent>
+        <Typography>
+          اطلاعات سند در تب &quot;{targetTab?.title}&quot; تغییر کرده است. آیا می‌خواهید تغییرات ذخیره شوند؟
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+        <Button onClick={() => setPendingCloseTabId(null)} color="inherit">
+          انصراف
+        </Button>
+        <Button 
+          onClick={() => closeTab(pendingCloseTabId, true)} 
+          color="error" 
+          variant="outlined"
+        >
+          بستن بدون ذخیره
+        </Button>
+        <Button 
+          onClick={async () => {
+            // اگر متد ذخیره روی تب وجود داشت
+            if (targetTab?.data?.onSave) {
+              // منتظر می‌مانیم تا ببینیم آیا ذخیره موفق بوده یا نه
+              const isSavedSuccessfully = await targetTab.data.onSave();
+              
+              // اگر ذخیره موفق بود (یا خطایی نداشت که متوقفش کند)، تب را ببند
+              if (isSavedSuccessfully !== false) {
+                closeTab(pendingCloseTabId, true);
+              }
+            } else {
+              closeTab(pendingCloseTabId, true);
+            }
+          }} 
+          variant="contained" 
+          color="primary"
+        >
+          ذخیره و بستن
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+export default CloseUnsavedModal;
+</file>
+
+<file path="src/context/AuthProvider.jsx">
+import {useState} from "react";
+import { AuthContext } from "./AuthContext";
+
+
+export const AuthProvider = ({ children }) => {
+
+  const [token, setToken] = useState ( localStorage.getItem("token"));
+  const [user, setUser] = useState(() => {
+  const saved = localStorage.getItem("user");
+  return saved ? JSON.parse(saved) : null }); //برای داشتن اطلاعات یوزر و اگه خالی بود کرش نکنه
+
+  // وقتی اپ لود میشه اگر توکن تو localStorage بود ستش کن
+//   useEffect(() => {
+//     const storedToken = localStorage.getItem("token");
+//     if (storedToken) {
+//       setToken(storedToken);
+//     }
+//   }, []); //وقتی اپ برای اولین بار باز شد:برو ببین تو localStorage توکن هست؟ اگر هست، داخل state بذارش چرا؟ چون اگر کاربر قبلاً لاگین کرده بود بعد صفحه رو رفرش کنه ما نباید بندازیمش بیرون.
+
+  const login = (token , userData) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(userData))
+    setToken(token);
+    setUser(userData);
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    setToken(null);
+    setUser(null);
+  };
+
+  
+
+  return (
+    <AuthContext.Provider value={{ token,user, login, logout }}>
+    
+      {children}
+      
+    </AuthContext.Provider>
+  );
+};
+</file>
+
+<file path="src/context/useTabs.jsx">
+import { useContext } from "react";
+import TabContext from "./TabContext";
+
+const useTabs = () => { return useContext(TabContext); };
+
+export default useTabs;
+</file>
+
+<file path="src/pages/Login/Login.jsx">
+import React, { useState } from "react";
+import styles from "./Login.module.css";
+// import axios from "axios"; با api هندل میکنیم
+// import api from "../../api/axios"; // axios interceptors // حذف شد چون سرویسیش کردیم
+import {loginUser} from '../../services/authService' ; // ای پی آی رو از لاگین جدا کنیم که تغییرم کرد همجا نگردیم دنبالش
+import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import {AuthContext} from '../../context/AuthContext';
+
+
+
+
+const Login = () => {
+
+
+const { login } = useContext(AuthContext);
+const [username , setUserName]=useState("");
+const [password , setPassword]=useState("");
+const [loginError , setLoginError]=useState(false)
+const navigate = useNavigate();
+const [loading , setLoading] = useState(false); 
+
+const handleLogin =()=>{
+      setLoading(true);
+    // let params ={username,password}
+    // axios.post('https://dummyjson.com/auth/login', params)
+    // 
+    // api.post("/auth/login", params) // این رو حذف کردیم که ای پی آی نباشه تو یو آی و در صورت تغییر دنبالش نگردیم سرویسی باشه
+
+    loginUser(username,password)   
+    .then((res)=>{
+        
+        // localStorage.setItem("token",res.data.data.token);
+        login(res.data.accessToken,res.data)
+        navigate("/dashboard");
+        setLoginError(false);
+        //  console.log(res)
+
+    })
+    .catch((error)=>{
+        setLoginError(true);
+        console.log(error);
+        
+        
+    })
+    .finally(() => {
+      setLoading(false);
+    });;//هم در موفقیت اجرا میشه هم در خطا پس دیگه لازم نیست توی هر دو جا بنویسیم
+}
+
+
+    return( 
+
+<div className={styles.container}>       
+    <div className={styles.wrapper}>
+    <h1>ورود به سامانه</h1>
+    <input value={username} onChange={(event)=>setUserName(event.target.value)} type="text" placeholder="نام کاربری" /> 
+    <input value={password} onChange={(event)=>setPassword(event.target.value)} type="password" placeholder="گذرواژه" />
+    {loginError && <div className={styles.login_error}>نام کاربری یا گذرواژه صحیح نمیباشد</div>}
+    <button onClick={handleLogin}  disabled={loading}> {loading ? "در حال ورود..." : "ورود"}</button>
+
+  </div>
+</div>
+  );
+};
+
+export default Login;
+</file>
+
+<file path="src/services/authService.js">
+import api from '../api/axios';
+
+export const loginUser = (username , password)=>{
+
+    return api.post("/auth/login",{username,password});
+};//ای پی آی نباشه تو یو آی و در صورت تغییر دنبالش نگردیم سرویسی باشه
+</file>
+
+<file path="src/theme/Theme.jsx">
+import { createTheme, alpha } from "@mui/material/styles";
+import { InputAdornment } from "@mui/material";
+
+
+const colors = {
+  primary: "#4F46E5",
+  primaryHover: "#4338CA",
+  primaryLight: "#818CF8",
+  primarySelected: "#EEF2FF",
+
+  sidebar: "#20212B",
+  sidebarSurface: "#292B38",
+
+  background: "#F8FAFC",
+  paper: "#FFFFFF",
+
+  textPrimary: "#1F2937",
+  textSecondary: "#64748B",
+  textDisabled: "#94A3B8",
+
+  border: "#E2E8F0",
+
+  error: "#EF4444",
+  warning: "#F59E0B",
+  success: "#10B981",
+};
+
+
+// props مشترک همه‌ی فیلدهای یکدست: کپشن ثابت کنار مقدار (مثل «شماره سند» بالای سند)
+// ظاهرش کامل از theme.fieldBox و MuiFilledInput پایین همین فایل می‌آید
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const fieldProps = (label, inputExtra = {}) => ({
+  variant: "filled",
+  hiddenLabel: true,
+  size: "small",
+  fullWidth: true,
+  slotProps: {
+    htmlInput: { "aria-label": label },
+    input: {
+      disableUnderline: true,
+      startAdornment: <InputAdornment position="start">{label}</InputAdornment>,
+      ...inputExtra,
+    },
+  },
+});
+
+
+export const Theme = createTheme({
+  direction: "rtl",
+
+  palette: {
+    primary: {
+      main: '#4F46E5',         // Primary انتخابی شما
+      light: '#E0E7FF',        // Selected انتخابی شما
+      dark: '#3730A3',         // برای حالت Hover و متن‌های روی Selected
+      contrastText: '#FFFFFF',
+    },
+    background: {
+      default: '#F9FAFB',      // Background اصلی صفحه
+      paper: '#FFFFFF',        // بدنه کارت‌ها و DataGrid
+    },
+    text: {
+      primary: '#111827',
+      secondary: '#6B7280',
+    },
+    divider: '#E5E7EB',        // کادرها و جداکننده‌ها
+    action: {
+      hover: '#F8FAFC',        // رنگ موس روی سطرهای جدول
+      selected: '#E0E7FF',     // رنگ سطر انتخاب‌شده
+    },
+    // رنگ‌های اختصاصی سایدبار و سیستم مالی
+    sidebar: {
+      bg: "#181824",         // Charcoal تیره برای پس‌زمینه سایدبار
+      surface: "#222232",    // پس‌زمینه منوهای والد
+      activeBg: "#4F46E5",   // Electric Indigo برای آیتم فعال
+      text: "#94A3B8",
+      activeText: "#FFFFFF",
+    },
+    financial: {
+      debit: '#10B981',        // سبز بدهکار
+      credit: '#EF4444',       // قرمز بستانکار
+    },
+  },
+
+
+
+    // توکن‌های ظاهری فیلدهای یکدست (AppTextField / AppSelect) — با تغییر اینجا، همه‌ی فیلدهای برنامه عوض می‌شن
+  fieldBox: {
+    height: 38,
+    radius: 8,
+    background: "#f5f6fa",
+    hoverBackground: "#edeff5",
+    focusBackground: "#ffffff",
+    disabledBackground: "#eef0f4",
+    labelColor: "#515355",
+    labelFontSize: 12,
+    fontSize: 13,
+  },
+
+  typography: {
+    fontFamily: '"IRANSansX", "Tahoma", "Arial", sans-serif',
+    fontSize: 13,
+    h1: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
+    h2: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
+    h3: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
+    h4: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
+    h5: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 600 },
+    h6: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 600 },
+    subtitle1: { fontFamily: '"IRANSansX", sans-serif' },
+    subtitle2: { fontFamily: '"IRANSansX", sans-serif' },
+    body1: { fontFamily: '"IRANSansX", sans-serif', fontSize: "0.875rem" },
+    body2: { fontFamily: '"IRANSansX", sans-serif', fontSize: "0.8125rem" },
+    button: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 600, textTransform: "none" },
+    caption: { fontFamily: '"IRANSansX", sans-serif' },
+    overline: { fontFamily: '"IRANSansX", sans-serif' },
+  },
+
+  shape: {
+    borderRadius: 8,
+  },
+
+  components: {
+    // تنظیمات جهانی پایه
+
+MuiCssBaseline: {
+  styleOverrides: {
+    ":root": {
+      "--color-primary": colors.primary,
+      "--color-primary-hover": colors.primaryHover,
+      "--color-primary-light": colors.primaryLight,
+      "--color-primary-selected": colors.primarySelected,
+
+/* اصلاح دقیق نام متغیرهایی که در Sidebar.module.css خوانده می‌شوند */
+      "--sidebar-bg": colors.sidebar,             /* #20212B */
+      "--sidebar-surface": colors.sidebarSurface, /* #2D2E3A */
+      "--sidebar-surface-hover": "#383948",
+      "--sidebar-text": "#9CA3AF",                /* رنگ متن آیتم‌های معمولی */
+      "--sidebar-text-hover": "#FFFFFF",
+      "--sidebar-active": colors.primary,         /* #4F46E5 */
+
+      "--color-background": colors.background,
+      "--color-paper": colors.paper,
+
+      "--color-text-primary": colors.textPrimary,
+      "--color-text-secondary": colors.textSecondary,
+      "--color-text-disabled": colors.textDisabled,
+
+      "--color-border": colors.border,
+
+      "--color-error": colors.error,
+      "--color-warning": colors.warning,
+      "--color-success": colors.success,
+    },
+
+    body: {
+      fontFamily: '"IRANSansX", sans-serif',
+      backgroundColor: colors.background,
+      direction: "rtl",
+    },
+  },
+},
+
+
+    // دکمه‌ها
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          borderRadius: 6,
+          boxShadow: "none",
+          "&:hover": {
+            boxShadow: "none",
+          },
+        },
+      },
+    },
+
+    // فیلدهای ورودی (TextField / Input)
+    MuiInputBase: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          fontSize: "13px",
+          minHeight: 36,
+        },
+        input: {
+          fontFamily: '"IRANSansX", sans-serif',
+          textAlign:"right",
+          padding: "8px 10px",
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          fontSize: "13px",
+          right: 14,
+          left: "auto",
+          transformOrigin: "top right",
+          "&.MuiInputLabel-shrink": {
+            transform: "translate(0, -9px) scale(0.75)",
+            backgroundColor: "#ffffff",
+            padding: "0 4px",
+      },
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          fontSize: "0.875rem",
+          borderRadius: 8,
+          backgroundColor: "#ffffff",
+
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#94a3b8",
+          },
+
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#2563eb",
+            borderWidth: "1px",
+          },
+        },
+
+          notchedOutline: {
+            borderColor: "#cbd5e1",
+            textAlign: "right",
+          },
+          input: {
+            fontFamily: '"IRANSansX", sans-serif',
+            padding: "8.5px 12px",
+          },
+      },
+    },
+
+    MuiFormLabel: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif"',
+          fontSize: "0.8125rem",
+
+          "&.Mui-focused": {
+            color: "#2563eb",
+          },
+        },
+      },
+    },
+
+MuiSelect: {
+  styleOverrides: {
+    select: {
+      paddingLeft: "32px !important", // ایجاد فضای کافی برای متن تا زیر فلش نرود
+      display: "flex",
+      alignItems: "center",
+    },
+    icon: {
+      left: "6px !important",
+      right: "auto !important",
+    },
+  },
+},
+
+        // فیلد یکدست برنامه (variant="filled" + fieldProps) — تنها منبع ظاهر فیلدها
+    MuiFilledInput: {
+      styleOverrides: {
+        root: ({ theme }) => {
+          const f = theme.fieldBox;
+          return {
+            minHeight: f.height,
+            padding: "0 5px",
+            gap: 10,
+            borderRadius: f.radius,
+            backgroundColor: f.background,
+            transition: "background-color 0.15s ease, box-shadow 0.15s ease",
+            "&:hover": { backgroundColor: f.hoverBackground },
+            "&.Mui-focused": {
+              backgroundColor: f.focusBackground,
+              boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.16)}`,
+            },
+            "&.Mui-disabled": { backgroundColor: f.disabledBackground, opacity: 0.6 },
+
+            // کپشن (startAdornment)
+            "& .MuiInputAdornment-positionStart": {
+              margin: 0,
+              height: "auto",
+              maxHeight: "none",
+              whiteSpace: "nowrap",
+              fontSize: f.labelFontSize,
+              color: f.labelColor,
+              "& .MuiTypography-root": { fontSize: "inherit", color: "inherit", fontFamily: "inherit" },
+            },
+            "&.Mui-focused .MuiInputAdornment-positionStart": { color: theme.palette.primary.main },
+            "& .MuiInputAdornment-positionEnd": { margin: 0 ,
+                         "& .MuiIconButton-root": {
+                             padding: "2px !important", // کاهش پدینگ آیکون‌های داخل فیلد
+                                                   }, },
+            // سلکت: جای فلش کنار لبه‌ی چپ، متن هرگز زیر آن نمی‌رود
+            "& .MuiSelect-select": {
+              padding: "0 15px 0 0 !important",
+              minHeight: "auto",
+              textAlign: "right",
+            },
+            "& .MuiSelect-icon": { left: "1px !important", right: "auto !important", fontSize: 18 },
+          };
+        },
+        input: { padding: "0 !important", textAlign: "right", fontSize: 13 },
+      },
+    },
+
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          "&.MuiAutocomplete-paper": {
+            marginTop: 4,
+            borderRadius: 8,
+          },
+        },
+      },
+    },
+
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          fontSize: "13px",
+          justifyContent: "center",
+          textAlign: "center",
+
+
+          "&.Mui-selected": {
+            backgroundColor: "#eff6ff",
+          },
+
+          "&.Mui-selected:hover": {
+            backgroundColor: "#dbeafe",
+          },
+        },
+      },
+   },
+      MuiAccordion: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          border: "1px solid #e2e8f0",
+          borderRadius: 10,
+          boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)",
+          backgroundColor: "#ffffff",
+
+          "&:before": {
+            display: "none",
+          },
+
+          "&:first-of-type": {
+            borderTopLeftRadius: 8,
+            borderTopRightRadius: 8,
+          },
+
+          "&:last-of-type": {
+            borderBottomLeftRadius: 8,
+            borderBottomRightRadius: 8,
+          },
+        },
+      },
+    },
+
+    MuiAccordionSummary: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif"',
+          minHeight: 42,
+          padding: "0 12px",
+
+          "&.Mui-expanded": {
+            minHeight: 42,
+          },
+        },
+
+        content: {
+          margin: "8px 0",
+
+          "&.Mui-expanded": {
+            margin: "8px 0",
+          },
+        },
+      },
+    },
+
+    MuiAccordionDetails: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          padding: "12px",
+          borderTop: "1px solid #e2e8f0",
+        },
+      },
+    },
+
+    
+
+    // دیالوگ‌ها و مودال‌ها (مثل EntityPickerModal)
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          fontWeight: 700,
+          fontSize: "1rem",
+          textAlign: "right",
+        },
+      },
+    },
+    MuiDialogContent: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+        },
+      },
+    },
+
+    // تب‌ها (Tabs / Tab)
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          fontWeight: 600,
+          fontSize: "0.8125rem",
+        },
+      },
+    },
+
+    // استایل‌های عمومی جداول DataGridPro
+    MuiDataGrid: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          direction: "rtl",
+          border: "1px solid #cbd5e1",
+          borderRadius: 8,
+
+
+    // ۱. استایل کلی نوار هدر
+        '& .MuiDataGrid-columnHeaders': {
+          backgroundColor: "#e7edf3 !important", // پس‌زمینه نوار اصلی هدر
+          borderBottom: "2px solid #94a3b8 !important",
+          color: "#0f172a !important",
+          fontWeight: "700 !important",
+          paddingY: '3px',
+        },
+
+        // ۲. تبدیل هر هدر به یک کارت شیشه‌ای با لبه‌های گرد و سایه ملایم
+        '& .MuiDataGrid-columnHeader': {
+          position: 'relative',
+          backgroundColor: '#e7edf3', // سفید شفاف/شیک
+          marginRight: '2px', // فاصله نازک بین کارت‌ها (برای RTL به marginLeft تغییر دهید در صورت لزوم)
+          marginLeft: '2px',
+          borderRadius: '6px', // لبه‌های گرد برای حالت سه بعدی کارت
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)', // سایه ملایم زیر هر کارت هدر
+          border: '1px solid #989ca0',
+          transition: 'all 0.2s ease-in-out',
+
+          // افکت هوور روی کل کارت هدر
+          '&:hover': {
+            backgroundColor: '#cacbe9',
+            borderColor: '#94a3b8',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
+          },
+        },
+
+        // ۳. بازطراحی کامل columnSeparator به دستگیره جادویی و حرفه‌ای
+        '& .MuiDataGrid-columnSeparator': {
+          width: '18px', // پهنای عالی برای راحتی دراگ کردن با ماوس
+          justifyContent: 'center',
+          left: -8, // قرارگیری دقیق روی مرز جداکننده در RTL
+          right: 'auto',
+          zIndex: 10,
+
+          // حذف آیکون خطی معمولی پیش‌فرض MUI
+          '& .MuiDataGrid-iconSeparator': {
+            display: 'none', // ❌ حذف آیکون پیش‌فرض
+          },
+
+          // ساخت دستگیره دراگ به شکل ۳ نقطه نازک مدرن (Grip Dots)
+          '&::after': {
+            content: '""',
+            width: '4px',
+            height: '14px',
+            borderRadius: '2px',
+            // ایجاد حالت ۳ نقطه جداکننده سنتی ابزارها با استفاده از radial-gradient
+            backgroundColor: '#cbd5e1',
+            boxShadow: '0 -5px 0 #cbd5e1, 0 5px 0 #cbd5e1', // ایجاد دو نقطه در بالا و پایین نقطه وسط
+            transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          },
+
+          // افکت فوق‌العاده جذاب هنگام هوور روی جداکننده جهت تغییر عرض ستون
+          '&:hover::after': {
+            backgroundColor: '#0284c7', // تغییر رنگ نقطه مرکزی به آبی درخشان
+            boxShadow: '0 -6px 0 #0284c7, 0 6px 0 #0284c7, 0 0 10px rgba(2, 132, 199, 0.6)', // درخشش ۳ نقطه
+            transform: 'scale(1.25)', // بزرگ‌نمایی حالت اکشن
+          },
+          },
+              
+          "& .MuiDataGrid-columnHeaderTitleContainer": {
+            justifyContent: "flex-end !important",
+          },
+
+          "& .MuiDataGrid-columnHeaderTitleContainerContent": { 
+            width: "100% !important", 
+            display: "block !important", 
+          },
+          
+          "& .MuiDataGrid-columnHeaderTitle": { 
+            width: "100%",
+            fontFamily: '"IRANSansX", sans-serif',
+            fontWeight: 700,
+            fontSize: "0.8125rem", 
+            textAlign:"center"
+          },
+
+          "& .MuiDataGrid-iconButtonContainer": {
+            display: "none !important",
+          },
+
+          "& .MuiDataGrid-sortIcon": {
+            opacity: 0,
+            transition: "opacity 0.15s ease",
+          },
+
+          "& .MuiDataGrid-columnHeader:hover .MuiDataGrid-sortIcon": {
+            opacity: 1,
+          },
+
+          
+          "& .MuiDataGrid-cell": {
+            fontFamily: '"IRANSansX", sans-serif',
+            borderLeft: "1px solid #e2e8f0",
+            fontSize: "0.85rem",
+
+          },
+
+          // زیر اسکرول نیفته متن
+          "& .MuiDataGrid-cell--textRight": {
+            paddingRight: "22px",
+          },
+
+                    //  رنگ یکی درمیون ردیف‌ها (زبرا)
+          "& .MuiDataGrid-row:nth-of-type(even)": {
+            backgroundColor: "#f5f7f8",
+          },
+          
+          "& .MuiDataGrid-row.Mui-selected": {
+            backgroundColor: "#e5e5ff !important",
+          },
+
+          // "& .MuiDataGrid-row.Mui-selected:hover": {
+          //   backgroundColor: "#90caf9 !important",
+          // },
+
+          //  هاور ملایم روی ردیف زیر ماوس
+          "& .MuiDataGrid-row:hover": {
+            backgroundColor: "#f2f2fd !important",
+          },
+
+          //  کوچیک‌کردن نوار ابزار بالای گرید (سرچ/فیلتر/ستون‌ها)
+          "& .MuiDataGrid-toolbar": {
+            minHeight: "30px",
+            // borderBottom: "2px solid #dce4f0 !important",         
+           },
+
+          //  "& .MuiInputBase-input-MuiOutlinedInput-input":{
+
+          //   textAlign:"center"
+          //  }
+        },
+      },
+    },
+  },
+});
+</file>
+
+<file path="index.html">
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>سامانه جامع مدیریت منابع </title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="pnpm-workspace.yaml">
+allowBuilds:
+  '@mui/x-telemetry': true
+  esbuild: true
+</file>
+
+<file path="src/components/common/Pickers/EntityPickerModal.jsx">
+import { useEffect, useState, useRef } from "react";
+import { Dialog, DialogTitle, DialogContent, Box, Tabs, Tab, TextField, List, ListItemButton, ListItemText, CircularProgress, Button } from "@mui/material";
+import { toPersianDigits } from "../../../utils/formatter";
+import styles from "./EntityPickerModal.module.css";
+import { FixedSizeList } from "react-window";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+
+
+
+
+// تبدیل درخت تودرتو به یک لیست تخت با عمق (depth)، فقط شامل نودهایی که مسیرشون باز است
+function flattenTree(nodes, depth, expandedItems) {
+    let result = [];
+    for (const node of nodes) {
+        result.push({ node, depth });
+        const idStr = String(node.id);
+        if (expandedItems.includes(idStr) && node.children?.length > 0) {
+            result = result.concat(flattenTree(node.children, depth + 1, expandedItems));
+        }
+    }
+    return result;
+}
+
+function findFlatIndexById(flatNodes, id) {
+    return flatNodes.findIndex((entry) => String(entry.node.id) === String(id));
+}
+
+
+// مودال عمومی انتخاب کد؛ با یک picker (خروجی useEntityPicker) و یک onSelect کار می‌کند
+const EntityPickerModal = ({ title, picker, onSelect , allowAnyLevel = false }) => {
+
+    const {
+        modal, close,
+        activeTab, setActiveTab,
+        searchTerm, setSearchTerm, searchResults, searchLoading,
+        treeData, treeLoading, expandedItems, toggleNode,
+        scrollTargetId, clearScrollTarget,
+    } = picker;
+
+    const [highlightedIndex, setHighlightedIndex] = useState(0);
+    const virtualListRef = useRef(null);
+    
+    const treeListRef = useRef(null);
+    
+        // محاسبه‌ی لیست تخت درخت، برای رندر virtualized
+    const flatTreeNodes = flattenTree(treeData, 0, expandedItems);
+    
+    const [highlightedTreeIndex, setHighlightedTreeIndex] = useState(0);
+    const treeContainerRef = useRef(null);
+
+    // 🟢 الگوی رسمی ری‌اکت: وقتی scrollTargetId (از بیرون) تغییر کرد، هایلایت را همین‌جا در رندر تنظیم کن
+    const [prevScrollTargetId, setPrevScrollTargetId] = useState(scrollTargetId);
+    if (scrollTargetId !== prevScrollTargetId) {
+        setPrevScrollTargetId(scrollTargetId);
+        if (scrollTargetId) {
+            const index = findFlatIndexById(flatTreeNodes, scrollTargetId);
+            if (index >= 0) {
+                setHighlightedTreeIndex(index);
+            }
+        }
+    }
+
+
+
+    // با تغییر لیست تخت (باز/بسته شدن یه نود)، هایلایت برنمی‌گرده به صفر؛ فقط اگه ایندکس فعلی دیگه معتبر نبود، اصلاحش کن
+    if (highlightedTreeIndex > 0 && highlightedTreeIndex >= flatTreeNodes.length) {
+        setHighlightedTreeIndex(Math.max(0, flatTreeNodes.length - 1));
+    }
+
+
+
+    const searchInputRef = (element) => {
+        if (element && modal.open) {
+            setTimeout(() => {
+                element.focus();
+                const length = element.value ? element.value.length : 0;
+                if (length > 0 && typeof element.setSelectionRange === "function") {
+                    element.setSelectionRange(length, length);
+                }
+            }, 60);
+        }
+    };
+
+
+    // 🟢 الگوی رسمی ری‌اکت برای «تنظیم state هنگام تغییر یک prop» — بدون useEffect
+    const [prevSearchResults, setPrevSearchResults] = useState(searchResults);
+    if (searchResults !== prevSearchResults) {
+        setPrevSearchResults(searchResults);
+        setHighlightedIndex(0);
+    }
+
+    // این یکی می‌مونه چون واقعاً «سینک با سیستم خارجی» (اسکرول DOM) است، نه sync بین دو state
+    useEffect(() => {
+        virtualListRef.current?.scrollToItem(highlightedIndex, "smart");
+    }, [highlightedIndex]);
+
+    const handleSelect = (node) => {
+        onSelect(node);
+        close();
+    };
+
+    // اسکرول به نودی که از تایپ مستقیم کد پیدا شده (resolveTypedCode)
+    useEffect(() => {
+        if (!modal.open || activeTab !== 1 || !scrollTargetId) return;
+
+        const index = findFlatIndexById(flatTreeNodes, scrollTargetId);
+        if (index >= 0) {
+            treeListRef.current?.scrollToItem(index, "smart");
+        }
+        clearScrollTarget();
+    }, [modal.open, activeTab, scrollTargetId, flatTreeNodes, clearScrollTarget]);
+
+    // فوکوس روی اولین ریشه، فقط وقتی مودال با focusFirstRoot باز شده
+    useEffect(() => {
+        if (!modal.open || activeTab !== 1 || !modal.focusFirstRoot) return;
+        treeListRef.current?.scrollToItem(0, "smart");
+        
+    }, [modal.open, activeTab, modal.focusFirstRoot]);
+
+
+    // فوکوس گرفتن خودِ لیست درخت وقتی تب باز می‌شه، تا فوراً کیبورد کار کند
+    useEffect(() => {
+        if (!modal.open || activeTab !== 1) return;
+        const timer = setTimeout(() => {
+            treeContainerRef.current?.focus();
+        }, 60);
+        return () => clearTimeout(timer);
+    }, [modal.open, activeTab]);
+
+
+
+    return (
+
+        <Dialog open={modal.open} onClose={close} fullWidth maxWidth="sm" >
+            <DialogTitle className={styles.ModalTitle}>{title}</DialogTitle>
+
+            <Box sx={{ borderBottom: 1, borderColor: "divider" }} dir="rtl">
+                <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)} variant="fullWidth">
+                    <Tab label="جستجو" className={styles.TabFont} />
+                    <Tab label="ساختار درختی" className={styles.TabFont} />
+                </Tabs>
+            </Box>
+
+            <DialogContent dir="rtl">
+                {activeTab === 0 && (
+                    <Box sx={{ pt: 2 }} className={styles.TreeWrapper}>
+                        <TextField className={styles.SearchInput}
+                            fullWidth
+                            inputRef={searchInputRef}
+                            placeholder="کد یا نام را برای جستجو تایپ کنید..."
+                            size="small"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "ArrowDown") {
+                                    e.preventDefault();
+                                    setHighlightedIndex((prev) =>
+                                        Math.min(prev + 1, searchResults.length - 1)
+                                    );
+                                } else if (e.key === "ArrowUp") {
+                                    e.preventDefault();
+                                    setHighlightedIndex((prev) => Math.max(prev - 1, 0));
+                                } else if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    const item = searchResults[highlightedIndex];
+                                    if (item && !(item.childCount > 0)) {
+                                        handleSelect(item);
+                                    }
+                                }
+                            }}
+                        />
+                        {searchLoading ? (
+                            <div className={styles.LoadingContainer}><CircularProgress size={30} /></div>
+                        ) : (
+                            <List>
+                        {searchResults.length === 0 ? (
+                            <div className={styles.EmptyResult}>چیزی یافت نشد.</div>
+                        ) : (
+                            <FixedSizeList
+                                ref={virtualListRef}
+                                height={320}
+                                width="100%"
+                                itemCount={searchResults.length}
+                                itemSize={58}
+                            >
+                                {({ index, style }) => {
+                                    const item = searchResults[index];
+                                    const isParent = item.childCount > 0;
+                                    const isSelectable = !isParent || allowAnyLevel;
+
+
+                                    return (
+                                        <div style={style}>
+                                            <ListItemButton
+                                                className={styles.ResultItem}
+                                                key={item.id ?? item.Id ?? item.code ?? index}
+                                                selected={index === highlightedIndex}
+                                                disabled={!isSelectable}
+                                                onClick={() => isSelectable && handleSelect(item)}
+                                            >
+                                                <ListItemText
+                                                    primary={
+                                                        <span className={styles.ResultNameText}>
+                                                            {item.name}
+                                                            {isParent && <small style={{ color: "orange", marginRight: 8 }}>(دارای زیرمجموعه)</small>}
+                                                        </span>
+                                                    }
+                                                    secondary={<span className={styles.ResultCodeText}>کد: {toPersianDigits(item.code)}</span>}
+                                                />
+                                            </ListItemButton>
+                                        </div>
+                                    );
+                                }}
+                            </FixedSizeList>
+                        )}
+                            </List>
+                        )}
+                    </Box>
+                )}
+
+                {activeTab === 1 && (
+                    <Box sx={{ pt: 2 }} className={styles.TreeWrapper}>
+                        {treeLoading ? (
+                            <div className={styles.LoadingContainer}><CircularProgress size={30} /></div>
+                        ) : treeData.length > 0 ? (
+                            <div
+                                ref={treeContainerRef}
+                                tabIndex={0}
+                                style={{ outline: "none" }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "ArrowDown") {
+                                        e.preventDefault();
+                                        setHighlightedTreeIndex((prev) =>
+                                            Math.min(prev + 1, flatTreeNodes.length - 1)
+                                        );
+                                    } else if (e.key === "ArrowUp") {
+                                        e.preventDefault();
+                                        setHighlightedTreeIndex((prev) => Math.max(prev - 1, 0));
+                                                                        } else if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        const entry = flatTreeNodes[highlightedTreeIndex];
+                                        if (!entry || entry.node.isDummy) return;
+
+                                        if (allowAnyLevel) {
+                                            // استثنائاً اینجا: Enter یعنی «همین رو انتخاب کن»، فارغ از پدر/برگ بودن
+                                            handleSelect(entry.node);
+                                        } else {
+                                            toggleNode(entry.node, handleSelect);
+                                        }
+                                    } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                                        // جهت راست/چپ فقط برای باز/بسته کردن، تا با اسکرول افقی صفحه تصادم نکند
+                                        e.preventDefault();
+                                        const entry = flatTreeNodes[highlightedTreeIndex];
+                                        if (entry && entry.node.childCount > 0) {
+                                            toggleNode(entry.node, handleSelect);
+                                        }
+                                    }
+                                }}
+                            >
+                                <FixedSizeList
+                                    ref={treeListRef}
+                                    height={360}
+                                    width="100%"
+                                    itemCount={flatTreeNodes.length}
+                                    itemSize={44}
+                                >
+                                    {({ index, style }) => {
+                                        const { node, depth } = flatTreeNodes[index];
+                                        const isParent = node.childCount > 0;
+                                        const isDummy = node.isDummy;
+                                        const isExpanded = expandedItems.includes(String(node.id));
+                                        const isHighlighted = index === highlightedTreeIndex;
+
+                                        if (isDummy) {
+                                            return (
+                                                <div style={{ ...style, paddingRight: depth * 20 + 16, color: "#999", fontSize: 13, display: "flex", alignItems: "center" }}>
+                                                    در حال بارگذاری...
+                                                </div>
+                                            );
+                                        }
+
+                                        return (
+                                            <div
+                                                className={`${styles.TreeRowHover} ${isHighlighted ? styles.TreeRowSelected : ""}`}
+                                                style={{
+                                                    ...style,
+                                                    direction: "rtl",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    paddingRight: depth * 20 + 8,
+                                                    paddingLeft: 8,
+                                                    cursor: "pointer",
+                                                    gap: 8,
+                                                    boxSizing: "border-box",
+                                                }}
+                                                onClick={() => {
+                                                    setHighlightedTreeIndex(index);
+                                                    toggleNode(node, handleSelect);
+                                                }}
+                                            >
+                                                {isParent && (
+                                                    <span className={styles.TreeExpandIcon}>
+                                                        {isExpanded ? (
+                                                            <ExpandMoreIcon fontSize="inherit" />
+                                                        ) : (
+                                                            <ChevronLeftIcon fontSize="inherit" />
+                                                        )}
+                                                    </span>
+                                                )}
+                                                <span className={styles.TreeLabelContainer}>
+                                                    <span>{node.name}</span>
+                                                    <span className={styles.TreeCodeSpan}>({toPersianDigits(node.code)})</span>
+                                                </span>
+                                                {(!isParent || allowAnyLevel) && (
+                                                    <Button
+                                                        size="small"
+                                                        variant="outlined"
+                                                        className={styles.TreeSelectBtn}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleSelect(node);
+                                                        }}
+                                                    >
+                                                        انتخاب
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        );
+                                    }}
+                                </FixedSizeList>
+                            </div>
+                        ) : (
+                            <div className={styles.EmptyResult}>ساختار درختی یافت نشد.</div>
+                        )}
+                    </Box>
+                )}
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+export default EntityPickerModal;
+</file>
+
+<file path="src/components/tabs/GlobalTabs.jsx">
+import { useNavigate } from "react-router-dom";
+import useTabs from "../../context/useTabs";
+import { useEffect, useRef } from "react";
+import styles from "./GlobalTabs.module.css";
+import CloseUnsavedModal from "../../components/tabs/CloseUnsavedModal"; //  این  اضافه شد
+
+const GlobalTabs = () => {
+
+  const tabsContainerRef = useRef(null);
+
+  const navigate = useNavigate();
+
+  const {
+    tabs,
+    activeTabId,
+    activateTab,
+    closeTab,
+    closeAllTabs, //  اضافه شد
+  } = useTabs();
+
+  const handleTabClick = (tab) => {
+    activateTab(tab.id);
+
+    navigate(tab.path);
+  };
+
+  const handleCloseTab = (event, tab) => {
+    event.stopPropagation();
+
+    closeTab(tab.id);
+  };
+
+  // پشتیبانی از کلیک وسط موس روی تب برای بستن
+const handleAuxClick = (event, tab) => {
+  if (event.button === 1 && tab.closable) { // دکمه 1 یعنی کلیک وسط موس
+    event.preventDefault();
+    closeTab(tab.id);
+  }
+};
+
+  useEffect(() => {
+    if (!tabsContainerRef.current) return;
+
+    const activeElement =
+        tabsContainerRef.current.querySelector(
+            `[data-tab-id="${activeTabId}"]`
+        );
+
+    if (activeElement) {
+        activeElement.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+            inline: "nearest",
+        });
+    }
+  }, [activeTabId, tabs]);
+
+  return (
+
+  <div className={styles.tabsWrapper} style={{ display: "flex", alignItems: "center", width: "100%" }}>
+    <div ref={tabsContainerRef} className={styles.tabsContainer}>
+      <div className={styles.tabs}>
+
+        {tabs.map((tab) => (
+          <div
+            key={tab.id}
+            data-tab-id={tab.id}
+            className={`${styles.tab} ${
+              activeTabId === tab.id
+                ? styles.active
+                : ""
+            }`}
+            onClick={() => handleTabClick(tab)}
+            onAuxClick={(e) => handleAuxClick(e, tab)} // اضافه شد برای کلیک وسط
+          >
+
+            <span className={styles.tabTitle}>
+              {tab.title}
+            </span>
+
+            {tab.closable && (
+              <button
+                className={styles.closeButton}
+                onClick={(event) =>
+                  handleCloseTab(event, tab)
+                }
+              >
+                ×
+              </button>
+            )}
+
+          </div>
+        ))}
+      </div>
+    </div>
+{/* دکمه بستن همه در همان راستا کنار تب‌ها */}
+      {tabs.filter(t => t.closable).length > 0 && (
+        <button 
+          className={styles.closeAllButton}
+          onClick={closeAllTabs}
+          title="بستن همه تب‌ها"
+        >
+          بستن همه ×
+        </button>
+      )}
+
+      <CloseUnsavedModal />
+    </div>
+  );
+    
+};
+
+export default GlobalTabs;
+</file>
+
+<file path="src/components/tabs/GlobalTabs.module.css">
+.tabsContainer {
+    width: 100%;
+    background: var(--color-background);
+    border-bottom: 1px solid var(--color-border);
+    overflow-x: auto;
+}
+
+.tabs {
+    display: flex;
+    align-items: flex-end;
+    min-width: max-content;
+    direction: rtl;
+    padding: 0px 10px 0;
+    gap: 3px;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 110px;
+    max-width: 180px;
+    padding: 6px 10px;
+    background: var(--color-border);
+    color: var(--color-text-secondary);
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    transition: 0.2s;
+    user-select: none;
+    font-size: 13px;
+    line-height: 1.3;
+}
+
+.tab:hover {
+    background: var(--color-primary-selected);
+}
+
+.active {
+    background: var(--color-paper);
+    color: var(--color-primary);
+    font-weight: 600;
+    border: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-paper);
+}
+
+.tabTitle {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.closeButton {
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 16px;
+    line-height: 16px;
+    cursor: pointer;
+}
+
+.closeButton:hover {
+    background: #fee2e2;
+    color: var(--color-error);
+}
+
+.closeAllButton {
+  white-space: nowrap;
+  margin: 0 8px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 500;
+  background-color: var(--color-paper, #ffffff);
+  color: var(--color-text-secondary, #64748b);
+  border: 1px solid var(--color-border, #cbd5e1);
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+}
+
+.closeAllButton:hover {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+  color: var(--color-error, #dc2626);
+}
+</file>
+
 <file path="src/components/tabs/TabContent.jsx">
 import Dashboard from "../../pages/Dashboard/Dashboard";
 import VouchersList from "../../pages/Financial/Vouchers/VouchersList";
@@ -3592,60 +3682,6 @@ const menuConfig = [
 ];
 
 export default menuConfig;
-</file>
-
-<file path="src/context/AuthProvider.jsx">
-import {useState} from "react";
-import { AuthContext } from "./AuthContext";
-
-
-export const AuthProvider = ({ children }) => {
-
-  const [token, setToken] = useState ( localStorage.getItem("token"));
-  const [user, setUser] = useState(() => {
-  const saved = localStorage.getItem("user");
-  return saved ? JSON.parse(saved) : null }); //برای داشتن اطلاعات یوزر و اگه خالی بود کرش نکنه
-
-  // وقتی اپ لود میشه اگر توکن تو localStorage بود ستش کن
-//   useEffect(() => {
-//     const storedToken = localStorage.getItem("token");
-//     if (storedToken) {
-//       setToken(storedToken);
-//     }
-//   }, []); //وقتی اپ برای اولین بار باز شد:برو ببین تو localStorage توکن هست؟ اگر هست، داخل state بذارش چرا؟ چون اگر کاربر قبلاً لاگین کرده بود بعد صفحه رو رفرش کنه ما نباید بندازیمش بیرون.
-
-  const login = (token , userData) => {
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(userData))
-    setToken(token);
-    setUser(userData);
-  };
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
-    setUser(null);
-  };
-
-  
-
-  return (
-    <AuthContext.Provider value={{ token,user, login, logout }}>
-    
-      {children}
-      
-    </AuthContext.Provider>
-  );
-};
-</file>
-
-<file path="src/context/useTabs.jsx">
-import { useContext } from "react";
-import TabContext from "./TabContext";
-
-const useTabs = () => { return useContext(TabContext); };
-
-export default useTabs;
 </file>
 
 <file path="src/layout/Sidebar/Sidebar.module.css">
@@ -3909,13 +3945,24 @@ export default useTabs;
 }
 </file>
 
-<file path="src/services/authService.js">
-import api from '../api/axios';
+<file path="src/utils/formatter.js">
+export const formatNumber = (value) =>
+  Number(value || 0).toLocaleString("fa-IR");// جهت تبدیل اعداد به فارسی
 
-export const loginUser = (username , password)=>{
+export const toPersianDigits = (value) => {
+  if (value === null || value === undefined) return "";
+  return value
+    .toString()
+    .replace(/\d/g, d => "۰۱۲۳۴۵۶۷۸۹"[d]);
+};// جهت نمایش تاریخ به فارسی
 
-    return api.post("/auth/login",{username,password});
-};//ای پی آی نباشه تو یو آی و در صورت تغییر دنبالش نگردیم سرویسی باشه
+
+export const toEnglishDigits = (value) => {
+  if (value === null || value === undefined) return value;
+  return value
+    .toString()
+    .replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+};//تبدیل اعداد تاریخ به لاتین جهت ارسال به API
 </file>
 
 <file path="src/index.css">
@@ -11721,215 +11768,6 @@ export const toEnglishDigits = (value) => {
 };//تبدیل اعداد تاریخ به لاتین جهت ارسال به API
 </file>
 
-<file path="pnpm-workspace.yaml">
-allowBuilds:
-  '@mui/x-telemetry': true
-  esbuild: true
-</file>
-
-<file path="src/context/TabProvider.jsx">
-import { useState } from "react";
-import TabContext from "./TabContext";
-
-const TabProvider = ({ children }) => {
-  
-  const [tabs, setTabs] = useState([
-    {
-      id: "dashboard",
-      title: "داشبورد",
-      path: "/dashboard",
-      pageType: "dashboard",
-      closable: false,
-    },
-  ]);
-
-  const [activeTabId, setActiveTabId] = useState("dashboard");
-
-  //  اضافه شد: نگهداری آیدی تبی که تغییرات ذخیره‌نشده دارد
-const [pendingCloseTabId, setPendingCloseTabId] = useState(null);
-const [showCloseAllModal, setShowCloseAllModal] = useState(false);
-
-  // باز کردن تب
-  const openTab = ({ title, path, pageType, closable = true, data = {} }) => {
-
-    const tabId = `${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2, 9)}`;
-
-    const newTab = {
-      id: tabId,
-      title,
-      path,
-      pageType,
-      closable,
-      data,
-    };
-
-    setTabs((prevTabs) => [
-      ...prevTabs,
-      newTab,
-    ]);
-
-    setActiveTabId(tabId);
-
-    return newTab;
-  };
-  // فعال کردن تب
-  const activateTab = (id) => {
-    setActiveTabId(id);
-  };
-
-// بستن تب (با چک کردن تغییرات ذخیره‌نشده)
-// بستن تب
-  const closeTab = (id, force = false) => {
-    const targetTab = tabs.find((tab) => tab.id === id);
-
-    // اگر تب تغییر کرده بود و درخواست بستن اجباری نبود، اول اجازه نده و مدال را باز کن
-    if (targetTab && targetTab.isDirty && !force) {
-      setPendingCloseTabId(id);
-      return;
-    }
-
-    setTabs((prevTabs) => {
-      const tabIndex = prevTabs.findIndex((tab) => tab.id === id);
-      const newTabs = prevTabs.filter((tab) => tab.id !== id);
-
-      if (id === activeTabId) {
-        const nextTab = newTabs[tabIndex - 1] || newTabs[tabIndex] || newTabs[0];
-        if (nextTab) {
-          setActiveTabId(nextTab.id);
-        }
-      }
-
-      return newTabs;
-    });
-    setPendingCloseTabId(null);
-  };
-
-//  اضافه شد: تابع بستن همه تب‌ها
-const closeAllTabs = () => {
-  // پیدا کردن اولین تبی که قابل بستن است و تغییرات ذخیره‌نشده دارد
-  const firstDirtyTab = tabs.find(t => t.closable && t.isDirty);
-  
-  if (firstDirtyTab) {
-    // اگر تب تغییریافته پیدا شد، اول آن را فعال کن و بعد مدال اخطار را باز کن
-    setActiveTabId(firstDirtyTab.id);
-    setPendingCloseTabId(firstDirtyTab.id);
-    setShowCloseAllModal(true);
-    return;
-  }
-
-  // اگر هیچ تب تغییریافته‌ای نبود، همه تب‌های قابل بستن را ببند
-  setTabs(prev => prev.filter(t => !t.closable));
-  const dashboard = tabs.find(t => !t.closable);
-  if (dashboard) setActiveTabId(dashboard.id);
-};
-
-const updateTab = (id, updates) => {
-  setTabs((prevTabs) =>
-    prevTabs.map((tab) =>
-      tab.id === id
-        ? { ...tab, ...updates }
-        : tab
-    )
-  );
-};
-
-
-  return (
-    <TabContext.Provider
-      value={{
-        tabs,
-        activeTabId,
-        openTab,
-        activateTab,
-        closeTab,
-        closeAllTabs, //  اضافه شد
-        updateTab,
-        pendingCloseTabId, //  اضافه شد
-        setPendingCloseTabId, //  اضافه شد
-        showCloseAllModal, //  اضافه شد
-        setShowCloseAllModal, //  اضافه شد
-      }}
-    >
-      {children}
-    </TabContext.Provider>
-  );
-};
-
-export default TabProvider;
-</file>
-
-<file path="src/layout/MainLayout/MainLayout.jsx">
-import Sidebar from "../Sidebar/Sidebar";
-import Navbar from "../Navbar/Navbar";
-import GlobalTabs from "../../components/Tabs/GlobalTabs";
-import TabContent from "../../components/Tabs/TabContent";
-import useTabs from "../../context/useTabs";
-import styles from "./MainLayout.module.css";
-import CloseUnsavedModal from "../../components/tabs/CloseUnsavedModal"; //  این  اضافه شد
-
-const MainLayout = () => {
-  const { tabs, activeTabId } = useTabs();
-
-  return (
-    <div className={styles.layout}>
-
-      <Sidebar />
-
-      <div className={styles.content}>
-
-        <Navbar />
-
-        <GlobalTabs />
-
-        <div className={styles.page}>
-
-          {tabs.map((tab) => (
-            <div
-              key={tab.id}
-              className={
-                tab.id === activeTabId
-                  ? styles.tabPanelActive
-                  : styles.tabPanel
-              }
-            >
-              <TabContent tab={tab} />
-            </div>
-          ))}
-
-        </div>
-
-      </div>
-      <CloseUnsavedModal />
-
-    </div>
-  );
-};
-
-export default MainLayout;
-</file>
-
-<file path="src/utils/formatter.js">
-export const formatNumber = (value) =>
-  Number(value || 0).toLocaleString("fa-IR");// جهت تبدیل اعداد به فارسی
-
-export const toPersianDigits = (value) => {
-  if (value === null || value === undefined) return "";
-  return value
-    .toString()
-    .replace(/\d/g, d => "۰۱۲۳۴۵۶۷۸۹"[d]);
-};// جهت نمایش تاریخ به فارسی
-
-
-export const toEnglishDigits = (value) => {
-  if (value === null || value === undefined) return value;
-  return value
-    .toString()
-    .replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
-};//تبدیل اعداد تاریخ به لاتین جهت ارسال به API
-</file>
-
 <file path="src/components/common/SummaryBar/AccountHierarchySummary.jsx">
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -12087,6 +11925,226 @@ const AccountHierarchySummary = ({
 export default AccountHierarchySummary;
 </file>
 
+<file path="src/context/TabProvider.jsx">
+import { useState } from "react";
+import TabContext from "./TabContext";
+
+const TabProvider = ({ children }) => {
+  
+  const [tabs, setTabs] = useState([
+    {
+      id: "dashboard",
+      title: "داشبورد",
+      path: "/dashboard",
+      pageType: "dashboard",
+      closable: false,
+    },
+  ]);
+
+  const [activeTabId, setActiveTabId] = useState("dashboard");
+
+  //  اضافه شد: نگهداری آیدی تبی که تغییرات ذخیره‌نشده دارد
+const [pendingCloseTabId, setPendingCloseTabId] = useState(null);
+const [showCloseAllModal, setShowCloseAllModal] = useState(false);
+const [tabClosingQueue, setTabClosingQueue] = useState([]);
+
+  // باز کردن تب
+  const openTab = ({ title, path, pageType, closable = true, data = {} }) => {
+
+    const tabId = `${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 9)}`;
+
+    const newTab = {
+      id: tabId,
+      title,
+      path,
+      pageType,
+      closable,
+      data,
+    };
+
+    setTabs((prevTabs) => [
+      ...prevTabs,
+      newTab,
+    ]);
+
+    setActiveTabId(tabId);
+
+    return newTab;
+  };
+  // فعال کردن تب
+  const activateTab = (id) => {
+    setActiveTabId(id);
+  };
+
+  //  برای اینکه بقیه تب های دارای تغییرات رو هم چک کنه و پیغام بده بسته شه یا نه
+  const processNextInQueue = (currentQueue, currentTabs) => {
+    if (currentQueue.length === 0) {
+      setTabClosingQueue([]);
+      setPendingCloseTabId(null);
+      return;
+    }
+
+    const nextId = currentQueue[0];
+    const remainingQueue = currentQueue.slice(1);
+    const targetTab = currentTabs.find((t) => t.id === nextId);
+
+    if (targetTab && targetTab.isDirty) {
+      setActiveTabId(targetTab.id);
+      setPendingCloseTabId(targetTab.id);
+      setTabClosingQueue(remainingQueue);
+    } else if (targetTab) {
+      executeCloseTab(nextId, remainingQueue);
+    } else {
+      processNextInQueue(remainingQueue, currentTabs);
+    }
+  };
+//
+  const executeCloseTab = (id, queueOverride = null) => {
+    setTabs((prevTabs) => {
+      const tabIndex = prevTabs.findIndex((tab) => tab.id === id);
+      const newTabs = prevTabs.filter((tab) => tab.id !== id);
+
+      if (id === activeTabId) {
+        const nextTab = newTabs[tabIndex - 1] || newTabs[tabIndex] || newTabs[0];
+        if (nextTab) {
+          setActiveTabId(nextTab.id);
+        }
+      }
+
+      const currentQueue = queueOverride !== null ? queueOverride : tabClosingQueue;
+
+      if (currentQueue.length > 0) {
+        setTimeout(() => {
+          processNextInQueue(currentQueue, newTabs);
+        }, 50);
+      } else {
+        setTabClosingQueue([]);
+        setPendingCloseTabId(null);
+      }
+
+      return newTabs;
+    });
+  };
+
+
+// بستن تب (با چک کردن تغییرات ذخیره‌نشده)
+// بستن تب
+const closeTab = (id, force = false) => {
+    const targetTab = tabs.find((tab) => tab.id === id);
+
+    if (targetTab && targetTab.isDirty && !force) {
+      setPendingCloseTabId(id);
+      return;
+    }
+
+    executeCloseTab(id);
+  };
+
+//  اضافه شد: تابع بستن همه تب‌ها
+  const closeAllTabs = () => {
+    const closableTabs = tabs.filter((t) => t.closable);
+    if (closableTabs.length === 0) return;
+
+    const tabIds = closableTabs.map((t) => t.id);
+    const firstTab = closableTabs[0];
+
+    if (firstTab.isDirty) {
+      setActiveTabId(firstTab.id);
+      setPendingCloseTabId(firstTab.id);
+      setTabClosingQueue(tabIds.slice(1));
+    } else {
+      setTabClosingQueue(tabIds.slice(1));
+      executeCloseTab(firstTab.id, tabIds.slice(1));
+    }
+  };
+
+const updateTab = (id, updates) => {
+  setTabs((prevTabs) =>
+    prevTabs.map((tab) =>
+      tab.id === id
+        ? { ...tab, ...updates }
+        : tab
+    )
+  );
+};
+
+
+  return (
+    <TabContext.Provider
+      value={{
+        tabs,
+        activeTabId,
+        openTab,
+        activateTab,
+        closeTab,
+        closeAllTabs, //  اضافه شد
+        updateTab,
+        pendingCloseTabId, //  اضافه شد
+        setPendingCloseTabId, //  اضافه شد
+        showCloseAllModal, //  اضافه شد
+        setShowCloseAllModal, //  اضافه شد
+      }}
+    >
+      {children}
+    </TabContext.Provider>
+  );
+};
+
+export default TabProvider;
+</file>
+
+<file path="src/layout/MainLayout/MainLayout.jsx">
+import Sidebar from "../Sidebar/Sidebar";
+import Navbar from "../Navbar/Navbar";
+import GlobalTabs from "../../components/Tabs/GlobalTabs";
+import TabContent from "../../components/Tabs/TabContent";
+import useTabs from "../../context/useTabs";
+import styles from "./MainLayout.module.css";
+import CloseUnsavedModal from "../../components/tabs/CloseUnsavedModal"; //  این  اضافه شد
+
+const MainLayout = () => {
+  const { tabs, activeTabId } = useTabs();
+
+  return (
+    <div className={styles.layout}>
+
+      <Sidebar />
+
+      <div className={styles.content}>
+
+        <Navbar />
+
+        <GlobalTabs />
+
+        <div className={styles.page}>
+
+          {tabs.map((tab) => (
+            <div
+              key={tab.id}
+              className={
+                tab.id === activeTabId
+                  ? styles.tabPanelActive
+                  : styles.tabPanel
+              }
+            >
+              <TabContent tab={tab} />
+            </div>
+          ))}
+
+        </div>
+
+      </div>
+      <CloseUnsavedModal />
+
+    </div>
+  );
+};
+
+export default MainLayout;
+</file>
+
 <file path="src/layout/MainLayout/MainLayout.module.css">
 .layout {
   display: flex;
@@ -12195,6 +12253,130 @@ export default Navbar;
   display: flex;
   align-items: center;
   gap: 12px;
+}
+</file>
+
+<file path="src/pages/Financial/Vouchers/VoucherNew/useVoucher.jsx">
+import { useState, useCallback } from "react";
+import axios from "axios";
+import DateObject from "react-date-object";
+import persian from "react-date-object/calendars/persian";
+import persian_fa from "react-date-object/locales/persian_fa";
+import { toEnglishDigits } from "../../../../utils/formatter";
+
+
+const getTodayPersianDate = () =>
+    toEnglishDigits(new DateObject({ calendar: persian, locale: persian_fa }).format("YYYY/MM/DD"));
+
+const baseVoucher = {
+    number: "",
+    state: 0,
+    subNumber: 0,
+    sharh: "",
+    tozihat: "",
+    debtorAmount: 0,
+    creditorAmount: 0,
+    countOfLines: 0,
+    inserterCode: 0,
+    lines: [],
+    subDomain: 0,
+    reference: 0,
+    type: 0,
+    deletedLineIds: [],
+};
+
+// نگاشت هر ردیف سند از فرمت API (GetById) به فرمتی که گرید استفاده می‌کند
+const mapLineFromApi = (line) => ({
+    id: line.id,
+    row: line.row,
+    sequence: line.row,
+    accountId: line.account?.id ?? null,
+    accountCode: line.accountCode || "",
+    accountName: line.account?.name || "",
+    sharh: line.sharh || "",
+    debtorAmount: line.debtorAmount || 0,
+    creditorAmount: line.creditorAmount || 0,
+    // آبجکت account برگشتی از GetById همان فیلدهای Able (markaz1Able و ...) را دارد
+    // که VoucherColumns برای فعال/غیرفعال کردن ستون‌ها استفاده می‌کند
+    accountFeatures: line.account || null,
+    good: line.goodCode || "",
+    markaz1: line.markaz1Code || "",
+    markaz2: line.markaz2Code || "",
+    markaz3: line.markaz3Code || "",
+    markaz4: line.markaz4Code || "",
+    dateCheq: line.dateCheq || "",
+    numCheq: line.numCheq || "",
+    tedad1: line.tedad1 || 0,
+    tedad2: line.tedad2 || 0,
+    tedad3: line.tedad3 || 0,
+    currencyCode: line.currencyCode || 0,
+    currencyFee: line.currencyFee || 0,
+    currencyTedad: line.currencyTedad || 0,
+});
+
+// نگاشت کل سند از فرمت API به فرمت state داخلی
+const mapVoucherFromApi = (data) => ({
+    id: data.id,
+    number: data.number,
+    state: data.state ?? 0,
+    subNumber: data.subNumber ?? 0,
+    date: data.date || "",
+    sharh: data.sharh || "",
+    tozihat: data.tozihat || "",
+    debtorAmount: data.debtorAmount || 0,
+    creditorAmount: data.creditorAmount || 0,
+    countOfLines: data.lines?.length || 0,
+    inserterCode: data.inserterCode || 0,
+    lines: (data.lines || []).map(mapLineFromApi),
+    subDomain: data.subDomain ?? 0,
+    reference: data.reference ?? 0,
+    type: data.type ?? 0,
+    atfNumber: data.atfNumber,
+    deletedLineIds: [],
+});
+
+export default function useVoucher() {
+
+    const [voucher, setVoucher] = useState(() => ({
+        ...baseVoucher,
+         date: getTodayPersianDate(), }) );
+
+    const [loading, setLoading] = useState(false);
+    const [loadError, setLoadError] = useState(null);
+
+    // خواندن سند از سرور برای حالت ویرایش/مشاهده
+    const loadVoucherById = useCallback(async (id) => {
+        setLoading(true);
+        setLoadError(null);
+
+        try {
+            const res = await axios.post(
+                "http://ecipc107:8049/api/Voucher/GetById",
+                { id }
+            );
+
+            setVoucher(mapVoucherFromApi(res.data));
+
+        } catch (error) {
+            console.error("❌ VOUCHER GETBYID ERROR:", error);
+
+            setLoadError(
+                error.response?.data?.message ||
+                error.message ||
+                "خطا در دریافت اطلاعات سند."
+            );
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return {
+        voucher,
+        setVoucher,
+        loading,
+        loadError,
+        loadVoucherById,
+    };
 }
 </file>
 
@@ -12370,130 +12552,6 @@ const handleOpenTab = (item) => {
 };
 
 export default Sidebar;
-</file>
-
-<file path="src/pages/Financial/Vouchers/VoucherNew/useVoucher.jsx">
-import { useState, useCallback } from "react";
-import axios from "axios";
-import DateObject from "react-date-object";
-import persian from "react-date-object/calendars/persian";
-import persian_fa from "react-date-object/locales/persian_fa";
-import { toEnglishDigits } from "../../../../utils/formatter";
-
-
-const getTodayPersianDate = () =>
-    toEnglishDigits(new DateObject({ calendar: persian, locale: persian_fa }).format("YYYY/MM/DD"));
-
-const baseVoucher = {
-    number: "",
-    state: 0,
-    subNumber: 0,
-    sharh: "",
-    tozihat: "",
-    debtorAmount: 0,
-    creditorAmount: 0,
-    countOfLines: 0,
-    inserterCode: 0,
-    lines: [],
-    subDomain: 0,
-    reference: 0,
-    type: 0,
-    deletedLineIds: [],
-};
-
-// نگاشت هر ردیف سند از فرمت API (GetById) به فرمتی که گرید استفاده می‌کند
-const mapLineFromApi = (line) => ({
-    id: line.id,
-    row: line.row,
-    sequence: line.row,
-    accountId: line.account?.id ?? null,
-    accountCode: line.accountCode || "",
-    accountName: line.account?.name || "",
-    sharh: line.sharh || "",
-    debtorAmount: line.debtorAmount || 0,
-    creditorAmount: line.creditorAmount || 0,
-    // آبجکت account برگشتی از GetById همان فیلدهای Able (markaz1Able و ...) را دارد
-    // که VoucherColumns برای فعال/غیرفعال کردن ستون‌ها استفاده می‌کند
-    accountFeatures: line.account || null,
-    good: line.goodCode || "",
-    markaz1: line.markaz1Code || "",
-    markaz2: line.markaz2Code || "",
-    markaz3: line.markaz3Code || "",
-    markaz4: line.markaz4Code || "",
-    dateCheq: line.dateCheq || "",
-    numCheq: line.numCheq || "",
-    tedad1: line.tedad1 || 0,
-    tedad2: line.tedad2 || 0,
-    tedad3: line.tedad3 || 0,
-    currencyCode: line.currencyCode || 0,
-    currencyFee: line.currencyFee || 0,
-    currencyTedad: line.currencyTedad || 0,
-});
-
-// نگاشت کل سند از فرمت API به فرمت state داخلی
-const mapVoucherFromApi = (data) => ({
-    id: data.id,
-    number: data.number,
-    state: data.state ?? 0,
-    subNumber: data.subNumber ?? 0,
-    date: data.date || "",
-    sharh: data.sharh || "",
-    tozihat: data.tozihat || "",
-    debtorAmount: data.debtorAmount || 0,
-    creditorAmount: data.creditorAmount || 0,
-    countOfLines: data.lines?.length || 0,
-    inserterCode: data.inserterCode || 0,
-    lines: (data.lines || []).map(mapLineFromApi),
-    subDomain: data.subDomain ?? 0,
-    reference: data.reference ?? 0,
-    type: data.type ?? 0,
-    atfNumber: data.atfNumber,
-    deletedLineIds: [],
-});
-
-export default function useVoucher() {
-
-    const [voucher, setVoucher] = useState(() => ({
-        ...baseVoucher,
-         date: getTodayPersianDate(), }) );
-
-    const [loading, setLoading] = useState(false);
-    const [loadError, setLoadError] = useState(null);
-
-    // خواندن سند از سرور برای حالت ویرایش/مشاهده
-    const loadVoucherById = useCallback(async (id) => {
-        setLoading(true);
-        setLoadError(null);
-
-        try {
-            const res = await axios.post(
-                "http://ecipc107:8049/api/Voucher/GetById",
-                { id }
-            );
-
-            setVoucher(mapVoucherFromApi(res.data));
-
-        } catch (error) {
-            console.error("❌ VOUCHER GETBYID ERROR:", error);
-
-            setLoadError(
-                error.response?.data?.message ||
-                error.message ||
-                "خطا در دریافت اطلاعات سند."
-            );
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    return {
-        voucher,
-        setVoucher,
-        loading,
-        loadError,
-        loadVoucherById,
-    };
-}
 </file>
 
 <file path="src/pages/Financial/Vouchers/VoucherNew/VoucherHeader.jsx">
@@ -13498,449 +13556,6 @@ export default CustomDataGrid;
 }
 </file>
 
-<file path="src/pages/Financial/Vouchers/VoucherNew/VoucherNew.jsx">
-import {React, useState, useEffect, useRef, useCallback} from 'react';
-import styles from "./VoucherNew.module.css";
-import VoucherHeader from "./VoucherHeader";
-import VoucherLineGrid from "./VoucherLineGrid"
-import useVoucher from "./useVoucher";
-import axios from "axios";
-import { Snackbar, Alert } from "@mui/material";
-import { validateVoucher , validateVoucherBalance } from "./voucherNewValidations";
-import useTabs from "../../../../context/useTabs";
-import { toEnglishDigits } from "../../../../utils/formatter";
-
-
-const VoucherNew = ({ tab }) => {
-
-  const { voucher, setVoucher, loading, loadError, loadVoucherById } = useVoucher();
-
-  const { updateTab } = useTabs();
-
-
-  const [saveStatus, setSaveStatus] = useState(null);
-
-  const lineGridRef = useRef(null);
-
-  // اگر تب با آیدی یک سند باز شده باشد (کلیک روی سند در لیست)، اطلاعاتش از سرور خوانده می‌شود
-  useEffect(() => {
-    const voucherId = tab?.data?.id;
-    if (voucherId) {
-      loadVoucherById(voucherId);
-    }
-  }, [tab?.data?.id, loadVoucherById]);
-
-
-  const [snackbar, setSnackbar] = useState({
-    open:false,
-    message:"",
-    severity:"error"
-  });
-
-  const [successSnackbar, setSuccessSnackbar] = useState({
-    open:false,
-    message:""
-  });
-
-
-
-  const showErrorSnackbar = (message) => {
-    setSnackbar({
-      open:true,
-      message,
-      severity:"error"
-    });
-  };
-
-
-  const showSuccessSnackbar = (message) => {
-    setSuccessSnackbar({
-      open:true,
-      message
-    });
-  };
-
-  const closeSnackbar = () => {
-    setSnackbar((prev) => ({
-      ...prev,
-      open: false,
-    }));
-  };
-
-
-
-  const handleSave = useCallback( async () => {
-    
-      const validationErrors = validateVoucher(voucher);
-
-        if (validationErrors.length > 0) {
-
-          console.log("❌ VALIDATION ERRORS:", validationErrors);
-
-        showErrorSnackbar(
-        validationErrors
-          .map((error) => error.message)
-          .join("\n"),
-        "error"
-        );
-
-          return;
-        }
-
-        console.log("✅ VOUCHER VALIDATION PASSED");
-      const balanceValidation = validateVoucherBalance(voucher);
-
-      // کنترل بالانس بودن سند
-        if (!balanceValidation.isValid) {
-
-            showErrorSnackbar(
-                balanceValidation.message,
-                "error"
-            );
-
-            return;
-        }
-    
-    // ========================================
-    // BUILD API PAYLOAD
-    // ========================================
-
-        const validLines = voucher.lines.filter(
-        (line) => line.accountCode
-        );
-
-        const linesPayload = validLines.map((line, index) => ({
-          row: index,
-          accountCode: line.accountCode,
-
-          markaz1Code: line.markaz1 || "",
-          markaz2Code: line.markaz2 || "",
-          markaz3Code: line.markaz3 || "",
-          markaz4Code: line.markaz4 || "",
-
-          goodCode: line.good || "",
-
-          currencyCode: Number(line.currencyCode || 0),
-          currencyTedad: Number(line.currencyTedad || 0),
-          currencyFee: Number(line.currencyFee || 0),
-
-          tedad1: Number(line.tedad1 || 0),
-          tedad2: Number(line.tedad2 || 0),
-          tedad3: Number(line.tedad3 || 0),
-
-          sharh: line.sharh || "",
-
-          dateCheq: line.dateCheq || "",
-          numCheq: line.numCheq || "",
-
-          debtorAmount: Number(line.debtorAmount || 0),
-          creditorAmount: Number(line.creditorAmount || 0),
-
-          // سطرهای تازه‌ساز (هنوز ثبت‌نشده روی سرور) باید id صفر بگیرن تا بک‌اند به‌جای آپدیت، درج‌شون کنه
-          id: line.isNew ? 0 : Number(line.id) || 0,
-        }));
-
-        const basePayload = {
-        state: Number(voucher.state),
-        subNumber: Number(voucher.subNumber || 0),
-        date: toEnglishDigits(voucher.date),
-        sharh: voucher.sharh,
-        tozihat: voucher.tozihat,
-
-        debtorAmount: validLines.reduce(
-          (sum, line) => sum + Number(line.debtorAmount || 0),
-          0
-        ),
-
-        creditorAmount: validLines.reduce(
-          (sum, line) => sum + Number(line.creditorAmount || 0),
-          0
-        ),
-
-        countOfLines: validLines.length,
-
-        inserterCode: voucher.inserterCode,
-
-        lines: linesPayload,
-
-        subDomain: voucher.subDomain,
-        reference: voucher.reference,
-        type: voucher.type,
-      };
-
-      console.log("SAVE PAYLOAD:", basePayload);
-
-      // ========================================
-      // SEND TO API
-      // ========================================
-
-      try {
-            let response;
-
-            if (voucher.id) {
-
-                const updatePayload = {
-                    ...basePayload,
-                    id: voucher.id,
-                    lineIdsForDelete: voucher.deletedLineIds || [],
-                };
-
-                console.log("UPDATE VOUCHER:", updatePayload);
-
-                response = await axios.post(
-                    "http://ecipc107:8049/api/Voucher/Update",
-                    updatePayload
-                );
-
-            } else {
-
-                console.log("INSERT VOUCHER:", basePayload);
-
-                response = await axios.post(
-                    "http://ecipc107:8049/api/Voucher/Insert",
-                    basePayload
-                );
-            }
-
-        console.log("SAVE RESPONSE:", response.data);
-
-      if (response.data?.isSuccess) {
-
-        const result = response.data.data;
-
-          if(result){
-
-              // رفرش کامل سند از سرور: هم id واقعی سطرهای تازه‌ساز رو می‌گیریم
-              // هم isNew و deletedLineIds به‌درستی ریست می‌شن، بدون نیاز به مدیریت دستی این حالت‌ها
-              await loadVoucherById(result.id);
-
-          // ✅ بعد از ذخیره موفق، تغییرات ذخیره‌نشده را پاک می‌کنیم
-              updateTab(tab.id, { isDirty: false });
-
-              if (!voucher.id) {
-                  updateTab(tab.id, {
-                    title: "ویرایش سند",
-                    pageType: "voucher-detail",
-                    data: {
-                      id: result.id,
-                    },
-                  });
-                }
-
-              showSuccessSnackbar(
-                  voucher.id
-                  ? "ویرایش سند با موفقیت انجام شد"
-                  : `سند شماره ${result.number} ثبت شد`,
-                  "success"
-              );
-
-              setSaveStatus({
-                type: "saved",
-                number: result.number
-              });
-          }
-
-        } else {
-
-          console.error(
-            "❌ VOUCHER SAVE ERROR:",
-            response.data?.message
-          );
-
-          showErrorSnackbar(
-            response.data?.message ||
-            "ثبت سند با خطا مواجه شد.",
-            "error"
-          );
-        }
-
-      } catch (error) {
-
-        console.error("❌ SAVE API ERROR:", error);
-
-    const apiError = error.response?.data;
-
-    console.error("API ERROR DATA:", apiError);
-
-          showErrorSnackbar(
-          apiError?.message ||
-          apiError?.title ||
-          apiError ||
-          error.message ||
-          "خطا در ارتباط با سرور.",
-          "error"
-          );
-      }
-  
-  }, [voucher, tab?.id, updateTab, loadVoucherById]);
-
-  
-// مقایسه هوشمند تغییرات برای جلوگیری از فعال شدن بی‌دلیل isDirty
-  const isFirstMount = useRef(true);
-  const initialVoucherRef = useRef(null); // نگهداری نسخه اولیه یا لود شده سند
-
-  const handleSaveRef = useRef(handleSave);
-  useEffect(() => {
-    handleSaveRef.current = handleSave;
-  });
-
-  const updateTabRef = useRef(updateTab);
-  useEffect(() => {
-    updateTabRef.current = updateTab;
-  });
-
-  // وقتی سند جدید باز می‌شود یا از سرور لود می‌شود، نسخه اولیه را ثبـت می‌کنیم
-  useEffect(() => {
-    if (voucher && !initialVoucherRef.current) {
-      initialVoucherRef.current = JSON.stringify(voucher);
-    }
-  }, [voucher]);
-
-  // هر بار که آیدی تب عوض می‌شود، مرجع اولیه را ریست می‌کنیم تا برای سند جدید آماده شود
-  useEffect(() => {
-    initialVoucherRef.current = null;
-  }, [tab?.id, tab?.data?.id]);
-
-  // بررسی تغییرات واقعی
-  useEffect(() => {
-    if (isFirstMount.current) {
-      isFirstMount.current = false;
-      return;
-    }
-
-    // اگر هنوز نسخه اولیه ست نشده، کاری نکن
-    if (!initialVoucherRef.current) {
-      return;
-    }
-
-    // مقایسه سند فعلی با نسخه اولیه
-    const currentVoucherString = JSON.stringify(voucher);
-    const hasChanged = currentVoucherString !== initialVoucherRef.current;
-
-    if (tab?.id && updateTabRef.current) {
-      updateTabRef.current(tab.id, {
-        isDirty: hasChanged, // فقط زمانی که واقعاً تفاوت وجود داشته باشد true می‌شود
-        data: {
-          ...tab?.data,
-          onSave: () => handleSaveRef.current(),
-        },
-      });
-    }
-  }, [voucher, tab?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-
-    // ترکیب خطای بارگذاری سند با snackbar خطا، بدون نیاز به useEffect و setState اضافه
-  const isErrorSnackbarOpen = snackbar.open || Boolean(loadError);
-  const errorSnackbarMessage = snackbar.open ? snackbar.message : loadError;
-
-
-return (
-  
-  
-<div className={styles.voucherPage}>   
-
-
-    {loading && (
-      <div style={{ padding: "8px 4px", color: "#1976d2" }}>
-        در حال دریافت اطلاعات سند...
-      </div>
-    )}
-
-       <VoucherHeader
-          voucher={voucher}
-          setVoucher={setVoucher}
-          onDescriptionEnter={() => lineGridRef.current?.focusFirstCell()}
-       />
-
-  <div>
-    
-    <VoucherLineGrid 
-      ref={lineGridRef}
-      voucher={voucher}
-      setVoucher={setVoucher}
-      onSave={handleSave}
-    />
-
-  </div>
-
-    <Snackbar
-      open={isErrorSnackbarOpen}
-      autoHideDuration={4000}
-      onClose={closeSnackbar}
-      anchorOrigin={{
-        vertical: "bottom",
-        horizontal: "center",
-      }}
-    >
-      <Alert
-        onClose={closeSnackbar}
-        severity="error"
-        variant="filled"
-        sx={{ direction: "rtl" }}
-      >
-        {errorSnackbarMessage}
-      </Alert>
-    </Snackbar>
-
-    <Snackbar
-      open={successSnackbar.open}
-      autoHideDuration={6000}
-      onClose={() =>
-        setSuccessSnackbar({
-          open:false,
-          message:""
-        })
-      }
-      anchorOrigin={{
-        vertical:"bottom",
-        horizontal:"center"
-      }}
-    >
-      <Alert
-        severity="success"
-        variant="filled"
-        icon={false}
-        sx={{
-          direction:"rtl",
-          width:"auto",
-          minHeight:"40px",
-          display:"flex",
-          alignItems:"center",
-          justifyContent:"center",
-          fontSize:"1.2rem",
-          fontWeight:700,
-          borderRadius:"14px",
-          boxShadow:"0 8px 25px rgba(0,0,0,0.25)"
-        }}
-      >
-          <div
-            style={{
-              display:"flex",
-              alignItems:"center",
-              justifyContent:"center",
-              gap:"10px",
-              direction:"rtl"
-            }}
-          >
-            <span style={{fontSize:"24px"}}>
-              ✅
-            </span>
-
-            <span>
-              {successSnackbar.message}
-            </span>
-          </div>
-
-      </Alert>
-    </Snackbar>
-</div> 
-
-);
-}
-
-export default VoucherNew;
-</file>
-
 <file path="src/pages/Financial/Vouchers/VoucherNew/useVoucherGrid.jsx">
 import { useGridApiRef } from "@mui/x-data-grid-pro";
 import {getColumns} from "./VoucherColumns";
@@ -14668,6 +14283,451 @@ if (event.key === 'Enter') {
          
     }; 
 }
+</file>
+
+<file path="src/pages/Financial/Vouchers/VoucherNew/VoucherNew.jsx">
+import {React, useState, useEffect, useRef, useCallback} from 'react';
+import styles from "./VoucherNew.module.css";
+import VoucherHeader from "./VoucherHeader";
+import VoucherLineGrid from "./VoucherLineGrid"
+import useVoucher from "./useVoucher";
+import axios from "axios";
+import { Snackbar, Alert } from "@mui/material";
+import { validateVoucher , validateVoucherBalance } from "./voucherNewValidations";
+import useTabs from "../../../../context/useTabs";
+import { toEnglishDigits } from "../../../../utils/formatter";
+
+
+const VoucherNew = ({ tab }) => {
+
+  const { voucher, setVoucher, loading, loadError, loadVoucherById } = useVoucher();
+
+  const { updateTab } = useTabs();
+
+
+  const [saveStatus, setSaveStatus] = useState(null);
+
+  const lineGridRef = useRef(null);
+
+  // اگر تب با آیدی یک سند باز شده باشد (کلیک روی سند در لیست)، اطلاعاتش از سرور خوانده می‌شود
+  useEffect(() => {
+    const voucherId = tab?.data?.id;
+    if (voucherId) {
+      loadVoucherById(voucherId);
+    }
+  }, [tab?.data?.id, loadVoucherById]);
+
+
+  const [snackbar, setSnackbar] = useState({
+    open:false,
+    message:"",
+    severity:"error"
+  });
+
+  const [successSnackbar, setSuccessSnackbar] = useState({
+    open:false,
+    message:""
+  });
+
+
+
+  const showErrorSnackbar = (message) => {
+    setSnackbar({
+      open:true,
+      message,
+      severity:"error"
+    });
+  };
+
+
+  const showSuccessSnackbar = (message) => {
+    setSuccessSnackbar({
+      open:true,
+      message
+    });
+  };
+
+  const closeSnackbar = () => {
+    setSnackbar((prev) => ({
+      ...prev,
+      open: false,
+    }));
+  };
+
+
+
+  const handleSave = useCallback( async () => {
+    
+      const validationErrors = validateVoucher(voucher);
+
+        if (validationErrors.length > 0) {
+
+          console.log("❌ VALIDATION ERRORS:", validationErrors);
+
+        showErrorSnackbar(
+        validationErrors
+          .map((error) => error.message)
+          .join("\n"),
+        "error"
+        );
+
+          return false;
+        }
+
+        console.log("✅ VOUCHER VALIDATION PASSED");
+      const balanceValidation = validateVoucherBalance(voucher);
+
+      // کنترل بالانس بودن سند
+        if (!balanceValidation.isValid) {
+
+            showErrorSnackbar(
+                balanceValidation.message,
+                "error"
+            );
+
+            return false;
+        }
+    
+    // ========================================
+    // BUILD API PAYLOAD
+    // ========================================
+
+        const validLines = voucher.lines.filter(
+        (line) => line.accountCode
+        );
+
+        const linesPayload = validLines.map((line, index) => ({
+          row: index,
+          accountCode: line.accountCode,
+
+          markaz1Code: line.markaz1 || "",
+          markaz2Code: line.markaz2 || "",
+          markaz3Code: line.markaz3 || "",
+          markaz4Code: line.markaz4 || "",
+
+          goodCode: line.good || "",
+
+          currencyCode: Number(line.currencyCode || 0),
+          currencyTedad: Number(line.currencyTedad || 0),
+          currencyFee: Number(line.currencyFee || 0),
+
+          tedad1: Number(line.tedad1 || 0),
+          tedad2: Number(line.tedad2 || 0),
+          tedad3: Number(line.tedad3 || 0),
+
+          sharh: line.sharh || "",
+
+          dateCheq: line.dateCheq || "",
+          numCheq: line.numCheq || "",
+
+          debtorAmount: Number(line.debtorAmount || 0),
+          creditorAmount: Number(line.creditorAmount || 0),
+
+          // سطرهای تازه‌ساز (هنوز ثبت‌نشده روی سرور) باید id صفر بگیرن تا بک‌اند به‌جای آپدیت، درج‌شون کنه
+          id: line.isNew ? 0 : Number(line.id) || 0,
+        }));
+
+        const basePayload = {
+        state: Number(voucher.state),
+        subNumber: Number(voucher.subNumber || 0),
+        date: toEnglishDigits(voucher.date),
+        sharh: voucher.sharh,
+        tozihat: voucher.tozihat,
+
+        debtorAmount: validLines.reduce(
+          (sum, line) => sum + Number(line.debtorAmount || 0),
+          0
+        ),
+
+        creditorAmount: validLines.reduce(
+          (sum, line) => sum + Number(line.creditorAmount || 0),
+          0
+        ),
+
+        countOfLines: validLines.length,
+
+        inserterCode: voucher.inserterCode,
+
+        lines: linesPayload,
+
+        subDomain: voucher.subDomain,
+        reference: voucher.reference,
+        type: voucher.type,
+      };
+
+      console.log("SAVE PAYLOAD:", basePayload);
+
+      // ========================================
+      // SEND TO API
+      // ========================================
+
+      try {
+            let response;
+
+            if (voucher.id) {
+
+                const updatePayload = {
+                    ...basePayload,
+                    id: voucher.id,
+                    lineIdsForDelete: voucher.deletedLineIds || [],
+                };
+
+                console.log("UPDATE VOUCHER:", updatePayload);
+
+                response = await axios.post(
+                    "http://ecipc107:8049/api/Voucher/Update",
+                    updatePayload
+                );
+
+            } else {
+
+                console.log("INSERT VOUCHER:", basePayload);
+
+                response = await axios.post(
+                    "http://ecipc107:8049/api/Voucher/Insert",
+                    basePayload
+                );
+            }
+
+        console.log("SAVE RESPONSE:", response.data);
+
+      if (response.data?.isSuccess) {
+
+        const result = response.data.data;
+
+          if(result){
+
+              // رفرش کامل سند از سرور: هم id واقعی سطرهای تازه‌ساز رو می‌گیریم
+              // هم isNew و deletedLineIds به‌درستی ریست می‌شن، بدون نیاز به مدیریت دستی این حالت‌ها
+              await loadVoucherById(result.id);
+
+          // ✅ بعد از ذخیره موفق، تغییرات ذخیره‌نشده را پاک می‌کنیم
+              updateTab(tab.id, { isDirty: false });
+
+              if (!voucher.id) {
+                  updateTab(tab.id, {
+                    title: "ویرایش سند",
+                    pageType: "voucher-detail",
+                    data: {
+                      id: result.id,
+                    },
+                  });
+                }
+
+              showSuccessSnackbar(
+                  voucher.id
+                  ? "ویرایش سند با موفقیت انجام شد"
+                  : `سند شماره ${result.number} ثبت شد`,
+                  "success"
+              );
+
+              setSaveStatus({
+                type: "saved",
+                number: result.number
+              });
+          }
+                    return true; //  یعنی ذخیره با موفقیت انجام شد و تب می‌تواند بسته شود
+        } else {
+
+          console.error(
+            "❌ VOUCHER SAVE ERROR:",
+            response.data?.message
+          );
+
+          showErrorSnackbar(
+            response.data?.message ||
+            "ثبت سند با خطا مواجه شد.",
+            "error"
+          );
+          return false;
+        }
+
+      } catch (error) {
+
+        console.error("❌ SAVE API ERROR:", error);
+
+    const apiError = error.response?.data;
+
+    console.error("API ERROR DATA:", apiError);
+
+          showErrorSnackbar(
+          apiError?.message ||
+          apiError?.title ||
+          apiError ||
+          error.message ||
+          "خطا در ارتباط با سرور.",
+          "error"
+          );
+          return false;
+      }
+  
+  }, [voucher, tab?.id, updateTab, loadVoucherById]);
+
+  
+// مقایسه هوشمند تغییرات برای جلوگیری از فعال شدن بی‌دلیل isDirty
+  const isFirstMount = useRef(true);
+  const initialVoucherRef = useRef(null); // نگهداری نسخه اولیه یا لود شده سند
+
+  const handleSaveRef = useRef(handleSave);
+  useEffect(() => {
+    handleSaveRef.current = handleSave;
+  });
+
+  const updateTabRef = useRef(updateTab);
+  useEffect(() => {
+    updateTabRef.current = updateTab;
+  });
+
+  // وقتی سند جدید باز می‌شود یا از سرور لود می‌شود، نسخه اولیه را ثبـت می‌کنیم
+  useEffect(() => {
+    if (voucher && !initialVoucherRef.current) {
+      initialVoucherRef.current = JSON.stringify(voucher);
+    }
+  }, [voucher]);
+
+  // هر بار که آیدی تب عوض می‌شود، مرجع اولیه را ریست می‌کنیم تا برای سند جدید آماده شود
+  useEffect(() => {
+    initialVoucherRef.current = null;
+  }, [tab?.id, tab?.data?.id]);
+
+  // بررسی تغییرات واقعی
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+
+    // اگر هنوز نسخه اولیه ست نشده، کاری نکن
+    if (!initialVoucherRef.current) {
+      return;
+    }
+
+    // مقایسه سند فعلی با نسخه اولیه
+    const currentVoucherString = JSON.stringify(voucher);
+    const hasChanged = currentVoucherString !== initialVoucherRef.current;
+
+    if (tab?.id && updateTabRef.current) {
+      updateTabRef.current(tab.id, {
+        isDirty: hasChanged, // فقط زمانی که واقعاً تفاوت وجود داشته باشد true می‌شود
+        data: {
+          ...tab?.data,
+          onSave: () => handleSaveRef.current(),
+        },
+      });
+    }
+  }, [voucher, tab?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+
+    // ترکیب خطای بارگذاری سند با snackbar خطا، بدون نیاز به useEffect و setState اضافه
+  const isErrorSnackbarOpen = snackbar.open || Boolean(loadError);
+  const errorSnackbarMessage = snackbar.open ? snackbar.message : loadError;
+
+
+return (
+  
+  
+<div className={styles.voucherPage}>   
+
+
+    {loading && (
+      <div style={{ padding: "8px 4px", color: "#1976d2" }}>
+        در حال دریافت اطلاعات سند...
+      </div>
+    )}
+
+       <VoucherHeader
+          voucher={voucher}
+          setVoucher={setVoucher}
+          onDescriptionEnter={() => lineGridRef.current?.focusFirstCell()}
+       />
+
+  <div>
+    
+    <VoucherLineGrid 
+      ref={lineGridRef}
+      voucher={voucher}
+      setVoucher={setVoucher}
+      onSave={handleSave}
+    />
+
+  </div>
+
+    <Snackbar
+      open={isErrorSnackbarOpen}
+      autoHideDuration={4000}
+      onClose={closeSnackbar}
+      anchorOrigin={{
+        vertical: "bottom",
+        horizontal: "center",
+      }}
+    >
+      <Alert
+        onClose={closeSnackbar}
+        severity="error"
+        variant="filled"
+        sx={{ direction: "rtl" }}
+      >
+        {errorSnackbarMessage}
+      </Alert>
+    </Snackbar>
+
+    <Snackbar
+      open={successSnackbar.open}
+      autoHideDuration={6000}
+      onClose={() =>
+        setSuccessSnackbar({
+          open:false,
+          message:""
+        })
+      }
+      anchorOrigin={{
+        vertical:"bottom",
+        horizontal:"center"
+      }}
+    >
+      <Alert
+        severity="success"
+        variant="filled"
+        icon={false}
+        sx={{
+          direction:"rtl",
+          width:"auto",
+          minHeight:"40px",
+          display:"flex",
+          alignItems:"center",
+          justifyContent:"center",
+          fontSize:"1.2rem",
+          fontWeight:700,
+          borderRadius:"14px",
+          boxShadow:"0 8px 25px rgba(0,0,0,0.25)"
+        }}
+      >
+          <div
+            style={{
+              display:"flex",
+              alignItems:"center",
+              justifyContent:"center",
+              gap:"10px",
+              direction:"rtl"
+            }}
+          >
+            <span style={{fontSize:"24px"}}>
+              ✅
+            </span>
+
+            <span>
+              {successSnackbar.message}
+            </span>
+          </div>
+
+      </Alert>
+    </Snackbar>
+</div> 
+
+);
+}
+
+export default VoucherNew;
 </file>
 
 <file path="src/pages/Financial/Vouchers/VouchersList.jsx">
