@@ -83,7 +83,7 @@ const VoucherNew = ({ tab }) => {
         "error"
         );
 
-          return;
+          return false;
         }
 
         console.log("✅ VOUCHER VALIDATION PASSED");
@@ -97,7 +97,7 @@ const VoucherNew = ({ tab }) => {
                 "error"
             );
 
-            return;
+            return false;
         }
     
     // ========================================
@@ -238,7 +238,7 @@ const VoucherNew = ({ tab }) => {
                 number: result.number
               });
           }
-
+                    return true; //  یعنی ذخیره با موفقیت انجام شد و تب می‌تواند بسته شود
         } else {
 
           console.error(
@@ -251,6 +251,7 @@ const VoucherNew = ({ tab }) => {
             "ثبت سند با خطا مواجه شد.",
             "error"
           );
+          return false;
         }
 
       } catch (error) {
@@ -269,6 +270,7 @@ const VoucherNew = ({ tab }) => {
           "خطا در ارتباط با سرور.",
           "error"
           );
+          return false;
       }
   
   }, [voucher, tab?.id, updateTab, loadVoucherById]);

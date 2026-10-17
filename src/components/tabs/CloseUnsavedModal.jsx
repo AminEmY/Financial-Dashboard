@@ -27,12 +27,19 @@ const CloseUnsavedModal = () => {
           بستن بدون ذخیره
         </Button>
         <Button 
-          onClick={() => {
-            // اگر متد ذخیره از طریق دیتا روی تب پاس داده شده باشد، اینجا صدا زده می‌شود
+          onClick={async () => {
+            // اگر متد ذخیره روی تب وجود داشت
             if (targetTab?.data?.onSave) {
-              targetTab.data.onSave();
+              // منتظر می‌مانیم تا ببینیم آیا ذخیره موفق بوده یا نه
+              const isSavedSuccessfully = await targetTab.data.onSave();
+              
+              // اگر ذخیره موفق بود (یا خطایی نداشت که متوقفش کند)، تب را ببند
+              if (isSavedSuccessfully !== false) {
+                closeTab(pendingCloseTabId, true);
+              }
+            } else {
+              closeTab(pendingCloseTabId, true);
             }
-            closeTab(pendingCloseTabId, true);
           }} 
           variant="contained" 
           color="primary"
