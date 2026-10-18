@@ -17,8 +17,6 @@ const VoucherNew = ({ tab }) => {
   const { updateTab } = useTabs();
 
 
-  const [saveStatus, setSaveStatus] = useState(null);
-
   const lineGridRef = useRef(null);
 
   // اگر تب با آیدی یک سند باز شده باشد (کلیک روی سند در لیست)، اطلاعاتش از سرور خوانده می‌شود
@@ -209,13 +207,15 @@ const VoucherNew = ({ tab }) => {
 
           if(result){
 
-              // رفرش کامل سند از سرور: هم id واقعی سطرهای تازه‌ساز رو می‌گیریم
+              
               // هم isNew و deletedLineIds به‌درستی ریست می‌شن، بدون نیاز به مدیریت دستی این حالت‌ها
               await loadVoucherById(result.id);
-
-          // ✅ بعد از ذخیره موفق، تغییرات ذخیره‌نشده را پاک می‌کنیم
+            // 🟢 ۱. این خط رو اضافه کن تا مرجع مقایسه تغییرات با داده‌های جدید آپدیت بشه
+              initialVoucherRef.current = JSON.stringify(voucher);
+              // 🟢 ۲. این خط هم وضعیت تب رو پاک می‌کنه
               updateTab(tab.id, { isDirty: false });
 
+         // رفرش کامل سند از سرور: هم id واقعی سطرهای تازه‌ساز رو می‌گیریم
               if (!voucher.id) {
                   updateTab(tab.id, {
                     title: "ویرایش سند",
@@ -232,13 +232,11 @@ const VoucherNew = ({ tab }) => {
                   : `سند شماره ${result.number} ثبت شد`,
                   "success"
               );
-
-              setSaveStatus({
-                type: "saved",
-                number: result.number
-              });
+            
+              return true; //  یعنی ذخیره با موفقیت انجام شد و تب می‌تواند بسته شود
           }
-                    return true; //  یعنی ذخیره با موفقیت انجام شد و تب می‌تواند بسته شود
+          
+                  
         } else {
 
           console.error(
@@ -273,11 +271,12 @@ const VoucherNew = ({ tab }) => {
           return false;
       }
   
-  }, [voucher, tab?.id, updateTab, loadVoucherById]);
+  }, [voucher, tab?.id, updateTab, loadVoucherById ]);
 
   
 // مقایسه هوشمند تغییرات برای جلوگیری از فعال شدن بی‌دلیل isDirty
   const isFirstMount = useRef(true);
+  
   const initialVoucherRef = useRef(null); // نگهداری نسخه اولیه یا لود شده سند
 
   const handleSaveRef = useRef(handleSave);
@@ -293,12 +292,14 @@ const VoucherNew = ({ tab }) => {
   // وقتی سند جدید باز می‌شود یا از سرور لود می‌شود، نسخه اولیه را ثبـت می‌کنیم
   useEffect(() => {
     if (voucher && !initialVoucherRef.current) {
+      // eslint-disable-next-line react-hooks/immutability
       initialVoucherRef.current = JSON.stringify(voucher);
     }
   }, [voucher]);
 
   // هر بار که آیدی تب عوض می‌شود، مرجع اولیه را ریست می‌کنیم تا برای سند جدید آماده شود
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     initialVoucherRef.current = null;
   }, [tab?.id, tab?.data?.id]);
 
