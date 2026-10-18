@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 const KEY_PREFIX = "gridLayouts:";
+const DEFAULT_KEY_PREFIX = "defaultLayout:"; // اضافه شد برای ذخیره اسم مدل پیش‌فرض
 
 const readStore = (gridKey) => {
   try {
@@ -44,7 +45,68 @@ const recalculateMainColumnWidth = (apiRef) => {
 // defaultState: وضعیت پیش‌فرض گرید (ستون‌های نمایان و ...)
 export default function useGridLayouts(gridKey, apiRef, defaultState) {
   const [layouts, setLayouts] = useState(() => readStore(gridKey).layouts);
-  const [initialState] = useState(() => readStore(gridKey).current ?? defaultState);
+
+  // ➕ اضافه شد: خواندن نام مدل پیش‌فرضِ ذخیره‌شده از localStorage
+  const [defaultLayoutName, setDefaultLayoutName] = useState(() => {
+    try {
+      return localStorage.getItem(DEFAULT_KEY_PREFIX + gridKey) || "";
+    } catch {
+      return "";
+    }
+  });
+
+//  ویرایش شد: تعیین وضعیت اولیه (initialState) بر اساس مدل پیش‌فرضِ کاربر یا ذخیره شده‌ی قبلی
+  const [initialState] = useState(() => {
+    try {
+      const savedDefaultName = localStorage.getItem(DEFAULT_KEY_PREFIX + gridKey);
+      if (savedDefaultName) {
+        const store = readStore(gridKey);
+        const foundLayout = store.layouts.find((l) => l.name === savedDefaultName);
+        if (foundLayout) {
+          const cleanState = JSON.parse(JSON.stringify(foundLayout.state));
+          if (cleanState?.columns) cleanState.columns.columnDimensions = {};
+          return cleanState;
+        }
+      }
+      return readStore(gridKey).current ?? defaultState;
+    } catch {
+      return readStore(gridKey).current ?? defaultState;
+    }
+  });
+
+  // 🟢 اضافه شدن این useEffect برای اعمال قطعیِ پیش‌فرض به محض لود گرید
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!apiRef.current) return;
+      try {
+        const savedDefaultName = localStorage.getItem(DEFAULT_KEY_PREFIX + gridKey);
+        if (savedDefaultName) {
+          const layout = readStore(gridKey).layouts.find((l) => l.name === savedDefaultName);
+          if (layout) {
+            const cleanState = JSON.parse(JSON.stringify(layout.state));
+            if (cleanState?.columns) cleanState.columns.columnDimensions = {};
+            apiRef.current.restoreState(cleanState);
+            recalculateMainColumnWidth(apiRef);
+            return;
+          }
+        }
+        // اگر پیش‌فرضی نبود ولی current ذخیره شده بود
+        const store = readStore(gridKey);
+        if (store.current) {
+          const cleanState = JSON.parse(JSON.stringify(store.current));
+          if (cleanState?.columns) cleanState.columns.columnDimensions = {};
+          apiRef.current.restoreState(cleanState);
+          recalculateMainColumnWidth(apiRef);
+        }
+      } catch (error) {
+        console.error("خطا در اعمال وضعیت اولیه گرید:", error);
+      }
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [apiRef, gridKey]);
+
+
   const saveTimer = useRef(null);
 
   const write = useCallback((patch) => {
@@ -98,10 +160,32 @@ const applyLayout = useCallback((name) => {
       layouts: readStore(gridKey).layouts.filter((l) => l.name !== name),
     });
     setLayouts(next.layouts);
-  }, [gridKey, write]);
+    // اگر مدلی که حذف شد پیش‌فرض بود، پیش‌فرض را هم پاک کن
+    if (defaultLayoutName === name) {
+      setDefaultLayoutName("");
+      localStorage.removeItem(DEFAULT_KEY_PREFIX + gridKey);
+    }
+    
+  }, [gridKey, write, defaultLayoutName]);
+
 
 const resetToDefault = useCallback(() => {
     if (apiRef.current) {
+
+      // اگر کاربر مدل پیش‌فرضی انتخاب کرده بود، جدول را ببر روی همون، وگرنه defaultState
+      const savedDefaultName = localStorage.getItem(DEFAULT_KEY_PREFIX + gridKey);
+      if (savedDefaultName) {
+        const layout = readStore(gridKey).layouts.find((l) => l.name === savedDefaultName);
+        if (layout) {
+          const cleanState = JSON.parse(JSON.stringify(layout.state));
+          if (cleanState?.columns) cleanState.columns.columnDimensions = {};
+          apiRef.current.restoreState(cleanState);
+          write({ current: cleanState });
+          recalculateMainColumnWidth(apiRef);
+          return;
+        }
+      }
+
       const cleanDefaultState = JSON.parse(JSON.stringify(defaultState));
 
       // ➕ پاک کردن عرض‌های ثبت‌شده قبلی
@@ -115,7 +199,19 @@ const resetToDefault = useCallback(() => {
       // ➕ محاسبه مجدد عرض جدول در حالت پیش‌فرض
       recalculateMainColumnWidth(apiRef);
     }
-  }, [apiRef, defaultState, write]);
+  }, [apiRef, defaultState, write, gridKey]);
 
-  return { initialState, layouts, persistCurrent, saveLayout, applyLayout, deleteLayout, resetToDefault };
+
+  // ➕ تابع جدید: تنظیم یک مدل به عنوان پیش‌فرض دائمی
+  const setDefaultLayout = useCallback((name) => {
+    setDefaultLayoutName(name);
+    try {
+      localStorage.setItem(DEFAULT_KEY_PREFIX + gridKey, name);
+    } catch (error) {
+      // برای جلوگیری از خطای خالی بودن catch
+      console.error("خطا در ذخیره پیش‌فرض:", error);
+    }
+  }, [gridKey]);
+
+  return { initialState, layouts, defaultLayoutName, persistCurrent, saveLayout, applyLayout, deleteLayout, resetToDefault, setDefaultLayout };
 }

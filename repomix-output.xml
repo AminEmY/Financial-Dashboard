@@ -12095,56 +12095,6 @@ const updateTab = (id, updates) => {
 export default TabProvider;
 </file>
 
-<file path="src/layout/MainLayout/MainLayout.jsx">
-import Sidebar from "../Sidebar/Sidebar";
-import Navbar from "../Navbar/Navbar";
-import GlobalTabs from "../../components/Tabs/GlobalTabs";
-import TabContent from "../../components/Tabs/TabContent";
-import useTabs from "../../context/useTabs";
-import styles from "./MainLayout.module.css";
-import CloseUnsavedModal from "../../components/tabs/CloseUnsavedModal"; //  این  اضافه شد
-
-const MainLayout = () => {
-  const { tabs, activeTabId } = useTabs();
-
-  return (
-    <div className={styles.layout}>
-
-      <Sidebar />
-
-      <div className={styles.content}>
-
-        <Navbar />
-
-        <GlobalTabs />
-
-        <div className={styles.page}>
-
-          {tabs.map((tab) => (
-            <div
-              key={tab.id}
-              className={
-                tab.id === activeTabId
-                  ? styles.tabPanelActive
-                  : styles.tabPanel
-              }
-            >
-              <TabContent tab={tab} />
-            </div>
-          ))}
-
-        </div>
-
-      </div>
-      <CloseUnsavedModal />
-
-    </div>
-  );
-};
-
-export default MainLayout;
-</file>
-
 <file path="src/layout/MainLayout/MainLayout.module.css">
 .layout {
   display: flex;
@@ -12254,6 +12204,82 @@ export default Navbar;
   align-items: center;
   gap: 12px;
 }
+</file>
+
+<file path="src/layout/MainLayout/MainLayout.jsx">
+import Sidebar from "../Sidebar/Sidebar";
+import Navbar from "../Navbar/Navbar";
+import GlobalTabs from "../../components/Tabs/GlobalTabs";
+import TabContent from "../../components/Tabs/TabContent";
+import { useEffect } from "react";
+import useTabs from "../../context/useTabs";
+import styles from "./MainLayout.module.css";
+import CloseUnsavedModal from "../../components/tabs/CloseUnsavedModal"; //  این  اضافه شد
+
+const MainLayout = () => {
+
+
+  const { tabs, activeTabId, closeTab } = useTabs();
+
+  //  اضافه کردن این useEffect برای بستن توسط کلیک وسط موس در هر جای صفحه
+  useEffect(() => {
+      const handleGlobalMiddleClick = (e) => {
+        if (e.button === 1) { // کلیک وسط موس
+          const currentTab = tabs.find((t) => t.id === activeTabId);
+          
+          if (currentTab && currentTab.closable) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeTab(currentTab.id);
+          }
+        }
+      };
+
+      // 🟢 استفاده از mousedown با حالت capture برای مهار کردن کلیک وسط حتی روی گرید و سلول‌های آن
+      window.addEventListener("mousedown", handleGlobalMiddleClick, { capture: true });
+      
+      return () => {
+        window.removeEventListener("mousedown", handleGlobalMiddleClick, { capture: true });
+      };
+    }, [tabs, activeTabId, closeTab]);
+
+
+return (
+    <div className={styles.layout}>
+
+      <Sidebar />
+
+      <div className={styles.content}>
+
+        <Navbar />
+
+        <GlobalTabs />
+
+        <div className={styles.page}>
+
+          {tabs.map((tab) => (
+            <div
+              key={tab.id}
+              className={
+                tab.id === activeTabId
+                  ? styles.tabPanelActive
+                  : styles.tabPanel
+              }
+            >
+              <TabContent tab={tab} />
+            </div>
+          ))}
+
+        </div>
+
+      </div>
+      <CloseUnsavedModal />
+
+    </div>
+  );
+};
+
+export default MainLayout;
 </file>
 
 <file path="src/pages/Financial/Vouchers/VoucherNew/useVoucher.jsx">
@@ -14305,8 +14331,6 @@ const VoucherNew = ({ tab }) => {
   const { updateTab } = useTabs();
 
 
-  const [saveStatus, setSaveStatus] = useState(null);
-
   const lineGridRef = useRef(null);
 
   // اگر تب با آیدی یک سند باز شده باشد (کلیک روی سند در لیست)، اطلاعاتش از سرور خوانده می‌شود
@@ -14497,13 +14521,15 @@ const VoucherNew = ({ tab }) => {
 
           if(result){
 
-              // رفرش کامل سند از سرور: هم id واقعی سطرهای تازه‌ساز رو می‌گیریم
+              
               // هم isNew و deletedLineIds به‌درستی ریست می‌شن، بدون نیاز به مدیریت دستی این حالت‌ها
               await loadVoucherById(result.id);
-
-          // ✅ بعد از ذخیره موفق، تغییرات ذخیره‌نشده را پاک می‌کنیم
+            // 🟢 ۱. این خط رو اضافه کن تا مرجع مقایسه تغییرات با داده‌های جدید آپدیت بشه
+              initialVoucherRef.current = JSON.stringify(voucher);
+              // 🟢 ۲. این خط هم وضعیت تب رو پاک می‌کنه
               updateTab(tab.id, { isDirty: false });
 
+         // رفرش کامل سند از سرور: هم id واقعی سطرهای تازه‌ساز رو می‌گیریم
               if (!voucher.id) {
                   updateTab(tab.id, {
                     title: "ویرایش سند",
@@ -14520,13 +14546,11 @@ const VoucherNew = ({ tab }) => {
                   : `سند شماره ${result.number} ثبت شد`,
                   "success"
               );
-
-              setSaveStatus({
-                type: "saved",
-                number: result.number
-              });
+            
+              return true; //  یعنی ذخیره با موفقیت انجام شد و تب می‌تواند بسته شود
           }
-                    return true; //  یعنی ذخیره با موفقیت انجام شد و تب می‌تواند بسته شود
+          
+                  
         } else {
 
           console.error(
@@ -14561,11 +14585,12 @@ const VoucherNew = ({ tab }) => {
           return false;
       }
   
-  }, [voucher, tab?.id, updateTab, loadVoucherById]);
+  }, [voucher, tab?.id, updateTab, loadVoucherById ]);
 
   
 // مقایسه هوشمند تغییرات برای جلوگیری از فعال شدن بی‌دلیل isDirty
   const isFirstMount = useRef(true);
+  
   const initialVoucherRef = useRef(null); // نگهداری نسخه اولیه یا لود شده سند
 
   const handleSaveRef = useRef(handleSave);
@@ -14581,12 +14606,14 @@ const VoucherNew = ({ tab }) => {
   // وقتی سند جدید باز می‌شود یا از سرور لود می‌شود، نسخه اولیه را ثبـت می‌کنیم
   useEffect(() => {
     if (voucher && !initialVoucherRef.current) {
+      // eslint-disable-next-line react-hooks/immutability
       initialVoucherRef.current = JSON.stringify(voucher);
     }
   }, [voucher]);
 
   // هر بار که آیدی تب عوض می‌شود، مرجع اولیه را ریست می‌کنیم تا برای سند جدید آماده شود
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     initialVoucherRef.current = null;
   }, [tab?.id, tab?.data?.id]);
 
@@ -14749,24 +14776,24 @@ import useGridLayouts from "../../../components/common/list/useGridLayouts"
 const STATE_LABELS = { 0: "پیش‌نویس", 1: "موقت", 2: "دائم" };
 
 const COLUMN_CONFIG = [
-  { field: "number",         headerName: "شماره سند",      flex: 1,  valueFormatter: toPersianDigits },
-  { field: "date_Shamsi",    headerName: "تاریخ",           flex: 1, minWidth: 107,  valueFormatter: toPersianDigits },
+  { field: "number",         headerName: "شماره سند",       flex: 1, minWidth: 100 , valueFormatter: toPersianDigits },
+  { field: "date_Shamsi",    headerName: "تاریخ",            flex: 1, minWidth: 107,  valueFormatter: toPersianDigits },
   { field: "sharh",          headerName: "شرح",             flex: 3, minWidth: 200 },
-  { field: "countOfLines",   headerName: "تعداد ردیف سند",  flex: 1,  valueFormatter: formatNumber },
-  { field: "amount",         headerName: "مبلغ",            flex: 1, minWidth: 100, valueFormatter: formatNumber },
+  { field: "countOfLines",   headerName: "تعداد ردیف",     flex: 1, minWidth: 90 , valueFormatter: formatNumber },
+  { field: "amount",         headerName: "مبلغ",            flex: 1, minWidth: 155, valueFormatter: formatNumber },
   { field: "subNumber",      headerName: "شماره فرعی",      flex: 1, minWidth: 110, valueFormatter: toPersianDigits },
-  { field: "atfNumber",      headerName: "شماره عطف",       flex: 1, minWidth: 110, valueFormatter: toPersianDigits },
-  { field: "dayIndex",       headerName: "اندیس روز",       flex: 1, minWidth: 100, valueFormatter: toPersianDigits },
-  { field: "state",          headerName: "وضعیت",           flex: 1, minWidth: 100, valueFormatter: (v) => STATE_LABELS[v] ?? toPersianDigits(v) },
-  { field: "stateCode",      headerName: "کد وضعیت",        flex: 1, minWidth: 100, valueFormatter: toPersianDigits },
+  { field: "atfNumber",      headerName: "شماره عطف",      flex: 1, minWidth: 110, valueFormatter: toPersianDigits },
+  { field: "dayIndex",       headerName: "اندیس روز",      flex: 1, minWidth: 100, valueFormatter: toPersianDigits },
+  { field: "state",          headerName: "وضعیت",          flex: 1, minWidth: 100, valueFormatter: (v) => STATE_LABELS[v] ?? toPersianDigits(v) },
+  { field: "stateCode",      headerName: "کد وضعیت",       flex: 1, minWidth: 100, valueFormatter: toPersianDigits },
   { field: "type",           headerName: "نوع",             flex: 1, minWidth: 90,  valueFormatter: toPersianDigits },
   { field: "subDomain",      headerName: "زیرسامانه",       flex: 1, minWidth: 100, valueFormatter: toPersianDigits },
   { field: "reference",      headerName: "مرجع",            flex: 1, minWidth: 90,  valueFormatter: toPersianDigits },
-  { field: "numberOfAttach", headerName: "تعداد پیوست",     flex: 1, minWidth: 110, valueFormatter: toPersianDigits },
+  { field: "numberOfAttach", headerName: "تعداد پیوست",    flex: 1, minWidth: 90, valueFormatter: toPersianDigits },
   { field: "inserterCode",   headerName: "کد ثبت‌کننده",    flex: 1, minWidth: 110, valueFormatter: toPersianDigits },
   { field: "inserterName",   headerName: "ثبت‌کننده",       flex: 1, minWidth: 130 },
   { field: "insertDate",     headerName: "تاریخ ثبت",       flex: 1, minWidth: 110, valueFormatter: toPersianDigits },
-  { field: "date_Miladi",    headerName: "تاریخ میلادی",    flex: 1, minWidth: 120, valueFormatter: (v) => (v ? String(v).slice(0, 10) : "") },
+  { field: "date_Miladi",    headerName: "تاریخ میلادی",      flex: 1, minWidth: 120, valueFormatter: (v) => (v ? String(v).slice(0, 10) : "") },
   { field: "id",             headerName: "شناسه",           flex: 1, minWidth: 90,  valueFormatter: toPersianDigits },
 ];
 

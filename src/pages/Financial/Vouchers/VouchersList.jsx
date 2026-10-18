@@ -70,7 +70,8 @@ const VouchersList = () => {
   const { openTab } = useTabs();
 
   const apiRef = useGridApiRef(); // 
-  const { initialState, layouts, persistCurrent, saveLayout, applyLayout, deleteLayout, resetToDefault } =
+
+  const { initialState, layouts, defaultLayoutName, persistCurrent, saveLayout, applyLayout, deleteLayout, resetToDefault, setDefaultLayout } =
     useGridLayouts("vouchersList", apiRef, DEFAULT_STATE); 
 
 const fetchVouchers = useCallback(() => {
@@ -117,10 +118,12 @@ useEffect(() => {
 
   const layoutProps = {
     layouts,
+    defaultLayoutName,
     onApply: applyLayout,
     onSave: saveLayout,
     onDelete: deleteLayout,
     onReset: resetToDefault,
+    setDefaultLayout,
   };
 
 
