@@ -1,5 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { DataGridPro, useGridApiRef } from "@mui/x-data-grid-pro";
+import { flushSync } from "react-dom";
 import { faIR } from "@mui/x-data-grid-pro/locales";
 
 const CustomDataGrid = ({
@@ -9,10 +10,24 @@ const CustomDataGrid = ({
   slotProps,
   localeText,
   apiRef: externalApiRef,
+  visualRtl = false,
   ...props
 }) => {
   const internalApiRef = useGridApiRef();
   const apiRef = externalApiRef || internalApiRef;
+
+    // لیست‌ها: موتور گرید LTR می‌ماند و ظاهر RTL با برعکس‌کردن ترتیب ستون‌ها ساخته می‌شود
+  const gridColumns = useMemo(
+    () => (visualRtl && props.columns ? [...props.columns].reverse() : props.columns),
+    [visualRtl, props.columns]
+  );
+
+  // شروع از لبه‌ی راست (اولین ستون منطقی)
+  useEffect(() => {
+    if (!visualRtl) return;
+    const t = setTimeout(() => apiRef.current?.scroll({ left: 10000000 }), 300);
+    return () => clearTimeout(t);
+  }, [visualRtl, apiRef]);
 
   // اصلاح جهت دراگ رزایز ستون‌ها در RTL بدون دستکاری DOM یا اسلات‌ها
   useEffect(() => {
@@ -22,6 +37,7 @@ const CustomDataGrid = ({
     let isDragging = false;
     let startX = 0;
     let startWidth = 0;
+    let lastWidth = 0;
     let currentField = null;
 
     const handlePointerDown = (e) => {
@@ -45,6 +61,7 @@ const CustomDataGrid = ({
       isDragging = true;
       startX = e.clientX;
       startWidth = col.computedWidth;
+      lastWidth = startWidth;
 
       const handlePointerMove = (moveEvent) => {
         if (!isDragging || !currentField) return;
@@ -56,9 +73,29 @@ const CustomDataGrid = ({
         const deltaX = moveEvent.clientX - startX;
         // فرمول درست RTL: کشیدن به راست (deltaX > 0) عرض ستون را کم می‌کند
         const minW = col.minWidth || 50;
+       //  تغییر علامت پلاس (+) به مینوس (-) برای معکوس شدن جهت ریسایز با موس
         const newWidth = Math.max(minW, startWidth - deltaX);
+        const applied = newWidth - lastWidth;
+        lastWidth = newWidth;
 
-        apiRef.current.setColumnWidth(currentField, newWidth);
+        // رندر هم‌زمان: عرض جدید همین‌جا روی DOM اعمال می‌شود، نه فریم بعد
+        flushSync(() => {
+          apiRef.current.setColumnWidth(currentField, newWidth);
+        });
+
+        // موتور LTR است؛ اسکرول را در همان فریم به اندازه‌ی تغییر عرض جلو می‌بریم
+        if (visualRtl && applied !== 0) {
+          const target = apiRef.current.getScrollPosition().left + applied;
+          apiRef.current.scroll({ left: target });
+
+          // اگر گرید هنوز عرض کل را به‌روز نکرده بود و اسکرول کلمپ شد، یک‌بار دیگر اعمالش کن
+          requestAnimationFrame(() => {
+            if (Math.abs(apiRef.current.getScrollPosition().left - target) > 1) {
+              apiRef.current.scroll({ left: target });
+            }
+          });
+        }
+
       };
 
       const handlePointerUp = (upEvent) => {
@@ -82,11 +119,11 @@ const CustomDataGrid = ({
     return () => {
       rootEl.removeEventListener("pointerdown", handlePointerDown, true);
     };
-  }, [apiRef]);
+  }, [apiRef, visualRtl]);
 
   
 
-// 🟢 داخل کامپوننت CustomDataGrid:
+//  داخل کامپوننت CustomDataGrid:
 
   useEffect(() => {
     if (!apiRef.current) return;
@@ -149,8 +186,8 @@ const CustomDataGrid = ({
       slots={slots}
       slotProps={slotProps}
       sx={{
-        direction: "rtl",
         width: "100%",
+        direction: visualRtl ? "ltr" : "rtl",
 
         // "& .MuiDataGrid-main": {
         //   width: "100%",
@@ -161,17 +198,31 @@ const CustomDataGrid = ({
 
         // تنظیم موقعیت دستگیره رزایز روی مرز سمت چپ ستون‌ها در RTL
         "& .MuiDataGrid-columnSeparator": {
-          right: "auto !important",
           cursor: "col-resize !important",
           pointerEvents: "auto !important",
+          ...(visualRtl && { left: "auto !important", right: "-8px !important" }),
         },
+
         "& .MuiDataGrid-columnHeader": {
           position: "relative",
         },
+        // 🟢 تنظیم دقیق موقعیت دستگیره رزایز در حالت visualRtl
+        ...(visualRtl && {
+          "& .MuiDataGrid-columnSeparator": {
+            right: "unset !important",
+          },
+          "& .MuiDataGrid-columnHeader": {
+            // جابجایی تراز داخلی هدر برای هماهنگی با دستگیره چپ
+            position: "relative",
+          },
+        }),
+
+        
 
         ...(sx || {}),
       }}
       {...props}
+      columns={gridColumns}
     />
   );
 };

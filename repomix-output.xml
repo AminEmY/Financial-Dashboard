@@ -204,93 +204,6 @@ const FilterableHeader = ({ headerName, field, value, onChange }) => (
 export default FilterableHeader;
 </file>
 
-<file path="src/components/common/list/GridLayoutMenu.jsx">
-import { useState } from "react";
-import {
-  Button, Menu, MenuItem, ListItemText, IconButton, Divider,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-} from "@mui/material";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
-import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
-
-const GridLayoutMenu = ({ layouts, onApply, onSave, onDelete, onReset }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [name, setName] = useState("");
-
-  const closeMenu = () => setAnchorEl(null);
-
-  const handleSave = () => {
-    if (!name.trim()) return;
-    onSave(name);
-    setName("");
-    setDialogOpen(false);
-  };
-
-  return (
-    <>
-      <Button
-        size="small"
-        startIcon={<DashboardCustomizeIcon  />}
-        onClick={(e) => setAnchorEl(e.currentTarget)}
-      >
-      
-      </Button>
-
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu}>
-        <MenuItem dir="rtl" onClick={() => { onReset(); closeMenu(); }}>
-          <ListItemText primary="پیش‌فرض" />
-        </MenuItem>
-
-        {layouts.map((layout) => (
-          <MenuItem
-            key={layout.name}
-            dir="rtl"
-            onClick={() => { onApply(layout.name); closeMenu(); }}
-          >
-            <ListItemText primary={layout.name} />
-            <IconButton
-              size="small"
-              onClick={(e) => { e.stopPropagation(); onDelete(layout.name); }}
-            >
-              <DeleteOutlineIcon fontSize="small" />
-            </IconButton>
-          </MenuItem>
-        ))}
-
-        <Divider />
-        <MenuItem dir="rtl" onClick={() => { closeMenu(); setDialogOpen(true); }}>
-          <ListItemText primary=" ذخیره ستون ها " />
-        </MenuItem>
-      </Menu>
-
-      <Dialog dir="rtl" open={dialogOpen} onClose={() => setDialogOpen(false)}>
-        <DialogTitle>نام مدل</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            size="small"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
-            sx={{ mt: 1 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>انصراف</Button>
-          <Button variant="contained" onClick={handleSave} disabled={!name.trim()}>
-            ذخیره
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
-  );
-};
-
-export default GridLayoutMenu;
-</file>
-
 <file path="src/components/common/list/ListGridToolbar.jsx">
 import {
   Toolbar,
@@ -415,130 +328,6 @@ const ListGridToolbar = ({ layoutProps, apiRef, exportFileName = "خروجی", o
 };
 
 export default ListGridToolbar;
-</file>
-
-<file path="src/components/common/list/useGridLayouts.jsx">
-import { useState, useRef, useCallback } from "react";
-
-const KEY_PREFIX = "gridLayouts:";
-
-const readStore = (gridKey) => {
-  try {
-    const raw = localStorage.getItem(KEY_PREFIX + gridKey);
-    const parsed = raw ? JSON.parse(raw) : {};
-    return { current: parsed.current ?? null, layouts: parsed.layouts ?? [] };
-  } catch {
-    return { current: null, layouts: [] };
-  }
-};
-
-// محاسبه‌ی دستی عرض ستونِ اصلی (sharh یا آخرین ستون نمایان) تا فضای خالی باقی‌نماند؛
-// چون exportState/restoreState عرض‌های دستی قدیمی (columnDimensions) را هم ذخیره می‌کنند
-// و با تغییر تعداد ستون‌های نمایان، این عرض‌ها دیگر با عرض واقعی گرید جمع نمی‌شوند.
-const recalculateMainColumnWidth = (apiRef) => {
-  requestAnimationFrame(() => {
-    if (!apiRef.current) return;
-
-    const gridWidth = apiRef.current.rootElementRef?.current?.clientWidth || 0;
-    const visibleCols = apiRef.current.getVisibleColumns();
-    if (gridWidth === 0 || visibleCols.length === 0) return;
-
-    const mainCol =
-      visibleCols.find((c) => c.field === "sharh") || visibleCols[visibleCols.length - 1];
-
-    let otherWidths = 0;
-    visibleCols.forEach((col) => {
-      if (col.field !== mainCol?.field) {
-        otherWidths += col.computedWidth || col.width || 100;
-      }
-    });
-
-    if (mainCol) {
-      const remainingWidth = Math.max(mainCol.minWidth || 150, gridWidth - otherWidths - 10);
-      apiRef.current.setColumnWidth(mainCol.field, remainingWidth);
-    }
-  });
-};
-
-// gridKey: یک اسم یکتا برای هر لیست (مثلاً "vouchersList")
-// defaultState: وضعیت پیش‌فرض گرید (ستون‌های نمایان و ...)
-export default function useGridLayouts(gridKey, apiRef, defaultState) {
-  const [layouts, setLayouts] = useState(() => readStore(gridKey).layouts);
-  const [initialState] = useState(() => readStore(gridKey).current ?? defaultState);
-  const saveTimer = useRef(null);
-
-  const write = useCallback((patch) => {
-    const next = { ...readStore(gridKey), ...patch };
-    try {
-      localStorage.setItem(KEY_PREFIX + gridKey, JSON.stringify(next));
-    } catch {
-      // حافظه پر است یا مرورگر در حالت خصوصی است
-    }
-    return next;
-  }, [gridKey]);
-
-  // ذخیره‌ی خودکار وضعیت فعلی، با تاخیر کوتاه تا با هر تغییر ریز چندبار ننویسد
-  const persistCurrent = useCallback(() => {
-    clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      if (apiRef.current) write({ current: apiRef.current.exportState() });
-    }, 300);
-  }, [apiRef, write]);
-
-  const saveLayout = useCallback((name) => {
-    const clean = name.trim();
-    if (!clean || !apiRef.current) return;
-    const others = readStore(gridKey).layouts.filter((l) => l.name !== clean);
-    const next = write({
-      layouts: [...others, { name: clean, state: apiRef.current.exportState() }],
-    });
-    setLayouts(next.layouts);
-  }, [apiRef, gridKey, write]);
-
-const applyLayout = useCallback((name) => {
-    const layout = readStore(gridKey).layouts.find((l) => l.name === name);
-    if (layout && apiRef.current) {
-      const cleanState = JSON.parse(JSON.stringify(layout.state));
-
-      // ➕ پاک کردن تمام عرض‌های ثابت ذخیره‌شده تا ستون‌ها به حالت flex برگردند
-      if (cleanState?.columns) {
-        cleanState.columns.columnDimensions = {};
-      }
-
-      apiRef.current.restoreState(cleanState);
-      write({ current: cleanState });
-
-      // ➕ محاسبه هوشمند عرض ستون‌ها برای پر کردن ۱۰۰٪ فضای خالی گرید
-      recalculateMainColumnWidth(apiRef);
-    }
-  }, [apiRef, gridKey, write]);
-
-  const deleteLayout = useCallback((name) => {
-    const next = write({
-      layouts: readStore(gridKey).layouts.filter((l) => l.name !== name),
-    });
-    setLayouts(next.layouts);
-  }, [gridKey, write]);
-
-const resetToDefault = useCallback(() => {
-    if (apiRef.current) {
-      const cleanDefaultState = JSON.parse(JSON.stringify(defaultState));
-
-      // ➕ پاک کردن عرض‌های ثبت‌شده قبلی
-      if (cleanDefaultState?.columns) {
-        cleanDefaultState.columns.columnDimensions = {};
-      }
-
-      apiRef.current.restoreState(cleanDefaultState);
-      write({ current: null });
-
-      // ➕ محاسبه مجدد عرض جدول در حالت پیش‌فرض
-      recalculateMainColumnWidth(apiRef);
-    }
-  }, [apiRef, defaultState, write]);
-
-  return { initialState, layouts, persistCurrent, saveLayout, applyLayout, deleteLayout, resetToDefault };
-}
 </file>
 
 <file path="src/components/common/Pickers/AccountCodeField.jsx">
@@ -1636,6 +1425,342 @@ api.interceptors.response.use(
 );
 
 export default api;
+</file>
+
+<file path="src/components/common/list/GridLayoutMenu.jsx">
+import { useState } from "react";
+import {
+  Button, Menu, MenuItem, ListItemText, IconButton, Divider,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, Box, Tooltip
+} from "@mui/material";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
+import StarIcon from "@mui/icons-material/Star"; //  آیکون ستاره برای پیش‌فرض
+import StarBorderIcon from "@mui/icons-material/StarBorder"; //  آیکون ستاره توخالی
+
+const GridLayoutMenu = ({ layouts, onApply, onSave, onDelete, onReset, defaultLayoutName, setDefaultLayout }) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [name, setName] = useState("");
+
+  const closeMenu = () => setAnchorEl(null);
+
+  const handleSave = () => {
+    if (!name.trim()) return;
+    onSave(name);
+    setName("");
+    setDialogOpen(false);
+  };
+
+return (
+    <>
+      <Button
+        size="small"
+        startIcon={<DashboardCustomizeIcon />}
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+      />
+
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu}>
+        <MenuItem dir="rtl" onClick={() => { onReset(); closeMenu(); }}>
+          <ListItemText primary="پیش‌فرض اولیه سیستم" />
+        </MenuItem>
+
+        <Divider />
+
+        {layouts.map((layout) => {
+          const isDefault = defaultLayoutName === layout.name; // بررسی اینکه آیا این مدل پیش‌فرضِ کاربر است یا نه
+
+          return (
+            <MenuItem
+              key={layout.name}
+              dir="rtl"
+              sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}
+              onClick={() => { onApply(layout.name); closeMenu(); }}
+            >
+              <ListItemText 
+                primary={
+                  <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {layout.name}
+                    {isDefault && <span style={{ fontSize: '10px', color: '#1976d2', fontWeight: 'bold' }}>(پیش‌فرض)</span>}
+                  </Box>
+                } 
+              />
+
+              {/* ➕ دکمه تنظیم به عنوان پیش‌فرض */}
+              <Tooltip title={isDefault ? "مدل پیش‌فرض فعلی" : "تنظیم به عنوان پیش‌فرضِ لود صفحه"}>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDefaultLayout(layout.name);
+                  }}
+                >
+                  {isDefault ? <StarIcon fontSize="small" color="primary" /> : <StarBorderIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
+
+              {/* دکمه حذف مدل */}
+              <IconButton
+                size="small"
+                onClick={(e) => { e.stopPropagation(); onDelete(layout.name); }}
+              >
+                <DeleteOutlineIcon fontSize="small" />
+              </IconButton>
+            </MenuItem>
+          );
+        })}
+
+        <Divider />
+        <MenuItem dir="rtl" onClick={() => { closeMenu(); setDialogOpen(true); }}>
+          <ListItemText primary=" ذخیره ستون ها " />
+        </MenuItem>
+      </Menu>
+
+      <Dialog dir="rtl" open={dialogOpen} onClose={() => setDialogOpen(false)}>
+        <DialogTitle>نام مدل</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            size="small"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)}>انصراف</Button>
+          <Button variant="contained" onClick={handleSave} disabled={!name.trim()}>
+            ذخیره
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+};
+
+export default GridLayoutMenu;
+</file>
+
+<file path="src/components/common/list/useGridLayouts.jsx">
+import { useState, useRef, useCallback, useEffect } from "react";
+
+const KEY_PREFIX = "gridLayouts:";
+const DEFAULT_KEY_PREFIX = "defaultLayout:"; // اضافه شد برای ذخیره اسم مدل پیش‌فرض
+
+const readStore = (gridKey) => {
+  try {
+    const raw = localStorage.getItem(KEY_PREFIX + gridKey);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return { current: parsed.current ?? null, layouts: parsed.layouts ?? [] };
+  } catch {
+    return { current: null, layouts: [] };
+  }
+};
+
+// محاسبه‌ی دستی عرض ستونِ اصلی (sharh یا آخرین ستون نمایان) تا فضای خالی باقی‌نماند؛
+// چون exportState/restoreState عرض‌های دستی قدیمی (columnDimensions) را هم ذخیره می‌کنند
+// و با تغییر تعداد ستون‌های نمایان، این عرض‌ها دیگر با عرض واقعی گرید جمع نمی‌شوند.
+const recalculateMainColumnWidth = (apiRef) => {
+  requestAnimationFrame(() => {
+    if (!apiRef.current) return;
+
+    const gridWidth = apiRef.current.rootElementRef?.current?.clientWidth || 0;
+    const visibleCols = apiRef.current.getVisibleColumns();
+    if (gridWidth === 0 || visibleCols.length === 0) return;
+
+    const mainCol =
+      visibleCols.find((c) => c.field === "sharh") || visibleCols[visibleCols.length - 1];
+
+    let otherWidths = 0;
+    visibleCols.forEach((col) => {
+      if (col.field !== mainCol?.field) {
+        otherWidths += col.computedWidth || col.width || 100;
+      }
+    });
+
+    if (mainCol) {
+      const remainingWidth = Math.max(mainCol.minWidth || 150, gridWidth - otherWidths - 10);
+      apiRef.current.setColumnWidth(mainCol.field, remainingWidth);
+    }
+  });
+};
+
+// gridKey: یک اسم یکتا برای هر لیست (مثلاً "vouchersList")
+// defaultState: وضعیت پیش‌فرض گرید (ستون‌های نمایان و ...)
+export default function useGridLayouts(gridKey, apiRef, defaultState) {
+  const [layouts, setLayouts] = useState(() => readStore(gridKey).layouts);
+
+  // ➕ اضافه شد: خواندن نام مدل پیش‌فرضِ ذخیره‌شده از localStorage
+  const [defaultLayoutName, setDefaultLayoutName] = useState(() => {
+    try {
+      return localStorage.getItem(DEFAULT_KEY_PREFIX + gridKey) || "";
+    } catch {
+      return "";
+    }
+  });
+
+//  ویرایش شد: تعیین وضعیت اولیه (initialState) بر اساس مدل پیش‌فرضِ کاربر یا ذخیره شده‌ی قبلی
+  const [initialState] = useState(() => {
+    try {
+      const savedDefaultName = localStorage.getItem(DEFAULT_KEY_PREFIX + gridKey);
+      if (savedDefaultName) {
+        const store = readStore(gridKey);
+        const foundLayout = store.layouts.find((l) => l.name === savedDefaultName);
+        if (foundLayout) {
+          const cleanState = JSON.parse(JSON.stringify(foundLayout.state));
+          if (cleanState?.columns) cleanState.columns.columnDimensions = {};
+          return cleanState;
+        }
+      }
+      return readStore(gridKey).current ?? defaultState;
+    } catch {
+      return readStore(gridKey).current ?? defaultState;
+    }
+  });
+
+  // 🟢 اضافه شدن این useEffect برای اعمال قطعیِ پیش‌فرض به محض لود گرید
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!apiRef.current) return;
+      try {
+        const savedDefaultName = localStorage.getItem(DEFAULT_KEY_PREFIX + gridKey);
+        if (savedDefaultName) {
+          const layout = readStore(gridKey).layouts.find((l) => l.name === savedDefaultName);
+          if (layout) {
+            const cleanState = JSON.parse(JSON.stringify(layout.state));
+            if (cleanState?.columns) cleanState.columns.columnDimensions = {};
+            apiRef.current.restoreState(cleanState);
+            recalculateMainColumnWidth(apiRef);
+            return;
+          }
+        }
+        // اگر پیش‌فرضی نبود ولی current ذخیره شده بود
+        const store = readStore(gridKey);
+        if (store.current) {
+          const cleanState = JSON.parse(JSON.stringify(store.current));
+          if (cleanState?.columns) cleanState.columns.columnDimensions = {};
+          apiRef.current.restoreState(cleanState);
+          recalculateMainColumnWidth(apiRef);
+        }
+      } catch (error) {
+        console.error("خطا در اعمال وضعیت اولیه گرید:", error);
+      }
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [apiRef, gridKey]);
+
+
+  const saveTimer = useRef(null);
+
+  const write = useCallback((patch) => {
+    const next = { ...readStore(gridKey), ...patch };
+    try {
+      localStorage.setItem(KEY_PREFIX + gridKey, JSON.stringify(next));
+    } catch {
+      // حافظه پر است یا مرورگر در حالت خصوصی است
+    }
+    return next;
+  }, [gridKey]);
+
+  // ذخیره‌ی خودکار وضعیت فعلی، با تاخیر کوتاه تا با هر تغییر ریز چندبار ننویسد
+  const persistCurrent = useCallback(() => {
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      if (apiRef.current) write({ current: apiRef.current.exportState() });
+    }, 300);
+  }, [apiRef, write]);
+
+  const saveLayout = useCallback((name) => {
+    const clean = name.trim();
+    if (!clean || !apiRef.current) return;
+    const others = readStore(gridKey).layouts.filter((l) => l.name !== clean);
+    const next = write({
+      layouts: [...others, { name: clean, state: apiRef.current.exportState() }],
+    });
+    setLayouts(next.layouts);
+  }, [apiRef, gridKey, write]);
+
+const applyLayout = useCallback((name) => {
+    const layout = readStore(gridKey).layouts.find((l) => l.name === name);
+    if (layout && apiRef.current) {
+      const cleanState = JSON.parse(JSON.stringify(layout.state));
+
+      // ➕ پاک کردن تمام عرض‌های ثابت ذخیره‌شده تا ستون‌ها به حالت flex برگردند
+      if (cleanState?.columns) {
+        cleanState.columns.columnDimensions = {};
+      }
+
+      apiRef.current.restoreState(cleanState);
+      write({ current: cleanState });
+
+      // ➕ محاسبه هوشمند عرض ستون‌ها برای پر کردن ۱۰۰٪ فضای خالی گرید
+      recalculateMainColumnWidth(apiRef);
+    }
+  }, [apiRef, gridKey, write]);
+
+  const deleteLayout = useCallback((name) => {
+    const next = write({
+      layouts: readStore(gridKey).layouts.filter((l) => l.name !== name),
+    });
+    setLayouts(next.layouts);
+    // اگر مدلی که حذف شد پیش‌فرض بود، پیش‌فرض را هم پاک کن
+    if (defaultLayoutName === name) {
+      setDefaultLayoutName("");
+      localStorage.removeItem(DEFAULT_KEY_PREFIX + gridKey);
+    }
+    
+  }, [gridKey, write, defaultLayoutName]);
+
+
+const resetToDefault = useCallback(() => {
+    if (apiRef.current) {
+
+      // اگر کاربر مدل پیش‌فرضی انتخاب کرده بود، جدول را ببر روی همون، وگرنه defaultState
+      const savedDefaultName = localStorage.getItem(DEFAULT_KEY_PREFIX + gridKey);
+      if (savedDefaultName) {
+        const layout = readStore(gridKey).layouts.find((l) => l.name === savedDefaultName);
+        if (layout) {
+          const cleanState = JSON.parse(JSON.stringify(layout.state));
+          if (cleanState?.columns) cleanState.columns.columnDimensions = {};
+          apiRef.current.restoreState(cleanState);
+          write({ current: cleanState });
+          recalculateMainColumnWidth(apiRef);
+          return;
+        }
+      }
+
+      const cleanDefaultState = JSON.parse(JSON.stringify(defaultState));
+
+      // ➕ پاک کردن عرض‌های ثبت‌شده قبلی
+      if (cleanDefaultState?.columns) {
+        cleanDefaultState.columns.columnDimensions = {};
+      }
+
+      apiRef.current.restoreState(cleanDefaultState);
+      write({ current: null });
+
+      // ➕ محاسبه مجدد عرض جدول در حالت پیش‌فرض
+      recalculateMainColumnWidth(apiRef);
+    }
+  }, [apiRef, defaultState, write, gridKey]);
+
+
+  // ➕ تابع جدید: تنظیم یک مدل به عنوان پیش‌فرض دائمی
+  const setDefaultLayout = useCallback((name) => {
+    setDefaultLayoutName(name);
+    try {
+      localStorage.setItem(DEFAULT_KEY_PREFIX + gridKey, name);
+    } catch (error) {
+      // برای جلوگیری از خطای خالی بودن catch
+      console.error("خطا در ذخیره پیش‌فرض:", error);
+    }
+  }, [gridKey]);
+
+  return { initialState, layouts, defaultLayoutName, persistCurrent, saveLayout, applyLayout, deleteLayout, resetToDefault, setDefaultLayout };
+}
 </file>
 
 <file path="src/components/common/Pickers/EntityPickerModal.module.css">
@@ -12858,8 +12983,9 @@ export default App
 </file>
 
 <file path="src/components/common/CustomizedDataGrid.jsx">
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { DataGridPro, useGridApiRef } from "@mui/x-data-grid-pro";
+import { flushSync } from "react-dom";
 import { faIR } from "@mui/x-data-grid-pro/locales";
 
 const CustomDataGrid = ({
@@ -12869,10 +12995,24 @@ const CustomDataGrid = ({
   slotProps,
   localeText,
   apiRef: externalApiRef,
+  visualRtl = false,
   ...props
 }) => {
   const internalApiRef = useGridApiRef();
   const apiRef = externalApiRef || internalApiRef;
+
+    // لیست‌ها: موتور گرید LTR می‌ماند و ظاهر RTL با برعکس‌کردن ترتیب ستون‌ها ساخته می‌شود
+  const gridColumns = useMemo(
+    () => (visualRtl && props.columns ? [...props.columns].reverse() : props.columns),
+    [visualRtl, props.columns]
+  );
+
+  // شروع از لبه‌ی راست (اولین ستون منطقی)
+  useEffect(() => {
+    if (!visualRtl) return;
+    const t = setTimeout(() => apiRef.current?.scroll({ left: 10000000 }), 300);
+    return () => clearTimeout(t);
+  }, [visualRtl, apiRef]);
 
   // اصلاح جهت دراگ رزایز ستون‌ها در RTL بدون دستکاری DOM یا اسلات‌ها
   useEffect(() => {
@@ -12882,6 +13022,7 @@ const CustomDataGrid = ({
     let isDragging = false;
     let startX = 0;
     let startWidth = 0;
+    let lastWidth = 0;
     let currentField = null;
 
     const handlePointerDown = (e) => {
@@ -12905,6 +13046,7 @@ const CustomDataGrid = ({
       isDragging = true;
       startX = e.clientX;
       startWidth = col.computedWidth;
+      lastWidth = startWidth;
 
       const handlePointerMove = (moveEvent) => {
         if (!isDragging || !currentField) return;
@@ -12916,9 +13058,29 @@ const CustomDataGrid = ({
         const deltaX = moveEvent.clientX - startX;
         // فرمول درست RTL: کشیدن به راست (deltaX > 0) عرض ستون را کم می‌کند
         const minW = col.minWidth || 50;
+       //  تغییر علامت پلاس (+) به مینوس (-) برای معکوس شدن جهت ریسایز با موس
         const newWidth = Math.max(minW, startWidth - deltaX);
+        const applied = newWidth - lastWidth;
+        lastWidth = newWidth;
 
-        apiRef.current.setColumnWidth(currentField, newWidth);
+        // رندر هم‌زمان: عرض جدید همین‌جا روی DOM اعمال می‌شود، نه فریم بعد
+        flushSync(() => {
+          apiRef.current.setColumnWidth(currentField, newWidth);
+        });
+
+        // موتور LTR است؛ اسکرول را در همان فریم به اندازه‌ی تغییر عرض جلو می‌بریم
+        if (visualRtl && applied !== 0) {
+          const target = apiRef.current.getScrollPosition().left + applied;
+          apiRef.current.scroll({ left: target });
+
+          // اگر گرید هنوز عرض کل را به‌روز نکرده بود و اسکرول کلمپ شد، یک‌بار دیگر اعمالش کن
+          requestAnimationFrame(() => {
+            if (Math.abs(apiRef.current.getScrollPosition().left - target) > 1) {
+              apiRef.current.scroll({ left: target });
+            }
+          });
+        }
+
       };
 
       const handlePointerUp = (upEvent) => {
@@ -12942,11 +13104,11 @@ const CustomDataGrid = ({
     return () => {
       rootEl.removeEventListener("pointerdown", handlePointerDown, true);
     };
-  }, [apiRef]);
+  }, [apiRef, visualRtl]);
 
   
 
-// 🟢 داخل کامپوننت CustomDataGrid:
+//  داخل کامپوننت CustomDataGrid:
 
   useEffect(() => {
     if (!apiRef.current) return;
@@ -13009,8 +13171,8 @@ const CustomDataGrid = ({
       slots={slots}
       slotProps={slotProps}
       sx={{
-        direction: "rtl",
         width: "100%",
+        direction: visualRtl ? "ltr" : "rtl",
 
         // "& .MuiDataGrid-main": {
         //   width: "100%",
@@ -13021,17 +13183,31 @@ const CustomDataGrid = ({
 
         // تنظیم موقعیت دستگیره رزایز روی مرز سمت چپ ستون‌ها در RTL
         "& .MuiDataGrid-columnSeparator": {
-          right: "auto !important",
           cursor: "col-resize !important",
           pointerEvents: "auto !important",
+          ...(visualRtl && { left: "auto !important", right: "-8px !important" }),
         },
+
         "& .MuiDataGrid-columnHeader": {
           position: "relative",
         },
+        // 🟢 تنظیم دقیق موقعیت دستگیره رزایز در حالت visualRtl
+        ...(visualRtl && {
+          "& .MuiDataGrid-columnSeparator": {
+            right: "unset !important",
+          },
+          "& .MuiDataGrid-columnHeader": {
+            // جابجایی تراز داخلی هدر برای هماهنگی با دستگیره چپ
+            position: "relative",
+          },
+        }),
+
+        
 
         ...(sx || {}),
       }}
       {...props}
+      columns={gridColumns}
     />
   );
 };
@@ -13368,7 +13544,6 @@ export default CustomDataGrid;
     "preview": "vite preview"
   },
   "dependencies": {
-    "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^9.2.0",
@@ -13382,7 +13557,6 @@ export default CustomDataGrid;
     "react-multi-date-picker": "^4.5.2",
     "react-router-dom": "^7.13.0",
     "react-window": "^1.8.11",
-    "stylis": "^4.4.0",
     "stylis-plugin-rtl": "^2.1.1",
     "xlsx": "^0.18.5"
   },
@@ -14776,6 +14950,7 @@ import useGridLayouts from "../../../components/common/list/useGridLayouts"
 const STATE_LABELS = { 0: "پیش‌نویس", 1: "موقت", 2: "دائم" };
 
 const COLUMN_CONFIG = [
+  { field: "id",             headerName: "شناسه",           flex: 1, minWidth: 90,  valueFormatter: toPersianDigits },
   { field: "number",         headerName: "شماره سند",       flex: 1, minWidth: 100 , valueFormatter: toPersianDigits },
   { field: "date_Shamsi",    headerName: "تاریخ",            flex: 1, minWidth: 107,  valueFormatter: toPersianDigits },
   { field: "sharh",          headerName: "شرح",             flex: 3, minWidth: 200 },
@@ -14794,7 +14969,6 @@ const COLUMN_CONFIG = [
   { field: "inserterName",   headerName: "ثبت‌کننده",       flex: 1, minWidth: 130 },
   { field: "insertDate",     headerName: "تاریخ ثبت",       flex: 1, minWidth: 110, valueFormatter: toPersianDigits },
   { field: "date_Miladi",    headerName: "تاریخ میلادی",      flex: 1, minWidth: 120, valueFormatter: (v) => (v ? String(v).slice(0, 10) : "") },
-  { field: "id",             headerName: "شناسه",           flex: 1, minWidth: 90,  valueFormatter: toPersianDigits },
 ];
 
 // ستون‌هایی که به‌صورت پیش‌فرض دیده می‌شوند؛ بقیه پنهان‌اند (از پنل ستون‌ها قابل‌نمایش)
@@ -14802,7 +14976,7 @@ const DEFAULT_VISIBLE_FIELDS = ["number", "date_Shamsi", "sharh", "countOfLines"
 
 const DEFAULT_STATE = {
   columns: {
-    orderedFields: COLUMN_CONFIG.map((c) => c.field),
+    orderedFields: COLUMN_CONFIG.map((c) => c.field).reverse(),
     columnVisibilityModel: Object.fromEntries(
       COLUMN_CONFIG.filter((c) => !DEFAULT_VISIBLE_FIELDS.includes(c.field)).map((c) => [c.field, false])
     ),
@@ -14830,7 +15004,8 @@ const VouchersList = () => {
   const { openTab } = useTabs();
 
   const apiRef = useGridApiRef(); // 
-  const { initialState, layouts, persistCurrent, saveLayout, applyLayout, deleteLayout, resetToDefault } =
+
+  const { initialState, layouts, defaultLayoutName, persistCurrent, saveLayout, applyLayout, deleteLayout, resetToDefault, setDefaultLayout } =
     useGridLayouts("vouchersList", apiRef, DEFAULT_STATE); 
 
 const fetchVouchers = useCallback(() => {
@@ -14877,10 +15052,12 @@ useEffect(() => {
 
   const layoutProps = {
     layouts,
+    defaultLayoutName,
     onApply: applyLayout,
     onSave: saveLayout,
     onDelete: deleteLayout,
     onReset: resetToDefault,
+    setDefaultLayout,
   };
 
 
@@ -14926,7 +15103,8 @@ useEffect(() => {
               slots={{ toolbar: () => <ListGridToolbar layoutProps={layoutProps} apiRef={apiRef} exportFileName="لیست-اسناد" onRefresh={fetchVouchers} /> ,
                       footer: footerSlots.footer, }}
             //پراپ های مربوط به ستون سند
-              apiRef={apiRef} 
+              apiRef={apiRef}
+              visualRtl 
               state={initialState} 
               onColumnVisibilityModelChange={persistCurrent} 
               onColumnOrderChange={persistCurrent} 

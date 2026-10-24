@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@emotion/cache':
-        specifier: ^11.14.0
-        version: 11.14.0
       '@emotion/react':
         specifier: ^11.14.0
         version: 11.14.0(@types/react@19.2.17)(react@19.2.7)
@@ -50,9 +47,6 @@ importers:
       react-window:
         specifier: ^1.8.11
         version: 1.8.11(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      stylis:
-        specifier: ^4.4.0
-        version: 4.4.0
       stylis-plugin-rtl:
         specifier: ^2.1.1
         version: 2.1.1(stylis@4.4.0)

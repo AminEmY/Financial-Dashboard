@@ -16,6 +16,7 @@ import useGridLayouts from "../../../components/common/list/useGridLayouts"
 const STATE_LABELS = { 0: "پیش‌نویس", 1: "موقت", 2: "دائم" };
 
 const COLUMN_CONFIG = [
+  { field: "id",             headerName: "شناسه",           flex: 1, minWidth: 90,  valueFormatter: toPersianDigits },
   { field: "number",         headerName: "شماره سند",       flex: 1, minWidth: 100 , valueFormatter: toPersianDigits },
   { field: "date_Shamsi",    headerName: "تاریخ",            flex: 1, minWidth: 107,  valueFormatter: toPersianDigits },
   { field: "sharh",          headerName: "شرح",             flex: 3, minWidth: 200 },
@@ -34,7 +35,6 @@ const COLUMN_CONFIG = [
   { field: "inserterName",   headerName: "ثبت‌کننده",       flex: 1, minWidth: 130 },
   { field: "insertDate",     headerName: "تاریخ ثبت",       flex: 1, minWidth: 110, valueFormatter: toPersianDigits },
   { field: "date_Miladi",    headerName: "تاریخ میلادی",      flex: 1, minWidth: 120, valueFormatter: (v) => (v ? String(v).slice(0, 10) : "") },
-  { field: "id",             headerName: "شناسه",           flex: 1, minWidth: 90,  valueFormatter: toPersianDigits },
 ];
 
 // ستون‌هایی که به‌صورت پیش‌فرض دیده می‌شوند؛ بقیه پنهان‌اند (از پنل ستون‌ها قابل‌نمایش)
@@ -42,7 +42,7 @@ const DEFAULT_VISIBLE_FIELDS = ["number", "date_Shamsi", "sharh", "countOfLines"
 
 const DEFAULT_STATE = {
   columns: {
-    orderedFields: COLUMN_CONFIG.map((c) => c.field),
+    orderedFields: COLUMN_CONFIG.map((c) => c.field).reverse(),
     columnVisibilityModel: Object.fromEntries(
       COLUMN_CONFIG.filter((c) => !DEFAULT_VISIBLE_FIELDS.includes(c.field)).map((c) => [c.field, false])
     ),
@@ -169,7 +169,8 @@ useEffect(() => {
               slots={{ toolbar: () => <ListGridToolbar layoutProps={layoutProps} apiRef={apiRef} exportFileName="لیست-اسناد" onRefresh={fetchVouchers} /> ,
                       footer: footerSlots.footer, }}
             //پراپ های مربوط به ستون سند
-              apiRef={apiRef} 
+              apiRef={apiRef}
+              visualRtl 
               state={initialState} 
               onColumnVisibilityModelChange={persistCurrent} 
               onColumnOrderChange={persistCurrent} 
