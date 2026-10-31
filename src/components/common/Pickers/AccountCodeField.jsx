@@ -10,7 +10,7 @@ import { fieldProps } from "../../../theme/Theme";
 // فیلد ورودی کد حساب، با دقیقاً همون رفتار سلول کد حساب توی سند:
 // تایپ حرف -> تب سرچ باز می‌شه، Enter روی خالی -> تب درخت با فوکوس ریشه،
 // تایپ کد کامل یک والد -> مسیر درخت خودکار باز می‌شه، انتخاب برگ -> مقدار ست می‌شه
-const AccountCodeField = ({ value, onChange, onSelect, onMismatch, allowAnyLevel = false, label = "کد حساب :", disabled, sx }) => {
+const AccountCodeField = ({ value, onChange, onSelect, onMismatch, allowAnyLevel = false, label = "کد حساب", disabled, sx }) => {
     const [localValue, setLocalValue] = useState(value || "");
     const picker = useEntityPicker("Account");
 

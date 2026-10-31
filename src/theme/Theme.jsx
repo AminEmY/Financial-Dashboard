@@ -458,7 +458,7 @@ MuiSelect: {
           borderRadius: '6px', // لبه‌های گرد برای حالت سه بعدی کارت
           boxShadow: '0 1px 3px rgba(0,0,0,0.05)', // سایه ملایم زیر هر کارت هدر
           border: '1px solid #989ca0',
-          transition: 'all 0.2s ease-in-out',
+          transition: 'background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
 
           // افکت هوور روی کل کارت هدر
           '&:hover': {

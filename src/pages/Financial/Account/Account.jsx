@@ -1,332 +1,437 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import axios from "axios";
 import {
-  Box, TextField, MenuItem, Button, Accordion, AccordionSummary,
-  AccordionDetails, Typography, Snackbar, Alert,
+  Box, TextField, MenuItem, Button, Accordion, AccordionSummary, AccordionDetails,
+  Typography, Snackbar, Alert, Tooltip,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import TuneIcon from "@mui/icons-material/TuneOutlined";
+import ContactPhoneIcon from "@mui/icons-material/ContactPhoneOutlined";
+import PlaceIcon from "@mui/icons-material/PlaceOutlined";
+import BadgeIcon from "@mui/icons-material/BadgeOutlined";
 import AccountCodeField from "../../../components/common/Pickers/AccountCodeField";
 import FourStateCheckbox from "./FourStateCheckbox";
 import { fieldProps } from "../../../theme/Theme";
+import useTabs from "../../../context/useTabs";
 
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL ?? "http://ecipc107:8049/api" });
 
+const TICK_GROUPS = [
+  { title: "کالا و مراکز", items: [
+    ["tickHesabiForGood", "کالا"], ["tickHesabiForMarkaz1", "مرکز ۱"], ["tickHesabiForMarkaz2", "مرکز ۲"],
+    ["tickHesabiForMarkaz3", "مرکز ۳"], ["tickHesabiForMarkaz4", "مرکز ۴"],
+  ]},
+  { title: "چک", items: [["tickHesabiForDateCheq", "تاریخ چک"], ["tickHesabiForNumCheq", "شماره چک"]] },
+  { title: "تعداد", items: [["tickHesabiForTedad1", "تعداد ۱"], ["tickHesabiForTedad2", "تعداد ۲"], ["tickHesabiForTedad3", "تعداد ۳"]] },
+  { title: "ارز", items: [["tickHesabiForCurrencyCode", "کد ارز"], ["tickHesabiForCurrencyFee", "نرخ ارز"], ["tickHesabiForCurrencyTedad", "مقدار ارز"]] },
+];
+const TICK_FIELDS = TICK_GROUPS.flatMap((g) => g.items.map(([f]) => f));
 
-const TICK_FIELDS = [
-  { field: "tickHesabiForGood", label: "کالا" },
-  { field: "tickHesabiForMarkaz1", label: "مرکز ۱" },
-  { field: "tickHesabiForMarkaz2", label: "مرکز ۲" },
-  { field: "tickHesabiForMarkaz3", label: "مرکز ۳" },
-  { field: "tickHesabiForMarkaz4", label: "مرکز ۴" },
-  { field: "tickHesabiForDateCheq", label: "تاریخ چک" },
-  { field: "tickHesabiForNumCheq", label: "شماره چک" },
-  { field: "tickHesabiForTedad1", label: "تعداد ۱" },
-  { field: "tickHesabiForTedad2", label: "تعداد ۲" },
-  { field: "tickHesabiForTedad3", label: "تعداد ۳" },
-  { field: "tickHesabiForCurrencyCode", label: "کد ارز" },
-  { field: "tickHesabiForCurrencyFee", label: "نرخ ارز" },
-  { field: "tickHesabiForCurrencyTedad", label: "مقدار ارز" },
+const SECTIONS = [
+  { id: "contact", title: "اطلاعات تماس", subtitle: "موبایل، تلفن، ایمیل و افراد رابط", icon: ContactPhoneIcon, fields: [
+    { name: "mobile1", label: "موبایل ۱", ltr: true }, { name: "mobile2", label: "موبایل ۲", ltr: true },
+    { name: "mobile3", label: "موبایل ۳", ltr: true }, { name: "tel1", label: "تلفن ۱", ltr: true },
+    { name: "tel2", label: "تلفن ۲", ltr: true }, { name: "tel3", label: "تلفن ۳", ltr: true },
+    { name: "email", label: "ایمیل", ltr: true }, { name: "addressInternet", label: "وب‌سایت", ltr: true },
+    { name: "nameMasool", label: "نام مسئول" }, { name: "nameRabet", label: "نام رابط" },
+  ]},
+  { id: "address", title: "آدرس", subtitle: "استان، شهر، کد پستی و نشانی", icon: PlaceIcon, fields: [
+    { name: "ostan", label: "استان" }, { name: "shahrestan", label: "شهرستان" },
+    { name: "shahr", label: "شهر" }, { name: "codeShahr", label: "کد شهر", ltr: true },
+    { name: "codePosti", label: "کد پستی", ltr: true },
+    { name: "address1", label: "آدرس اصلی", multiline: true, full: true },
+    { name: "address2", label: "آدرس دوم", multiline: true, full: true },
+  ]},
 ];
 
-const CONTACT_FIELDS = [
-  ["tel1", "تلفن ۱"], ["tel2", "تلفن ۲"], ["tel3", "تلفن ۳"],
-  ["mobile1", "موبایل ۱"], ["mobile2", "موبایل ۲"], ["mobile3", "موبایل ۳"],
-  ["email", "ایمیل"], ["nameMasool", "نام مسئول"], ["nameRabet", "نام رابط"],
-  ["addressInternet", "آدرس اینترنتی"],
-];
-
-const ADDRESS_FIELDS = [
-  ["ostan", "استان"], ["shahr", "شهر"], ["shahrestan", "شهرستان"], ["codeShahr", "کد شهر"],
-  ["codePosti", "کد پستی"], ["address1", "آدرس ۱"], ["address2", "آدرس ۲"],
-  ["address3", "آدرس ۳"], ["address4", "آدرس ۴"],
-];
-
-const LEGAL_FIELDS = [
-  ["shomareSabt", "شماره ثبت"], ["codeEghtesadi", "کد اقتصادی"], ["nationalCode", "کد ملی"],
-  ["faaliat", "نوع فعالیت"], ["birthDate", "تاریخ تولد"],
-];
+const VALIDATORS = {
+  code: (v) => (!v ? "کد حساب الزامی است" : ""),
+  name: (v) => (!v?.trim() ? "نام حساب الزامی است" : ""),
+  email: (v) => (v && !/^\S+@\S+\.\S+$/.test(v) ? "ایمیل نامعتبر است" : ""),
+  mobile1: (v) => (v && !/^09\d{9}$/.test(v) ? "موبایل باید ۱۱ رقم و با ۰۹ شروع شود" : ""),
+  codePosti: (v) => (v && !/^\d{10}$/.test(v) ? "کد پستی باید ۱۰ رقم باشد" : ""),
+  nationalCode: (v) => (v && !/^\d{10,11}$/.test(v) ? "کد/شناسه ملی نامعتبر است" : ""),
+};
 
 const emptyAccount = {
-  code: "", name: "",
-  accountType: 0, accountNature: 0,
-  noeShakhs: 0, mahiatShakhs: 0,
+  code: "", name: "", accountType: 0, accountNature: 0, noeShakhs: 0, mahiatShakhs: 0,
   codeShahr: "", ostan: "", shahr: "", shahrestan: "",
   tel1: "", tel2: "", tel3: "", mobile1: "", mobile2: "", mobile3: "",
   address1: "", address2: "", address3: "", address4: "",
-  codePosti: "", nameMasool: "", email: "", shomareSabt: "",
-  codeEghtesadi: "", nationalCode: "", faaliat: "", nameRabet: "",
-  addressInternet: "", birthDate: "",
-  ...Object.fromEntries(TICK_FIELDS.map((t) => [t.field, 0])),
+  codePosti: "", nameMasool: "", email: "", shomareSabt: "", codeEghtesadi: "",
+  nationalCode: "", faaliat: "", nameRabet: "", addressInternet: "", birthDate: "",
+  ...Object.fromEntries(TICK_FIELDS.map((f) => [f, 0])),
 };
 
-const Account = () => {
+const normalize = (acc) =>
+  Object.fromEntries(Object.keys(emptyAccount).map((k) => [k, acc?.[k] ?? emptyAccount[k]]));
+
+const compactGridSx = {
+  display: "grid",
+  gap: 1.5,
+  gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+};
+
+const accordionSx = {
+  mb: 1.5,
+  "&.Mui-expanded": { mb: 1.5 },
+  "&.Mui-expanded:first-of-type": { mt: 0 },
+};
+
+const detailsSx = { p: 2 };
+const compactDetailsSx = { p: 1.5 };
+
+const SectionSummary = ({ title }) => (
+  <AccordionSummary
+    expandIcon={<ExpandMoreIcon />}
+    sx={{ px: 2, "& .MuiAccordionSummary-content": { my: 0.75, alignItems: "center", minWidth: 0 } }}
+  >
+    <TuneIcon sx={{ fontSize: 20, ml: "12px", flexShrink: 0, color: "primary.main" }} />
+    <Typography component="span" sx={{ fontSize: 14, fontWeight: 700, flex: 1 }}>{title}</Typography>
+  </AccordionSummary>
+);
+
+const CompactSectionSummary = ({ title, icon: IconComp, hasError }) => {
+  const IconToRender = IconComp || PlaceIcon;
+  return (
+    <AccordionSummary
+      expandIcon={<ExpandMoreIcon sx={{ fontSize: 18 }} />}
+      sx={{
+        px: 2,
+        minHeight: 40,
+        bgcolor: (t) => alpha(t.palette.action.hover, 0.4),
+        "&.Mui-expanded": { minHeight: 40 },
+        "& .MuiAccordionSummary-content": { my: 0.5, alignItems: "center", minWidth: 0 },
+      }}
+    >
+      <IconToRender sx={{ fontSize: 18, ml: "10px", flexShrink: 0, color: hasError ? "error.main" : "primary.main" }} />
+      <Typography component="span" sx={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{title}</Typography>
+    </AccordionSummary>
+  );
+};
+
+const LockedHint = ({ locked, children }) =>
+  locked ? (
+    <Tooltip arrow title="به دلیل وجود سند یا زیرحساب، این فیلد قابل تغییر نیست">
+      <Box component="span" sx={{ display: "block" }}>{children}</Box>
+    </Tooltip>
+  ) : (
+    children
+  );
+
+const Account = ({ onClose, onTabClose, closeTab: propCloseTab }) => {
   const [account, setAccount] = useState(emptyAccount);
-  const [saving, setSaving] = useState(false);
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-  const [fieldLocks, setFieldLocks] = useState({ accountType: false, accountNature: false });
-
+  const [original, setOriginal] = useState(emptyAccount);
+  const [ticksExpanded, setTicksExpanded] = useState(true);
   const [expandedSection, setExpandedSection] = useState(false);
-  const handleAccordionChange = (panel) => (event, isExpanded) => {
-    setExpandedSection(isExpanded ? panel : false);
-  };
+  const [fieldLocks, setFieldLocks] = useState({ accountType: false, accountNature: false });
+  const [saving, setSaving] = useState(false);
+  const [touched, setTouched] = useState({});
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
+  const { activeTabId, updateTab, closeTab: contextCloseTab, openTab } = useTabs();
+
+  const isDirty = useMemo(() => JSON.stringify(account) !== JSON.stringify(original), [account, original]);
   
+  const errors = useMemo(
+    () => Object.fromEntries(Object.entries(VALIDATORS).map(([k, fn]) => [k, fn(account[k])]).filter(([, e]) => e)),
+    [account]
+  );
 
-  const handleChange = (field, value) => {
-    setAccount((prev) => ({ ...prev, [field]: value }));
-  };
+  const notify = (message, severity = "success") => setSnackbar({ open: true, message, severity });
+  const handleChange = (field, value) => setAccount((prev) => ({ ...prev, [field]: value }));
 
-  const handleTickChange = (field, value) => {
-    setAccount((prev) => ({ ...prev, [field]: value }));
-  };
-
-  // وقتی از مودال (سرچ یا درخت) یه حساب موجود انتخاب شد: جزئیاتش رو با GetForVoucher می‌گیریم و فرم رو پُر می‌کنیم
-  // وقتی از مودال (سرچ یا درخت) یه حساب موجود انتخاب شد: جزئیاتش رو با GetByCode می‌گیریم و فرم رو پُر می‌کنیم
-  const handleSelectExisting = async (node) => {
-    try {
-      const res = await axios.post("http://ecipc107:8049/api/Account/GetByCode", {
-        code: node.code,
-      });
-      const acc = res.data;
-
-      setAccount((prev) => ({
-        ...prev,
-        code: acc.code,
-        name: acc.name,
-        accountType: acc.accountType ?? 0,
-        accountNature: acc.accountNature ?? 0,
-        tickHesabiForGood: acc.tickHesabiForGood ?? 0,
-        tickHesabiForMarkaz1: acc.tickHesabiForMarkaz1 ?? 0,
-        tickHesabiForMarkaz2: acc.tickHesabiForMarkaz2 ?? 0,
-        tickHesabiForMarkaz3: acc.tickHesabiForMarkaz3 ?? 0,
-        tickHesabiForMarkaz4: acc.tickHesabiForMarkaz4 ?? 0,
-        tickHesabiForDateCheq: acc.tickHesabiForDateCheq ?? 0,
-        tickHesabiForNumCheq: acc.tickHesabiForNumCheq ?? 0,
-        tickHesabiForTedad1: acc.tickHesabiForTedad1 ?? 0,
-        tickHesabiForTedad2: acc.tickHesabiForTedad2 ?? 0,
-        tickHesabiForTedad3: acc.tickHesabiForTedad3 ?? 0,
-        tickHesabiForCurrencyCode: acc.tickHesabiForCurrencyCode ?? 0,
-        tickHesabiForCurrencyFee: acc.tickHesabiForCurrencyFee ?? 0,
-        tickHesabiForCurrencyTedad: acc.tickHesabiForCurrencyTedad ?? 0,
-        codeShahr: acc.codeShahr ?? "",
-        ostan: acc.ostan ?? "",
-        shahr: acc.shahr ?? "",
-        shahrestan: acc.shahrestan ?? "",
-        tel1: acc.tel1 ?? "",
-        tel2: acc.tel2 ?? "",
-        tel3: acc.tel3 ?? "",
-        mobile1: acc.mobile1 ?? "",
-        mobile2: acc.mobile2 ?? "",
-        mobile3: acc.mobile3 ?? "",
-        address1: acc.address1 ?? "",
-        address2: acc.address2 ?? "",
-        address3: acc.address3 ?? "",
-        address4: acc.address4 ?? "",
-        codePosti: acc.codePosti ?? "",
-        nameMasool: acc.nameMasool ?? "",
-        email: acc.email ?? "",
-        shomareSabt: acc.shomareSabt ?? "",
-        codeEghtesadi: acc.codeEghtesadi ?? "",
-        nationalCode: acc.nationalCode ?? "",
-        faaliat: acc.faaliat ?? "",
-        nameRabet: acc.nameRabet ?? "",
-        addressInternet: acc.addressInternet ?? "",
-        birthDate: acc.birthDate ?? "",
-        noeShakhs: acc.noeShakhs ?? 0,
-        mahiatShakhs: acc.mahiatShakhs ?? 0,
-      }));
-
-      // اگر سرور بگه این حساب اجازه‌ی تغییر نوع/ماهیت نداره، همون فیلدها رو قفل می‌کنیم
-      setFieldLocks({
-        accountType: acc.enableAccountType === false,
-        accountNature: acc.enableAccountNature === false,
-      });
-    } catch (error) {
-      console.error("خطا در دریافت جزئیات حساب:", error);
-      setSnackbar({ open: true, message: "خطا در دریافت جزئیات حساب.", severity: "error" });
+  const handleSave = useCallback(async () => {
+    if (Object.keys(errors).length) {
+      setTouched(Object.fromEntries(Object.keys(errors).map((k) => [k, true])));
+      const sectionWithError = SECTIONS.find((s) => s.fields.some((f) => errors[f.name]));
+      if (sectionWithError) setExpandedSection(sectionWithError.id);
+      if (errors.nationalCode) setExpandedSection("legal");
+      notify("لطفاً خطاهای فرم را برطرف کنید.", "warning");
+      return false;
     }
-  };
-
-  const handleSave = async () => {
+    
     setSaving(true);
     try {
-      const res = await axios.post("http://ecipc107:8049/api/Account/Save", account);
-      if (res.data?.isSuccess) {
-        setSnackbar({ open: true, message: "حساب با موفقیت ذخیره شد.", severity: "success" });
+      const { data } = await api.post("/Account/Save", account);
+      if (data?.isSuccess) {
+        setOriginal(account);
+        notify("حساب با موفقیت ذخیره شد.");
+        return true;
       } else {
-        setSnackbar({ open: true, message: res.data?.message || "ذخیره با خطا مواجه شد.", severity: "error" });
+        notify(data?.message || "ذخیره با خطا مواجه شد.", "error");
+        return false;
       }
-    } catch (error) {
-      console.error("خطای ذخیره‌ی حساب:", error);
-      setSnackbar({ open: true, message: "خطا در ارتباط با سرور.", severity: "error" });
+    } catch {
+      notify("خطا در ارتباط با سرور.", "error");
+      return false;
     } finally {
       setSaving(false);
     }
+  }, [account, errors]);
+
+  // ریف برای نگهداری آخرین نسخه متد ذخیره جهت جلوگیری از لوپ و رندرهای اضافی
+  const handleSaveRef = useRef();
+  useEffect(() => {
+    handleSaveRef.current = handleSave;
+  }, [handleSave]);
+
+  // ثبت وضعیت تب بدون ایجاد حلقه بی‌نهایت
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    const timer = setTimeout(() => {
+      if (activeTabId && isMounted) {
+        updateTab(activeTabId, {
+          isDirty,
+          onSave: (...args) => handleSaveRef.current?.(...args),
+        });
+      }
+    }, 0);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [activeTabId, isDirty, updateTab]);
+  
+
+  const confirmDiscard = () => !isDirty || window.confirm("تغییرات ذخیره نشده از بین می‌رود. ادامه می‌دهید؟");
+
+const handleNew = () => {
+    if (isDirty) {
+      // اگر تغییرات ذخیره نشده دارد، اجازه می‌دهیم سیستم تب‌ها مودال هشدار را بیاورد
+      // با این تفاوت که بعد از بسته شدن این تب، می‌خواهیم یک تب حساب جدید هم باز شود
+      // اما برای سادگی و اینکه دقیقاً همان مودال شما باز شود:
+      contextCloseTab(activeTabId);
+      
+      // بلافاصله یک تب جدید هم باز می‌کنیم تا کاربر معطل نشود
+      openTab({
+        title: "ساختار حساب",
+        path: "/Account", // یا مسیر فرم حساب شما
+        pageType: "account",
+        closable: true,
+      });
+    } else {
+      // اگر تغییری نداشت، همین فرم را خالی و ریست می‌کنیم
+      setAccount(emptyAccount);
+      setOriginal(emptyAccount);
+      setTouched({});
+      setFieldLocks({ accountType: false, accountNature: false });
+    }
   };
 
-  return (
-    <Box
-      dir="rtl"
-      sx={{ p: 3, maxWidth: 1000, mx: "auto", color: "text.primary", boxSizing: "border-box" }}
-    >
-      <Typography variant="h6" sx={{ mb: 2 }}>ایجاد / ویرایش حساب</Typography>
+  const handleCancelTab = () => {
+    if (activeTabId) {
+      contextCloseTab(activeTabId);
+    } else {
+      if (typeof onClose === "function") onClose();
+      else if (typeof onTabClose === "function") onTabClose();
+      else if (typeof propCloseTab === "function") propCloseTab();
+      else {
+        try { window.close(); } catch { window.history.back(); }
+      }
+    }
+  };
 
-      {/* اطلاعات پایه */}
-      <Box
-        sx={{
-          p: 2, mb: 2, display: "flex", gap: 1.5, flexWrap: "wrap",alignItems: "center",
-          bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 2,
+  const handleSelectExisting = async (node) => {
+    if (!confirmDiscard()) return;
+    try {
+      const { data } = await api.post("/Account/GetByCode", { code: node.code });
+      const next = normalize(data);
+      setAccount(next); setOriginal(next); setTouched({});
+      setFieldLocks({
+        accountType: data.enableAccountType === false,
+        accountNature: data.enableAccountNature === false,
+      });
+    } catch {
+      notify("خطا در دریافت جزئیات حساب.", "error");
+    }
+  };
+
+  // مدیریت کلید میانبر (Ctrl+S) و هشدار خروج
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { 
+        e.preventDefault(); 
+        handleSaveRef.current?.(); 
+      }
+    };
+    const onUnload = (e) => { 
+      if (isDirty) { 
+        e.preventDefault(); 
+        e.returnValue = ""; 
+      } 
+    };
+
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("beforeunload", onUnload);
+    
+    return () => { 
+      window.removeEventListener("keydown", onKey); 
+      window.removeEventListener("beforeunload", onUnload); 
+    };
+  }, [isDirty]);
+
+  const renderField = ({ name, label, ltr, multiline, full }) => {
+    const base = fieldProps(label);
+    return (
+      <TextField
+        key={name}
+        {...base}
+        slotProps={{
+          ...base.slotProps,
+          htmlInput: { ...base.slotProps.htmlInput, ...(ltr && { dir: "ltr", style: { textAlign: "left" } }) },
         }}
-      >
-        <AccountCodeField
-          value={account.code}
-          onChange={(code) => handleChange("code", code)}
-          onSelect={handleSelectExisting}
-          onMismatch={() => setAccount((prev) => ({ ...emptyAccount, code: prev.code }))}
-          allowAnyLevel
-          sx={{ width: 220 }}
-        />
+        value={account[name]}
+        onChange={(e) => handleChange(name, e.target.value)}
+        onBlur={() => setTouched((t) => ({ ...t, [name]: true }))}
+        error={touched[name] && !!errors[name]}
+        helperText={touched[name] && errors[name]}
+        multiline={multiline}
+        minRows={multiline ? 1.5 : undefined}
+        sx={full ? { gridColumn: "1 / -1" } : undefined}
+      />
+    );
+  };
 
-        <TextField
-          {...fieldProps("نام حساب :")}
-          value={account.name}
-          onChange={(e) => handleChange("name", e.target.value)}
-          sx={{ flex: 1, minWidth: 240 }}
-        />
+  const isLegalPerson = account.noeShakhs === 1;
+  const legalFields = isLegalPerson
+    ? [{ name: "shomareSabt", label: "شماره ثبت", ltr: true }, { name: "codeEghtesadi", label: "کد اقتصادی", ltr: true },
+       { name: "nationalCode", label: "شناسه ملی", ltr: true }, { name: "faaliat", label: "نوع فعالیت" }]
+    : [{ name: "nationalCode", label: "کد ملی", ltr: true }, { name: "birthDate", label: "تاریخ تولد", ltr: true },
+       { name: "codeEghtesadi", label: "کد اقتصادی", ltr: true }, { name: "faaliat", label: "شغل / فعالیت" }];
 
-        <TextField
-          select
-          {...fieldProps("نوع حساب :")}
-          sx={{ width: 150 }}
-          value={account.accountType}
-          disabled={fieldLocks.accountType}
-          onChange={(e) => handleChange("accountType", Number(e.target.value))}
-        >
-          <MenuItem value={0}>کل</MenuItem>
-          <MenuItem value={1}>معین</MenuItem>
-          <MenuItem value={2}>تفصیلی</MenuItem>
-        </TextField>
-
-        <TextField
-          select
-          {...fieldProps("ماهیت حساب :")}
-          sx={{ width: 170 }}
-          value={account.accountNature}
-          disabled={fieldLocks.accountNature}
-          onChange={(e) => handleChange("accountNature", Number(e.target.value))}
-        >
-          <MenuItem value={0}>بدهکار</MenuItem>
-          <MenuItem value={1}>بستانکار</MenuItem>
-        </TextField>
+  return (
+    <Box dir="rtl" sx={{ px: { xs: 2, md: 3 }, py: 2, maxWidth: 1080, mx: "auto" }}>
+      {/* Main info */}
+      <Box sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 2.5, p: 2, mb: 1.5 }}>
+        <Typography sx={{ fontSize: 14, fontWeight: 700, color: "text.primary", mb: 1.5 }}>اطلاعات اصلی</Typography>
+        <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "240px 1fr 170px 170px" } }}>
+          <AccountCodeField
+            value={account.code}
+            onChange={(code) => handleChange("code", code)}
+            onSelect={handleSelectExisting}
+            onMismatch={() => { setAccount((p) => ({ ...emptyAccount, code: p.code })); }}
+            allowAnyLevel
+          />
+          {renderField({ name: "name", label: "نام حساب" })}
+          <LockedHint locked={fieldLocks.accountType}>
+            <TextField select {...fieldProps("نوع حساب")} value={account.accountType}
+              disabled={fieldLocks.accountType}
+              onChange={(e) => handleChange("accountType", Number(e.target.value))}>
+              <MenuItem value={0}>کل</MenuItem><MenuItem value={1}>معین</MenuItem><MenuItem value={2}>تفصیلی</MenuItem>
+            </TextField>
+          </LockedHint>
+          <LockedHint locked={fieldLocks.accountNature}>
+            <TextField select {...fieldProps("ماهیت حساب")} value={account.accountNature}
+              disabled={fieldLocks.accountNature}
+              onChange={(e) => handleChange("accountNature", Number(e.target.value))}>
+              <MenuItem value={0}>بدهکار</MenuItem><MenuItem value={1}>بستانکار</MenuItem>
+            </TextField>
+          </LockedHint>
+        </Box>
       </Box>
 
-      {/* قابلیت‌های حساب (تیک‌ها) */}
-      <Accordion defaultExpanded>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>قابلیت‌های حساب</Typography>
-        </AccordionSummary>
-        <AccordionDetails
-          sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1 }}
-        >
-          {TICK_FIELDS.map(({ field, label }) => (
-            <FourStateCheckbox
-              key={field}
-              label={label}
-              value={account[field]}
-              onChange={(val) => handleTickChange(field, val)}
-            />
-          ))}
+      {/* Ticks */}
+      <Accordion expanded={ticksExpanded} onChange={(_, exp) => setTicksExpanded(exp)} disableGutters sx={accordionSx}>
+        <SectionSummary title="قابلیت‌های حساب" />
+        <AccordionDetails sx={detailsSx}>
+          <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(4, 1fr)" } }}>
+            {TICK_GROUPS.map((g) => {
+              const active = g.items.filter(([f]) => account[f]).length;
+              return (
+                <Box key={g.title} sx={{
+                  p: 1.5, borderRadius: 2, border: 1,
+                  borderColor: active ? "primary.main" : "divider",
+                  bgcolor: active ? (t) => alpha(t.palette.primary.main, 0.04) : "background.default",
+                }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                    <Typography sx={{ fontSize: 13, fontWeight: 700, color: "text.primary" }}>{g.title}</Typography>
+                  </Box>
+
+                  {g.title === "کالا و مراکز" ? (
+                    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 0.5 }}>
+                      <Box sx={{ gridColumn: "span 2" }}>
+                        <FourStateCheckbox label="کالا" value={account["tickHesabiForGood"]}
+                          onChange={(val) => handleChange("tickHesabiForGood", val)} />
+                      </Box>
+                      <Box><FourStateCheckbox label="مرکز ۱" value={account["tickHesabiForMarkaz1"]} onChange={(val) => handleChange("tickHesabiForMarkaz1", val)} /></Box>
+                      <Box><FourStateCheckbox label="مرکز ۲" value={account["tickHesabiForMarkaz2"]} onChange={(val) => handleChange("tickHesabiForMarkaz2", val)} /></Box>
+                      <Box><FourStateCheckbox label="مرکز ۳" value={account["tickHesabiForMarkaz3"]} onChange={(val) => handleChange("tickHesabiForMarkaz3", val)} /></Box>
+                      <Box><FourStateCheckbox label="مرکز ۴" value={account["tickHesabiForMarkaz4"]} onChange={(val) => handleChange("tickHesabiForMarkaz4", val)} /></Box>
+                    </Box>
+                  ) : (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                      {g.items.map(([field, label]) => (
+                        <Box key={field} sx={{ width: g.items.length > 2 ? "48%" : "100%", minWidth: "110px" }}>
+                          <FourStateCheckbox label={label} value={account[field]}
+                            onChange={(val) => handleChange(field, val)} />
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+
+                </Box>
+              );
+            })}
+          </Box>
         </AccordionDetails>
       </Accordion>
 
-      {/* اطلاعات تماس */}
-      <Accordion expanded={expandedSection === "contact"} onChange={handleAccordionChange("contact")}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>اطلاعات تماس</Typography>
-        </AccordionSummary>
-        <AccordionDetails
-          sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 1.5 }}
+      {/* Contact / Address */}
+      {SECTIONS.map((s) => (
+        <Accordion
+          key={s.id}
+          expanded={expandedSection === s.id}
+          onChange={(_, isExpanded) => setExpandedSection(isExpanded ? s.id : false)}
+          disableGutters
+          sx={accordionSx}
         >
-          {CONTACT_FIELDS.map(([field, label]) => (
-            <TextField
-              key={field}
-              {...fieldProps(label)}
-              value={account[field]}
-              onChange={(e) => handleChange(field, e.target.value)}
-            />
-          ))}
-        </AccordionDetails>
-      </Accordion>
+          <CompactSectionSummary title={s.title} icon={s.icon}
+            hasError={s.fields.some((f) => touched[f.name] && errors[f.name])} />
+          <AccordionDetails sx={{ ...compactDetailsSx, ...compactGridSx }}>{s.fields.map(renderField)}</AccordionDetails>
+        </Accordion>
+      ))}
 
-      {/* آدرس */}
-      <Accordion expanded={expandedSection === "address"} onChange={handleAccordionChange("address")}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>آدرس</Typography>
-        </AccordionSummary>
-        <AccordionDetails
-          sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 1.5 }}
-        >
-          {ADDRESS_FIELDS.map(([field, label]) => (
-            <TextField
-              key={field}
-              {...fieldProps(label)}
-              value={account[field]}
-              onChange={(e) => handleChange(field, e.target.value)}
-            />
-          ))}
-        </AccordionDetails>
-      </Accordion>
-
-      {/* اطلاعات ثبتی/حقوقی */}
-      <Accordion expanded={expandedSection === "legal"} onChange={handleAccordionChange("legal")}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>اطلاعات ثبتی و حقوقی</Typography>
-        </AccordionSummary>
-        <AccordionDetails
-          sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 1.5 }}
-        >
-          {LEGAL_FIELDS.map(([field, label]) => (
-            <TextField
-              key={field}
-              {...fieldProps(label)}
-              value={account[field]}
-              onChange={(e) => handleChange(field, e.target.value)}
-            />
-          ))}
-
-          <TextField
-            select
-            {...fieldProps("نوع شخص")}
-            value={account.noeShakhs}
-            onChange={(e) => handleChange("noeShakhs", Number(e.target.value))}
-          >
-            <MenuItem value={0}>حقیقی</MenuItem>
-            <MenuItem value={1}>حقوقی</MenuItem>
+      {/* Legal */}
+      <Accordion
+        expanded={expandedSection === "legal"}
+        onChange={(_, isExpanded) => setExpandedSection(isExpanded ? "legal" : false)}
+        disableGutters
+        sx={accordionSx}
+      >
+        <CompactSectionSummary title="اطلاعات ثبتی و حقوقی" icon={BadgeIcon}
+          hasError={touched.nationalCode && !!errors.nationalCode} />
+        <AccordionDetails sx={{ ...compactDetailsSx, ...compactGridSx }}>
+          <TextField select {...fieldProps("نوع شخص")} value={account.noeShakhs}
+            onChange={(e) => handleChange("noeShakhs", Number(e.target.value))}>
+            <MenuItem value={0}>حقیقی</MenuItem><MenuItem value={1}>حقوقی</MenuItem>
           </TextField>
-
-          <TextField
-            select
-            {...fieldProps("ماهیت شخص")}
-            value={account.mahiatShakhs}
-            onChange={(e) => handleChange("mahiatShakhs", Number(e.target.value))}
-          >
-            <MenuItem value={0}>مشتری</MenuItem>
-            <MenuItem value={1}>تامین‌کننده</MenuItem>
+          <TextField select {...fieldProps("ماهیت شخص")} value={account.mahiatShakhs}
+            onChange={(e) => handleChange("mahiatShakhs", Number(e.target.value))}>
+            <MenuItem value={0}>مشتری</MenuItem><MenuItem value={1}>تامین‌کننده</MenuItem>
           </TextField>
+          {legalFields.map(renderField)}
         </AccordionDetails>
       </Accordion>
 
-      <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-        <Button variant="contained" onClick={handleSave} disabled={saving}>
+      {/* Actions */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 2, flexWrap: "wrap" }}>
+        <Button variant="contained" onClick={handleSave} disabled={saving} sx={{ minWidth: 120 }}>
           {saving ? "در حال ذخیره..." : "ذخیره حساب"}
+        </Button>
+        <Button variant="outlined" onClick={handleNew}>حساب جدید</Button>
+        <Button variant="outlined" color="inherit" onClick={handleCancelTab} disabled={saving}>
+          انصراف
         </Button>
       </Box>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-      >
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+      <Snackbar open={snackbar.open} autoHideDuration={4000} anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}>
+        <Alert variant="filled" severity={snackbar.severity}>{snackbar.message}</Alert>
       </Snackbar>
     </Box>
   );
