@@ -5,7 +5,6 @@ import TabContent from "../../components/Tabs/TabContent";
 import { useEffect } from "react";
 import useTabs from "../../context/useTabs";
 import styles from "./MainLayout.module.css";
-import CloseUnsavedModal from "../../components/tabs/CloseUnsavedModal"; //  این  اضافه شد
 
 const MainLayout = () => {
 
@@ -64,7 +63,7 @@ return (
         </div>
 
       </div>
-      <CloseUnsavedModal />
+    
 
     </div>
   );

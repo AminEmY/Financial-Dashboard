@@ -73,6 +73,15 @@ const compactGridSx = {
   gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
 };
 
+const legalGridSx = {
+  display: "grid",
+  gap: 1.5,
+  gridTemplateColumns: {
+    xs: "1fr",
+    sm: "repeat(2, minmax(0, 1fr))",
+  },
+};
+
 const accordionSx = {
   mb: 1.5,
   "&.Mui-expanded": { mb: 1.5 },
@@ -81,6 +90,12 @@ const accordionSx = {
 
 const detailsSx = { p: 2 };
 const compactDetailsSx = { p: 1.5 };
+// فیلدهای ردیف اصلی: بلندتر؛ کد و نام بولد (هم‌وزن عنوان‌های بخش‌ها)
+const mainFieldSx = {
+  "& .MuiFilledInput-root": { minHeight: 48 },
+  "& .MuiFilledInput-input": { fontSize: 14, fontWeight: 700 },
+};
+const mainSelectSx = { "& .MuiFilledInput-root": { minHeight: 48 } };
 
 const SectionSummary = ({ title }) => (
   <AccordionSummary
@@ -120,7 +135,7 @@ const LockedHint = ({ locked, children }) =>
     children
   );
 
-const Account = ({ onClose, onTabClose, closeTab: propCloseTab }) => {
+const Account = ({ tab, onClose, onTabClose, closeTab: propCloseTab }) => {
   const [account, setAccount] = useState(emptyAccount);
   const [original, setOriginal] = useState(emptyAccount);
   const [ticksExpanded, setTicksExpanded] = useState(true);
@@ -130,7 +145,7 @@ const Account = ({ onClose, onTabClose, closeTab: propCloseTab }) => {
   const [touched, setTouched] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
-  const { activeTabId, updateTab, closeTab: contextCloseTab, openTab } = useTabs();
+  const { updateTab, closeTab: contextCloseTab, openTab } = useTabs();
 
   const isDirty = useMemo(() => JSON.stringify(account) !== JSON.stringify(original), [account, original]);
   
@@ -177,35 +192,21 @@ const Account = ({ onClose, onTabClose, closeTab: propCloseTab }) => {
     handleSaveRef.current = handleSave;
   }, [handleSave]);
 
-  // ثبت وضعیت تب بدون ایجاد حلقه بی‌نهایت
+  const tabId = tab?.id;
+  const stableOnSave = useCallback((...args) => handleSaveRef.current?.(...args), []);
 
   useEffect(() => {
-    let isMounted = true;
-    
-    const timer = setTimeout(() => {
-      if (activeTabId && isMounted) {
-        updateTab(activeTabId, {
-          isDirty,
-          onSave: (...args) => handleSaveRef.current?.(...args),
-        });
-      }
-    }, 0);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timer);
-    };
-  }, [activeTabId, isDirty, updateTab]);
+    if (tabId) updateTab(tabId, { isDirty, onSave: stableOnSave });
+  }, [tabId, isDirty, updateTab, stableOnSave]);
   
 
-  const confirmDiscard = () => !isDirty || window.confirm("تغییرات ذخیره نشده از بین می‌رود. ادامه می‌دهید؟");
 
 const handleNew = () => {
     if (isDirty) {
       // اگر تغییرات ذخیره نشده دارد، اجازه می‌دهیم سیستم تب‌ها مودال هشدار را بیاورد
       // با این تفاوت که بعد از بسته شدن این تب، می‌خواهیم یک تب حساب جدید هم باز شود
       // اما برای سادگی و اینکه دقیقاً همان مودال شما باز شود:
-      contextCloseTab(activeTabId);
+      contextCloseTab(tabId);
       
       // بلافاصله یک تب جدید هم باز می‌کنیم تا کاربر معطل نشود
       openTab({
@@ -224,8 +225,8 @@ const handleNew = () => {
   };
 
   const handleCancelTab = () => {
-    if (activeTabId) {
-      contextCloseTab(activeTabId);
+    if (tabId) {
+      contextCloseTab(tabId);
     } else {
       if (typeof onClose === "function") onClose();
       else if (typeof onTabClose === "function") onTabClose();
@@ -237,7 +238,6 @@ const handleNew = () => {
   };
 
   const handleSelectExisting = async (node) => {
-    if (!confirmDiscard()) return;
     try {
       const { data } = await api.post("/Account/GetByCode", { code: node.code });
       const next = normalize(data);
@@ -251,31 +251,23 @@ const handleNew = () => {
     }
   };
 
-  // مدیریت کلید میانبر (Ctrl+S) و هشدار خروج
-  useEffect(() => {
-    const onKey = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { 
-        e.preventDefault(); 
-        handleSaveRef.current?.(); 
-      }
-    };
-    const onUnload = (e) => { 
-      if (isDirty) { 
-        e.preventDefault(); 
-        e.returnValue = ""; 
-      } 
-    };
+// مدیریت کلید میانبر Ctrl+S
+useEffect(() => {
+  const onKey = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+      e.preventDefault();
+      handleSaveRef.current?.();
+    }
+  };
 
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("beforeunload", onUnload);
-    
-    return () => { 
-      window.removeEventListener("keydown", onKey); 
-      window.removeEventListener("beforeunload", onUnload); 
-    };
-  }, [isDirty]);
+  window.addEventListener("keydown", onKey);
 
-  const renderField = ({ name, label, ltr, multiline, full }) => {
+  return () => {
+    window.removeEventListener("keydown", onKey);
+  };
+}, []);
+
+  const renderField = ({ name, label, ltr, multiline, full, sx }) => {
     const base = fieldProps(label);
     return (
       <TextField
@@ -292,7 +284,7 @@ const handleNew = () => {
         helperText={touched[name] && errors[name]}
         multiline={multiline}
         minRows={multiline ? 1.5 : undefined}
-        sx={full ? { gridColumn: "1 / -1" } : undefined}
+        sx={full ? { gridColumn: "1 / -1" } : sx}
       />
     );
   };
@@ -306,9 +298,13 @@ const handleNew = () => {
 
   return (
     <Box dir="rtl" sx={{ px: { xs: 2, md: 3 }, py: 2, maxWidth: 1080, mx: "auto" }}>
+
       {/* Main info */}
-      <Box sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 2.5, p: 2, mb: 1.5 }}>
-        <Typography sx={{ fontSize: 14, fontWeight: 700, color: "text.primary", mb: 1.5 }}>اطلاعات اصلی</Typography>
+      <Box
+        component="section"
+        aria-label="اطلاعات اصلی"
+        sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 2.5, p: 2, mb: 1.5 }}
+      >
         <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "240px 1fr 170px 170px" } }}>
           <AccountCodeField
             value={account.code}
@@ -316,18 +312,19 @@ const handleNew = () => {
             onSelect={handleSelectExisting}
             onMismatch={() => { setAccount((p) => ({ ...emptyAccount, code: p.code })); }}
             allowAnyLevel
+            sx={mainFieldSx}
           />
-          {renderField({ name: "name", label: "نام حساب" })}
+          {renderField({ name: "name", label: "نام حساب", sx: mainFieldSx })}
           <LockedHint locked={fieldLocks.accountType}>
             <TextField select {...fieldProps("نوع حساب")} value={account.accountType}
-              disabled={fieldLocks.accountType}
+              disabled={fieldLocks.accountType} sx={mainSelectSx}
               onChange={(e) => handleChange("accountType", Number(e.target.value))}>
               <MenuItem value={0}>کل</MenuItem><MenuItem value={1}>معین</MenuItem><MenuItem value={2}>تفصیلی</MenuItem>
             </TextField>
           </LockedHint>
           <LockedHint locked={fieldLocks.accountNature}>
             <TextField select {...fieldProps("ماهیت حساب")} value={account.accountNature}
-              disabled={fieldLocks.accountNature}
+              disabled={fieldLocks.accountNature} sx={mainSelectSx}
               onChange={(e) => handleChange("accountNature", Number(e.target.value))}>
               <MenuItem value={0}>بدهکار</MenuItem><MenuItem value={1}>بستانکار</MenuItem>
             </TextField>
@@ -405,12 +402,14 @@ const handleNew = () => {
       >
         <CompactSectionSummary title="اطلاعات ثبتی و حقوقی" icon={BadgeIcon}
           hasError={touched.nationalCode && !!errors.nationalCode} />
-        <AccordionDetails sx={{ ...compactDetailsSx, ...compactGridSx }}>
+        <AccordionDetails sx={{ ...compactDetailsSx, ...legalGridSx }}>
           <TextField select {...fieldProps("نوع شخص")} value={account.noeShakhs}
+                     sx={{ width: 180, maxWidth: "100%",}} 
             onChange={(e) => handleChange("noeShakhs", Number(e.target.value))}>
             <MenuItem value={0}>حقیقی</MenuItem><MenuItem value={1}>حقوقی</MenuItem>
           </TextField>
-          <TextField select {...fieldProps("ماهیت شخص")} value={account.mahiatShakhs}
+          <TextField select {...fieldProps("ماهیت شخص")} value={account.mahiatShakhs} 
+                     sx={{ width: 180, maxWidth: "100%",}} 
             onChange={(e) => handleChange("mahiatShakhs", Number(e.target.value))}>
             <MenuItem value={0}>مشتری</MenuItem><MenuItem value={1}>تامین‌کننده</MenuItem>
           </TextField>

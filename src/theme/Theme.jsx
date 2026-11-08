@@ -30,19 +30,38 @@ const colors = {
 // ظاهرش کامل از theme.fieldBox و MuiFilledInput پایین همین فایل می‌آید
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const fieldProps = (label, inputExtra = {}) => ({
+export const fieldProps = (label, inputExtra = {}, options = {}) => ({
   variant: "filled",
   hiddenLabel: true,
   size: "small",
   fullWidth: true,
+
   slotProps: {
-    htmlInput: { "aria-label": label },
+    htmlInput: {
+      "aria-label": label,
+    },
     input: {
       disableUnderline: true,
-      startAdornment: <InputAdornment position="start">{label}</InputAdornment>,
+      startAdornment: (
+        <InputAdornment position="start">{label}</InputAdornment>
+      ),
       ...inputExtra,
     },
   },
+
+  // برای فیلدهایی مثل شرح و توضیحات:
+  // در حالت عادی وسط‌چین و هنگام تایپ راست‌چین
+  ...(options.alignTextOnFocus && {
+    sx: {
+      "& .MuiFilledInput-input": {
+        direction: "rtl",
+        textAlign: "center",
+      },
+      "& .MuiFilledInput-root.Mui-focused .MuiFilledInput-input": {
+        textAlign: "right",
+      },
+    },
+  }),
 });
 
 
@@ -87,6 +106,8 @@ export const Theme = createTheme({
 
     // توکن‌های ظاهری فیلدهای یکدست (AppTextField / AppSelect) — با تغییر اینجا، همه‌ی فیلدهای برنامه عوض می‌شن
   fieldBox: {
+    borderColor: "#D9DEE8",
+    hoverBorderColor: "#A5B4FC",
     height: 38,
     radius: 8,
     background: "#f5f6fa",
@@ -188,6 +209,7 @@ MuiCssBaseline: {
           fontFamily: '"IRANSansX", sans-serif',
           textAlign:"right",
           padding: "8px 10px",
+          borderColor:"black"
         },
       },
     },
@@ -252,7 +274,7 @@ MuiCssBaseline: {
 MuiSelect: {
   styleOverrides: {
     select: {
-      paddingLeft: "32px !important", // ایجاد فضای کافی برای متن تا زیر فلش نرود
+      paddingLeft: "15px !important", // ایجاد فضای کافی برای متن تا زیر فلش نرود
       display: "flex",
       alignItems: "center",
     },
@@ -268,45 +290,77 @@ MuiSelect: {
       styleOverrides: {
         root: ({ theme }) => {
           const f = theme.fieldBox;
-          return {
-            minHeight: f.height,
-            padding: "0 5px",
-            gap: 10,
-            borderRadius: f.radius,
-            backgroundColor: f.background,
-            transition: "background-color 0.15s ease, box-shadow 0.15s ease",
-            "&:hover": { backgroundColor: f.hoverBackground },
-            "&.Mui-focused": {
-              backgroundColor: f.focusBackground,
-              boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.16)}`,
-            },
-            "&.Mui-disabled": { backgroundColor: f.disabledBackground, opacity: 0.6 },
+      return {
+        minHeight: f.height,
+        padding: "0 5px",
+        gap: 10,
+        border: `1px solid ${f.borderColor}`,
+        boxSizing: "border-box",
+        borderRadius: f.radius,
+        backgroundColor: f.background,
 
-            // کپشن (startAdornment)
-            "& .MuiInputAdornment-positionStart": {
-              margin: 0,
-              height: "auto",
-              maxHeight: "none",
-              whiteSpace: "nowrap",
-              fontSize: f.labelFontSize,
-              color: f.labelColor,
-              "& .MuiTypography-root": { fontSize: "inherit", color: "inherit", fontFamily: "inherit" },
-            },
-            "&.Mui-focused .MuiInputAdornment-positionStart": { color: theme.palette.primary.main },
-            "& .MuiInputAdornment-positionEnd": { margin: 0 ,
-                         "& .MuiIconButton-root": {
-                             padding: "2px !important", // کاهش پدینگ آیکون‌های داخل فیلد
-                                                   }, },
-            // سلکت: جای فلش کنار لبه‌ی چپ، متن هرگز زیر آن نمی‌رود
-            "& .MuiSelect-select": {
-              padding: "0 15px 0 0 !important",
-              minHeight: "auto",
-              textAlign: "right",
-            },
-            "& .MuiSelect-icon": { left: "1px !important", right: "auto !important", fontSize: 18 },
-          };
+        transition: "background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease",
+
+        "&:hover:not(.Mui-disabled)": {
+          backgroundColor: f.hoverBackground,
+          borderColor: f.hoverBorderColor,
         },
-        input: { padding: "0 !important", textAlign: "right", fontSize: 13 },
+
+        "&.Mui-focused": {
+          backgroundColor: f.focusBackground,
+          borderColor: theme.palette.primary.main,
+          boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.16)}`,
+        },
+
+        "&.Mui-disabled": {
+          backgroundColor: f.disabledBackground,
+          borderColor: f.borderColor,
+          opacity: 0.6,
+        },
+
+        // کپشن داخل فیلد
+        "& .MuiInputAdornment-positionStart": {
+          margin: 0,
+          marginInlineEnd: "8px",
+          height: "auto",
+          maxHeight: "none",
+          whiteSpace: "nowrap",
+          fontSize: f.labelFontSize,
+          color: f.labelColor,
+
+          "& .MuiTypography-root": {
+            fontSize: "inherit",
+            color: "inherit",
+            fontFamily: "inherit",
+          },
+        },
+
+        "&.Mui-focused .MuiInputAdornment-positionStart": {
+          color: theme.palette.primary.main,
+        },
+
+        "& .MuiInputAdornment-positionEnd": {
+          margin: 0,
+          "& .MuiIconButton-root": {
+            padding: "2px !important",
+          },
+        },
+
+        // سلکت
+        "& .MuiSelect-select": {
+          padding: "0 0 0 0 !important",
+          minHeight: "auto",
+          textAlign: "center",
+        },
+
+        "& .MuiSelect-icon": {
+          left: "1px !important",
+          right: "auto !important",
+          fontSize: 18,
+        },
+      };
+        },
+        input: { padding: "0 !important", textAlign: "center", fontSize: 13 },
       },
     },
 

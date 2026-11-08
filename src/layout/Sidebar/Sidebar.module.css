@@ -1,258 +1,245 @@
+
 .sidebar {
+    width: 250px;
+    height: 100vh;
+    padding: 18px 12px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
 
-    width:260px;
+    direction: rtl;
+    background: #1f2029;
+    color: #f8fafc;
 
-    height:100vh;
-
-    padding:15px;
-
-    background-color: var(--sidebar-bg); /* حتماً background-color بگذارید */
-
-    color:white;
-
-    overflow-y:auto;
-
-    box-sizing:border-box;
-
-    flex-shrink:0;
-
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* عنوان بالای سایدبار */
+.sidebarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
 
-.logo {
-
-    text-align:center;
-    margin-bottom:25px;
-    font-size:22px;
-
+    padding: 7px 13px 17px;
+    margin-bottom: 5px;
 }
 
+.sidebarCaption {
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 500;
+}
 
+/* ساختار کلی منو */
+.navigation {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
 
-/* سطح اول */
+.menuGroup {
+    width: 100%;
+}
+
+/* عنوان ماژول و گروه */
 .menuParent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 13px;
+    box-sizing: border-box;
 
-    padding:12px 14px;
+    border: none;
+    border-radius: 9px;
 
-    margin-bottom:6px;
+    background: transparent;
+    color: #e2e8f0;
 
-    border-radius:8px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 650;
+    text-align: right;
 
-    cursor:pointer;
+    cursor: pointer;
 
-    background: var(--sidebar-surface); /* استفاده از متغیر تم */
-
-    color:#f8fafc;
-
-    font-weight:600;
-
-    transition:0.2s;
-
+    transition:
+        background-color 0.18s ease,
+        color 0.18s ease;
 }
-
 
 .menuParent:hover {
-
-    background: var(--sidebar-surface-hover); /* استفاده از متغیر تم */
-
+    background: rgba(255, 255, 255, 0.055);
+    color: #ffffff;
 }
 
+/* ماژول سطح اول */
+.rootGroup > .menuParent {
+    min-height: 46px;
+    background: #2b2d39;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+}
 
+.rootGroup > .menuParent:hover,
+.rootGroup > .menuParentOpen {
+    background: #343644;
+}
 
-/* زیر منوها */
+/* عنوان گروه‌های داخلی */
+.nestedGroup > .menuParent {
+    min-height: 39px;
+    padding: 8px 11px;
 
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* متن و آیکون */
+.menuLabel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.menuIcon {
+    font-size: 19px !important;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.rootGroup > .menuParent .menuIcon {
+    color: #a5b4fc;
+}
+
+/* فلش باز و بسته شدن */
+.expandIcon {
+    font-size: 19px !important;
+    color: #94a3b8;
+    transition: transform 0.2s ease;
+}
+
+.expanded {
+    transform: rotate(180deg);
+}
+
+/* زیرمنو */
 .subMenu {
+    margin: 5px 12px 8px 0;
+    padding: 3px 10px 3px 0;
 
-    margin-right:15px;
-
-    border-right:2px solid #475569;
-
-    padding-right:10px;
-
+    border-right: 1px solid rgba(148, 163, 184, 0.25);
 }
 
-
+.nestedGroup > .subMenu {
+    margin-right: 8px;
+    padding-right: 9px;
+}
 
 /* لینک‌های نهایی */
-
 .link {
+    display: flex;
+    align-items: center;
 
-    display:flex;
+    width: 100%;
+    min-height: 39px;
+    padding: 9px 12px;
+    margin: 3px 0;
+    box-sizing: border-box;
 
-    align-items:center;
+    border-radius: 8px;
 
-    width:100%;
+    color: #aeb8c8;
+    background: transparent;
 
-    box-sizing:border-box;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.7;
 
-    padding:10px 14px;
+    text-decoration: none;
 
-    margin:4px 0;
-
-    border-radius:8px;
-
-    color: var(--sidebar-text); /* افزودن رنگ متن واضح برای زیرمنوها */
-
-    text-decoration:none;
-
-    transition:all .2s ease;
-
+    transition:
+        background-color 0.18s ease,
+        color 0.18s ease,
+        box-shadow 0.18s ease;
 }
 
-
-.link:hover {
-
-    background: var(--sidebar-surface); /* استفاده از متغیر تم */
-
-    color:white;
-
-}
-
-
-.link:hover {
-
-    background:#1e293b;
-
-    color:white;
-
+.link .menuIcon {
+    font-size: 18px !important;
 }
 
 .link:hover {
-
-    background:#334155;
-
-    color:white;
-
+    background: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
 }
 
+.link:hover .menuIcon {
+    color: #c7d2fe;
+}
 
-
+/* لینک فعال */
 .active {
+    display: flex;
+    align-items: center;
 
-    display:flex;
+    width: 100%;
+    min-height: 40px;
+    padding: 9px 12px;
+    margin: 3px 0;
+    box-sizing: border-box;
 
-    align-items:center;
+    border-radius: 8px;
 
-    width:100%;
+    background: #5145e5;
+    color: #ffffff;
 
-    box-sizing:border-box;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.7;
 
-    padding:10px 14px;
+    text-decoration: none;
 
-    margin:4px 0;
+    box-shadow: 0 3px 9px rgba(81, 69, 229, 0.2);
 
-    border-radius:8px;
-
-    background: var(--sidebar-active); /* استفاده از متغیر اصلی تم (Primary) */
-
-    color:white;
-
-    font-weight:600;
-
-    text-decoration:none;
-
-    box-shadow:
-        0 3px 10px rgba(79,70,229,0.35);
-
+    transition:
+        background-color 0.18s ease,
+        box-shadow 0.18s ease;
 }
 
-/* .active::before {
-
-    content:"";
-
-    position:absolute;
-
-    right:0;
-
-    top:0;
-
-    height:100%;
-
-    width:4px;
-
-    background:#93c5fd;
-
-} */
-
-.subMenu {
-
-    margin-right:12px;
-
-    padding-right:10px;
-
-    border-right:1px solid rgba(148,163,184,0.25);
-
+.active .menuIcon {
+    color: #ffffff;
 }
 
-
-.subMenu .menuParent {
-
-    background:transparent;
-
-    color:#e2e8f0;
-
-    font-size:14px;
-
-    padding:9px 12px;
-
+.active:hover {
+    background: #6257ed;
+    color: #ffffff;
 }
 
-
-.subMenu .menuParent:hover {
-
-    background:#1e293b;
-
+/* دسترسی با کیبورد */
+.menuParent:focus-visible,
+.link:focus-visible {
+    outline: 2px solid #a5b4fc;
+    outline-offset: 2px;
 }
 
-
-.subMenu .link {
-
-    background:#172554;
-
-    font-size:13px;
-
-    width:100%;
-
+/* اسکرول سایدبار */
+.sidebar::-webkit-scrollbar {
+    width: 5px;
 }
 
-
-
-.subMenu .subMenu .link:hover {
-
-    background:#64748b;
-
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.25);
+    border-radius: 10px;
 }
 
-.menuParent {
-
-    background:#1e293b;
-
-    border-radius:8px;
-
-    padding:11px 14px;
-
-    margin-bottom:5px;
-
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
 }
 
-
-.subMenu .menuParent {
-
-    background:#172554;
-
-    font-size:14px;
-
-}
-
-
-.subMenu .link {
-
-    background:transparent;
-
-    font-size:13px;
-
-}

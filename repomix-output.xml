@@ -329,173 +329,6 @@ const ListGridToolbar = ({ layoutProps, apiRef, exportFileName = "خروجی", o
 export default ListGridToolbar;
 </file>
 
-<file path="src/components/common/Pickers/AccountCodeField.jsx">
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { TextField, InputAdornment, IconButton } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import useEntityPicker from "./useEntityPicker";
-import EntityPickerModal from "./EntityPickerModal";
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import { fieldProps } from "../../../theme/Theme";
-
-// فیلد ورودی کد حساب، با دقیقاً همون رفتار سلول کد حساب توی سند:
-// تایپ حرف -> تب سرچ باز می‌شه، Enter روی خالی -> تب درخت با فوکوس ریشه،
-// تایپ کد کامل یک والد -> مسیر درخت خودکار باز می‌شه، انتخاب برگ -> مقدار ست می‌شه
-const AccountCodeField = ({ value, onChange, onSelect, onMismatch, allowAnyLevel = false, label = "کد حساب :", disabled, sx }) => {
-    const [localValue, setLocalValue] = useState(value || "");
-    const picker = useEntityPicker("Account");
-
-    // اگر مقدار از بیرون عوض شد (مثلاً فرم ریست شد)، مقدار محلی هم هماهنگ بشه
-    const [prevValue, setPrevValue] = useState(value);
-    if (value !== prevValue) {
-        setPrevValue(value);
-        setLocalValue(value || "");
-    }
-
-    // در حالت allowAnyLevel، همزمان با توقف تایپ (بدون نیاز به Enter)، کد با سرور چک می‌شود
-    // و اگر دقیقاً یک حساب موجود بود (چه والد چه برگ)، فرم زنده پر می‌شود؛ وگرنه onMismatch خبر می‌دهد
-    useEffect(() => {
-        if (!allowAnyLevel) return;
-
-        const typed = localValue?.trim();
-        if (!typed) {
-            onMismatch?.();
-            return;
-        }
-
-        let cancelled = false;
-        const timer = setTimeout(async () => {
-            try {
-                const res = await axios.post("http://ecipc107:8049/api/Account/SearchTreeView", { code: typed });
-                const node = (res.data || []).find((item) => String(item.code).trim() === typed);
-                if (cancelled) return;
-                if (node) {
-                    onSelect?.(node);
-                } else {
-                    onMismatch?.();
-                }
-            } catch (error) {
-                console.error("خطا در بررسی زنده‌ی کد حساب:", error);
-            }
-        }, 350);
-
-        return () => {
-            cancelled = true;
-            clearTimeout(timer);
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [localValue, allowAnyLevel]);
-
-    const handleSelect = (node) => {
-        setLocalValue(node.code);
-        onChange?.(node.code);
-        onSelect?.(node);
-    };
-
-    const commitTypedCode = async (typedValue) => {
-        if (allowAnyLevel) {
-            // اینجا محدودیت «فقط برگ» وجود ندارد؛ هر کد معتبر (والد یا برگ) پذیرفته می‌شود
-            try {
-                const res = await axios.post("http://ecipc107:8049/api/Account/SearchTreeView", { code: typedValue });
-                const node = (res.data || []).find((item) => String(item.code).trim() === typedValue);
-                if (node) handleSelect(node);
-            } catch (error) {
-                console.error("خطا در بررسی کد حساب:", error);
-            }
-            return;
-        }
-
-        const result = await picker.resolveTypedCode(typedValue, null);
-        if (result.status === "leaf") {
-            handleSelect(result.node);
-        }
-    };
-
-    const onKeyDownHandler = (e) => {
-        const ignoredKeys = [
-            "Escape", "Tab", "Shift", "Control", "Alt", "Meta",
-            "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
-            "Backspace", "Delete", "CapsLock",
-        ];
-
-        if (e.key === "Enter") {
-            const typedValue = localValue?.trim();
-
-            if (!typedValue) {
-                e.preventDefault();
-                picker.open(null, "", true);
-                return;
-            }
-
-            e.preventDefault();
-            commitTypedCode(typedValue);
-            return;
-        }
-
-        if (!ignoredKeys.includes(e.key)) {
-            const isNumber = /^[0-9]$/.test(e.key);
-            if (isNumber) return;
-
-            e.preventDefault();
-            picker.open(null, e.key);
-        }
-    };
-
-    return (
-        <>
-            <TextField
-                {...fieldProps(label, {
-                    endAdornment: (
-                        <InputAdornment position="end">
-                            <IconButton
-                                size="small"
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() => picker.open(null, "", true)}
-                                title="ساختار درختی"
-                            >
-                                <AccountTreeIcon fontSize="small" sx={{ color: "text.secondary" }} />
-                            </IconButton>
-                            <IconButton
-                                size="small"
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() => picker.open(null, localValue, false)}
-                                title="جستجو"
-                            >
-                                <SearchIcon fontSize="small" sx={{ color: "primary.main" }} />
-                            </IconButton>
-                        </InputAdornment>
-                    ),
-                })}
-                disabled={disabled}
-                sx={sx}
-                value={localValue}
-                onChange={(e) => {
-                    setLocalValue(e.target.value);
-                    onChange?.(e.target.value);
-                }}
-                onKeyDown={onKeyDownHandler}
-                onBlur={() => {
-                    const typedValue = localValue?.trim();
-                    if (typedValue && typedValue !== value) {
-                        commitTypedCode(typedValue);
-                    }
-                }}
-            />
-
-            <EntityPickerModal
-                title="انتخاب حساب"
-                picker={picker}
-                onSelect={handleSelect}
-                allowAnyLevel={allowAnyLevel}
-            />
-        </>
-    );
-};
-
-export default AccountCodeField;
-</file>
-
 <file path="src/components/common/Pickers/entityPickerConfigs.jsx">
 // تنظیمات هر فیلد: عنوان مودال + بخش اول آدرس API
 export const entityPickerConfigs = {
@@ -562,1075 +395,6 @@ export default Dashboard;
 
 <file path="src/pages/Dashboard/Dashboard.module.css">
 
-</file>
-
-<file path="src/pages/Financial/Account/Account.jsx">
-import { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
-import {
-  Box,
-  TextField,
-  MenuItem,
-  Button,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
-  Snackbar,
-  Alert,
-  Chip,
-  Stack,
-  Tooltip,
-  CircularProgress,
-} from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import TuneIcon from "@mui/icons-material/TuneOutlined";
-import ContactPhoneIcon from "@mui/icons-material/ContactPhoneOutlined";
-import PlaceIcon from "@mui/icons-material/PlaceOutlined";
-import BadgeIcon from "@mui/icons-material/BadgeOutlined";
-
-import AccountCodeField from "../../../components/common/Pickers/AccountCodeField";
-import FourStateCheckbox from "./FourStateCheckbox";
-import { fieldProps } from "../../../theme/Theme";
-
-const api = axios.create({
-  baseURL:
-    import.meta.env.VITE_API_URL ??
-    "http://ecipc107:8049/api",
-});
-
-const TICK_GROUPS = [
-  {
-    title: "کالا و مراکز",
-    items: [
-      ["tickHesabiForGood", "کالا"],
-      ["tickHesabiForMarkaz1", "مرکز ۱"],
-      ["tickHesabiForMarkaz2", "مرکز ۲"],
-      ["tickHesabiForMarkaz3", "مرکز ۳"],
-      ["tickHesabiForMarkaz4", "مرکز ۴"],
-    ],
-  },
-  {
-    title: "چک",
-    items: [
-      ["tickHesabiForDateCheq", "تاریخ چک"],
-      ["tickHesabiForNumCheq", "شماره چک"],
-    ],
-  },
-  {
-    title: "تعداد",
-    items: [
-      ["tickHesabiForTedad1", "تعداد ۱"],
-      ["tickHesabiForTedad2", "تعداد ۲"],
-      ["tickHesabiForTedad3", "تعداد ۳"],
-    ],
-  },
-  {
-    title: "ارز",
-    items: [
-      ["tickHesabiForCurrencyCode", "کد ارز"],
-      ["tickHesabiForCurrencyFee", "نرخ ارز"],
-      ["tickHesabiForCurrencyTedad", "مقدار ارز"],
-    ],
-  },
-];
-
-const TICK_FIELDS = TICK_GROUPS.flatMap((group) =>
-  group.items.map(([field]) => field)
-);
-
-const SECTIONS = [
-  {
-    id: "contact",
-    title: "اطلاعات تماس",
-    icon: ContactPhoneIcon,
-    fields: [
-      { name: "mobile1", label: "موبایل ۱", ltr: true },
-      { name: "mobile2", label: "موبایل ۲", ltr: true },
-      { name: "mobile3", label: "موبایل ۳", ltr: true },
-      { name: "tel1", label: "تلفن ۱", ltr: true },
-      { name: "tel2", label: "تلفن ۲", ltr: true },
-      { name: "tel3", label: "تلفن ۳", ltr: true },
-      { name: "email", label: "ایمیل", ltr: true },
-      {
-        name: "addressInternet",
-        label: "وب‌سایت",
-        ltr: true,
-      },
-      { name: "nameMasool", label: "نام مسئول" },
-      { name: "nameRabet", label: "نام رابط" },
-    ],
-  },
-  {
-    id: "address",
-    title: "آدرس",
-    icon: PlaceIcon,
-    fields: [
-      { name: "ostan", label: "استان" },
-      { name: "shahrestan", label: "شهرستان" },
-      { name: "shahr", label: "شهر" },
-      { name: "codeShahr", label: "کد شهر", ltr: true },
-      { name: "codePosti", label: "کد پستی", ltr: true },
-      {
-        name: "address1",
-        label: "آدرس اصلی",
-        multiline: true,
-        full: true,
-      },
-      {
-        name: "address2",
-        label: "آدرس دوم",
-        multiline: true,
-        full: true,
-      },
-    ],
-  },
-];
-
-const VALIDATORS = {
-  code: (value) =>
-    !String(value ?? "").trim()
-      ? "کد حساب الزامی است"
-      : "",
-
-  name: (value) =>
-    !value?.trim()
-      ? "نام حساب الزامی است"
-      : "",
-
-  email: (value) =>
-    value && !/^\S+@\S+\.\S+$/.test(value)
-      ? "ایمیل نامعتبر است"
-      : "",
-
-  mobile1: (value) =>
-    value && !/^09\d{9}$/.test(value)
-      ? "موبایل باید ۱۱ رقم و با ۰۹ شروع شود"
-      : "",
-
-  codePosti: (value) =>
-    value && !/^\d{10}$/.test(value)
-      ? "کد پستی باید ۱۰ رقم باشد"
-      : "",
-
-  nationalCode: (value) =>
-    value && !/^\d{10,11}$/.test(value)
-      ? "کد/شناسه ملی نامعتبر است"
-      : "",
-};
-
-const emptyAccount = {
-  code: "",
-  name: "",
-  accountType: 0,
-  accountNature: 0,
-  noeShakhs: 0,
-  mahiatShakhs: 0,
-
-  codeShahr: "",
-  ostan: "",
-  shahr: "",
-  shahrestan: "",
-
-  tel1: "",
-  tel2: "",
-  tel3: "",
-
-  mobile1: "",
-  mobile2: "",
-  mobile3: "",
-
-  address1: "",
-  address2: "",
-  address3: "",
-  address4: "",
-
-  codePosti: "",
-  nameMasool: "",
-  email: "",
-  shomareSabt: "",
-  codeEghtesadi: "",
-  nationalCode: "",
-  faaliat: "",
-  nameRabet: "",
-  addressInternet: "",
-  birthDate: "",
-
-  ...Object.fromEntries(
-    TICK_FIELDS.map((field) => [field, 0])
-  ),
-};
-
-const normalize = (account) =>
-  Object.fromEntries(
-    Object.keys(emptyAccount).map((key) => [
-      key,
-      account?.[key] ?? emptyAccount[key],
-    ])
-  );
-
-const gridSx = {
-  display: "grid",
-  gap: 2,
-  gridTemplateColumns: {
-    xs: "1fr",
-    sm: "repeat(2, minmax(0, 1fr))",
-    md: "repeat(3, minmax(0, 1fr))",
-  },
-};
-
-const accordionSx = {
-  mb: 1.25,
-  border: 1,
-  borderColor: "divider",
-  borderRadius: "10px !important",
-  overflow: "hidden",
-  boxShadow: "0 1px 3px rgba(15, 23, 42, 0.035)",
-  bgcolor: "background.paper",
-
-  "&:before": {
-    display: "none",
-  },
-
-  "&.Mui-expanded": {
-    mb: 1.25,
-    mt: 0,
-  },
-};
-
-const detailsSx = {
-  p: { xs: 1.5, md: 2 },
-  borderTop: 1,
-  borderColor: "divider",
-};
-
-const sectionSummarySx = {
-  px: 2,
-  minHeight: 48,
-
-  "&.Mui-expanded": {
-    minHeight: 48,
-  },
-
-  "& .MuiAccordionSummary-content": {
-    my: 1,
-    alignItems: "center",
-    gap: 1.25,
-    minWidth: 0,
-  },
-
-  "& .MuiAccordionSummary-content.Mui-expanded": {
-    my: 1,
-  },
-};
-
-const SectionSummary = ({
-  title,
-  icon: Icon,
-  hasError = false,
-}) => (
-  <AccordionSummary
-    expandIcon={<ExpandMoreIcon />}
-    sx={sectionSummarySx}
-  >
-    <Box
-      sx={{
-        width: 30,
-        height: 30,
-        flexShrink: 0,
-        borderRadius: 1.5,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: hasError ? "error.main" : "primary.main",
-        bgcolor: (theme) =>
-          alpha(
-            hasError
-              ? theme.palette.error.main
-              : theme.palette.primary.main,
-            0.09
-          ),
-      }}
-    >
-      <Icon sx={{ fontSize: 18 }} />
-    </Box>
-
-    <Typography
-      component="span"
-      sx={{
-        flex: 1,
-        minWidth: 0,
-        fontSize: 13,
-        fontWeight: 700,
-        color: hasError ? "error.main" : "text.primary",
-      }}
-    >
-      {title}
-    </Typography>
-
-    {hasError && (
-      <Chip
-        size="small"
-        color="error"
-        label="نیاز به اصلاح"
-        sx={{
-          height: 24,
-          fontSize: 11,
-        }}
-      />
-    )}
-  </AccordionSummary>
-);
-
-const LockedHint = ({ locked, children }) =>
-  locked ? (
-    <Tooltip
-      arrow
-      title="به دلیل وجود سند یا زیرحساب، این فیلد قابل تغییر نیست"
-    >
-      <Box component="span" sx={{ display: "block" }}>
-        {children}
-      </Box>
-    </Tooltip>
-  ) : (
-    children
-  );
-
-const Account = () => {
-  const [account, setAccount] = useState(() => ({
-    ...emptyAccount,
-  }));
-
-  const [original, setOriginal] = useState(() => ({
-    ...emptyAccount,
-  }));
-
-  const [isEdit, setIsEdit] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [touched, setTouched] = useState({});
-
-  const [expanded, setExpanded] = useState(["ticks"]);
-
-  const [fieldLocks, setFieldLocks] = useState({
-    accountType: false,
-    accountNature: false,
-  });
-
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
-
-  const isDirty = useMemo(
-    () =>
-      JSON.stringify(account) !== JSON.stringify(original),
-    [account, original]
-  );
-
-  const errors = useMemo(
-    () =>
-      Object.fromEntries(
-        Object.entries(VALIDATORS)
-          .map(([field, validate]) => [
-            field,
-            validate(account[field]),
-          ])
-          .filter(([, error]) => Boolean(error))
-      ),
-    [account]
-  );
-
-  const notify = useCallback(
-    (message, severity = "success") => {
-      setSnackbar({
-        open: true,
-        message,
-        severity,
-      });
-    },
-    []
-  );
-
-  const handleChange = useCallback((field, value) => {
-    setAccount((previous) => ({
-      ...previous,
-      [field]: value,
-    }));
-  }, []);
-
-  const toggleSection = (id) => (_, isExpanded) => {
-    setExpanded((previous) =>
-      isExpanded
-        ? [...new Set([...previous, id])]
-        : previous.filter((item) => item !== id)
-    );
-  };
-
-  const confirmDiscard = () =>
-    !isDirty ||
-    window.confirm(
-      "تغییرات ذخیره نشده از بین می‌رود. ادامه می‌دهید؟"
-    );
-
-  const handleNew = () => {
-    if (!confirmDiscard()) return;
-
-    const next = { ...emptyAccount };
-
-    setAccount(next);
-    setOriginal(next);
-    setIsEdit(false);
-    setTouched({});
-    setExpanded(["ticks"]);
-
-    setFieldLocks({
-      accountType: false,
-      accountNature: false,
-    });
-  };
-
-  const handleSelectExisting = async (node) => {
-    if (!confirmDiscard()) return;
-
-    setLoading(true);
-
-    try {
-      const { data } = await api.post(
-        "/Account/GetByCode",
-        { code: node.code }
-      );
-
-      const next = normalize(data);
-
-      setAccount(next);
-      setOriginal(next);
-      setIsEdit(true);
-      setTouched({});
-
-      setFieldLocks({
-        accountType: data.enableAccountType === false,
-        accountNature: data.enableAccountNature === false,
-      });
-    } catch {
-      notify("خطا در دریافت جزئیات حساب.", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSave = useCallback(async () => {
-    if (saving) return;
-
-    if (Object.keys(errors).length) {
-      setTouched((previous) => ({
-        ...previous,
-        ...Object.fromEntries(
-          Object.keys(errors).map((field) => [
-            field,
-            true,
-          ])
-        ),
-      }));
-
-      if (errors.code || errors.name) {
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
-      }
-
-      if (errors.nationalCode) {
-        setExpanded((previous) => [
-          ...new Set([...previous, "legal"]),
-        ]);
-      }
-
-      notify(
-        "لطفاً خطاهای فرم را برطرف کنید.",
-        "warning"
-      );
-
-      return;
-    }
-
-    setSaving(true);
-
-    try {
-      const payload = { ...account };
-
-      const { data } = await api.post(
-        "/Account/Save",
-        payload
-      );
-
-      if (data?.isSuccess) {
-        setOriginal(payload);
-        setAccount(payload);
-        setIsEdit(true);
-
-        notify("حساب با موفقیت ذخیره شد.");
-      } else {
-        notify(
-          data?.message || "ذخیره با خطا مواجه شد.",
-          "error"
-        );
-      }
-    } catch {
-      notify("خطا در ارتباط با سرور.", "error");
-    } finally {
-      setSaving(false);
-    }
-  }, [account, errors, notify, saving]);
-
-  useEffect(() => {
-    const onKeyDown = (event) => {
-      if (
-        (event.ctrlKey || event.metaKey) &&
-        event.key.toLowerCase() === "s"
-      ) {
-        event.preventDefault();
-        handleSave();
-      }
-    };
-
-    const onBeforeUnload = (event) => {
-      if (!isDirty) return;
-
-      event.preventDefault();
-      event.returnValue = "";
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener(
-      "beforeunload",
-      onBeforeUnload
-    );
-
-    return () => {
-      window.removeEventListener(
-        "keydown",
-        onKeyDown
-      );
-
-      window.removeEventListener(
-        "beforeunload",
-        onBeforeUnload
-      );
-    };
-  }, [handleSave, isDirty]);
-
-  const renderField = ({
-    name,
-    label,
-    ltr,
-    multiline,
-    full,
-  }) => {
-    const base = fieldProps(label);
-
-    return (
-      <TextField
-        key={name}
-        {...base}
-        value={account[name] ?? ""}
-        onChange={(event) =>
-          handleChange(name, event.target.value)
-        }
-        onBlur={() =>
-          setTouched((previous) => ({
-            ...previous,
-            [name]: true,
-          }))
-        }
-        error={Boolean(touched[name] && errors[name])}
-        helperText={
-          touched[name] ? errors[name] || " " : " "
-        }
-        multiline={multiline}
-        minRows={multiline ? 2 : undefined}
-        slotProps={{
-          ...base.slotProps,
-          htmlInput: {
-            ...base.slotProps?.htmlInput,
-            ...(ltr
-              ? {
-                  dir: "ltr",
-                  style: { textAlign: "left" },
-                }
-              : {}),
-          },
-        }}
-        sx={{
-          minWidth: 0,
-          ...(full && {
-            gridColumn: "1 / -1",
-          }),
-        }}
-      />
-    );
-  };
-
-  const isLegalPerson = account.noeShakhs === 1;
-
-  const legalFields = isLegalPerson
-    ? [
-        {
-          name: "shomareSabt",
-          label: "شماره ثبت",
-          ltr: true,
-        },
-        {
-          name: "codeEghtesadi",
-          label: "کد اقتصادی",
-          ltr: true,
-        },
-        {
-          name: "nationalCode",
-          label: "شناسه ملی",
-          ltr: true,
-        },
-        {
-          name: "faaliat",
-          label: "نوع فعالیت",
-        },
-      ]
-    : [
-        {
-          name: "nationalCode",
-          label: "کد ملی",
-          ltr: true,
-        },
-        {
-          name: "birthDate",
-          label: "تاریخ تولد",
-          ltr: true,
-        },
-        {
-          name: "codeEghtesadi",
-          label: "کد اقتصادی",
-          ltr: true,
-        },
-        {
-          name: "faaliat",
-          label: "شغل / فعالیت",
-        },
-      ];
-
-  return (
-    <Box
-      dir="rtl"
-      sx={{
-        width: "100%",
-        maxWidth: 1240,
-        mx: "auto",
-        px: { xs: 1.5, sm: 2.5, md: 3 },
-        py: { xs: 1.5, md: 2 },
-        color: "text.primary",
-      }}
-    >
-      {/* نوار عملیات؛ بدون عنوان تکراری صفحه */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          gap: 1,
-          minHeight: 36,
-          mb: 1.5,
-          flexWrap: "wrap",
-        }}
-      >
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={handleNew}
-          disabled={saving || loading}
-          sx={{
-            minHeight: 32,
-            px: 1.75,
-            borderRadius: 1.5,
-          }}
-        >
-          حساب جدید
-        </Button>
-
-        {isEdit && (
-          <Chip
-            size="small"
-            variant="outlined"
-            color="primary"
-            label={`کد حساب: ${original.code}`}
-            sx={{ height: 26 }}
-          />
-        )}
-
-        {isDirty && (
-          <Chip
-            size="small"
-            color="warning"
-            variant="outlined"
-            label="ذخیره نشده"
-            sx={{ height: 26 }}
-          />
-        )}
-
-        {loading && (
-          <CircularProgress
-            size={17}
-            color="primary"
-          />
-        )}
-      </Box>
-
-      {/* اطلاعات اصلی */}
-      <Box
-        sx={{
-          bgcolor: "background.paper",
-          border: 1,
-          borderColor: "divider",
-          borderRadius: 2,
-          p: { xs: 1.5, md: 2 },
-          mb: 1.5,
-        }}
-      >
-        <Typography
-          component="h2"
-          sx={{
-            fontSize: 13,
-            fontWeight: 700,
-            color: "text.primary",
-            mb: 1.75,
-          }}
-        >
-          اطلاعات اصلی
-        </Typography>
-
-        <Box
-          sx={{
-            display: "grid",
-            gap: 1.5,
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, minmax(0, 1fr))",
-              md: "170px 170px minmax(180px, 1fr) 250px",
-            },
-            alignItems: "start",
-          }}
-        >
-          <AccountCodeField
-            value={account.code}
-            onChange={(code) =>
-              handleChange("code", code)
-            }
-            onSelect={handleSelectExisting}
-            onMismatch={() => {
-              setAccount((previous) => ({
-                ...emptyAccount,
-                code: previous.code,
-              }));
-
-              setOriginal({ ...emptyAccount });
-              setIsEdit(false);
-              setTouched({});
-            }}
-            allowAnyLevel
-          />
-
-          {renderField({
-            name: "name",
-            label: "نام حساب",
-          })}
-
-          <LockedHint locked={fieldLocks.accountType}>
-            <TextField
-              select
-              {...fieldProps("نوع حساب")}
-              value={account.accountType}
-              disabled={fieldLocks.accountType}
-              onChange={(event) =>
-                handleChange(
-                  "accountType",
-                  Number(event.target.value)
-                )
-              }
-            >
-              <MenuItem value={0}>کل</MenuItem>
-              <MenuItem value={1}>معین</MenuItem>
-              <MenuItem value={2}>تفصیلی</MenuItem>
-            </TextField>
-          </LockedHint>
-
-          <LockedHint locked={fieldLocks.accountNature}>
-            <TextField
-              select
-              {...fieldProps("ماهیت حساب")}
-              value={account.accountNature}
-              disabled={fieldLocks.accountNature}
-              onChange={(event) =>
-                handleChange(
-                  "accountNature",
-                  Number(event.target.value)
-                )
-              }
-            >
-              <MenuItem value={0}>بدهکار</MenuItem>
-              <MenuItem value={1}>بستانکار</MenuItem>
-            </TextField>
-          </LockedHint>
-        </Box>
-      </Box>
-
-      {/* قابلیت‌های حساب */}
-      <Accordion
-        expanded={expanded.includes("ticks")}
-        onChange={toggleSection("ticks")}
-        disableGutters
-        sx={accordionSx}
-      >
-        <SectionSummary
-          title="قابلیت‌های حساب"
-          icon={TuneIcon}
-        />
-
-        <AccordionDetails sx={detailsSx}>
-          <Box
-            sx={{
-              display: "grid",
-              gap: 1.25,
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(2, minmax(0, 1fr))",
-                md: "repeat(4, minmax(0, 1fr))",
-              },
-              alignItems: "stretch",
-            }}
-          >
-            {TICK_GROUPS.map((group) => {
-              const activeCount = group.items.filter(
-                ([field]) => Boolean(account[field])
-              ).length;
-
-              return (
-                <Box
-                  key={group.title}
-                  sx={{
-                    minWidth: 0,
-                    p: 1.5,
-                    border: 1,
-                    borderColor: "divider",
-                    borderRadius: 1.75,
-                    bgcolor: activeCount
-                      ? (theme) =>
-                          alpha(
-                            theme.palette.primary.main,
-                            0.035
-                          )
-                      : "background.default",
-                    transition: "background-color 150ms ease",
-                  }}
-                >
-                  <Typography
-                    component="h3"
-                    sx={{
-                      fontSize: 12.5,
-                      fontWeight: 700,
-                      color: "text.primary",
-                      pb: 1,
-                      mb: 0.5,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                    }}
-                  >
-                    {group.title}
-                  </Typography>
-
-                  <Stack spacing={0.25}>
-                    {group.items.map(([field, label]) => (
-                      <FourStateCheckbox
-                        key={field}
-                        label={label}
-                        value={account[field]}
-                        onChange={(value) =>
-                          handleChange(field, value)
-                        }
-                      />
-                    ))}
-                  </Stack>
-                </Box>
-              );
-            })}
-          </Box>
-        </AccordionDetails>
-      </Accordion>
-
-      {/* اطلاعات تماس و آدرس */}
-      {SECTIONS.map((section) => (
-        <Accordion
-          key={section.id}
-          expanded={expanded.includes(section.id)}
-          onChange={toggleSection(section.id)}
-          disableGutters
-          sx={accordionSx}
-        >
-          <SectionSummary
-            title={section.title}
-            icon={section.icon}
-            hasError={section.fields.some(
-              (field) =>
-                touched[field.name] &&
-                Boolean(errors[field.name])
-            )}
-          />
-
-          <AccordionDetails
-            sx={{
-              ...detailsSx,
-              ...gridSx,
-            }}
-          >
-            {section.fields.map(renderField)}
-          </AccordionDetails>
-        </Accordion>
-      ))}
-
-      {/* اطلاعات ثبتی و حقوقی */}
-      <Accordion
-        expanded={expanded.includes("legal")}
-        onChange={toggleSection("legal")}
-        disableGutters
-        sx={accordionSx}
-      >
-        <SectionSummary
-          title="اطلاعات ثبتی و حقوقی"
-          icon={BadgeIcon}
-          hasError={
-            touched.nationalCode &&
-            Boolean(errors.nationalCode)
-          }
-        />
-
-        <AccordionDetails
-          sx={{
-            ...detailsSx,
-            ...gridSx,
-          }}
-        >
-          <TextField
-            select
-            {...fieldProps("نوع شخص")}
-            value={account.noeShakhs}
-            onChange={(event) =>
-              handleChange(
-                "noeShakhs",
-                Number(event.target.value)
-              )
-            }
-          >
-            <MenuItem value={0}>حقیقی</MenuItem>
-            <MenuItem value={1}>حقوقی</MenuItem>
-          </TextField>
-
-          <TextField
-            select
-            {...fieldProps("ماهیت شخص")}
-            value={account.mahiatShakhs}
-            onChange={(event) =>
-              handleChange(
-                "mahiatShakhs",
-                Number(event.target.value)
-              )
-            }
-          >
-            <MenuItem value={0}>مشتری</MenuItem>
-            <MenuItem value={1}>تأمین‌کننده</MenuItem>
-          </TextField>
-
-          {legalFields.map(renderField)}
-        </AccordionDetails>
-      </Accordion>
-
-      {/* عملیات پایانی */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          gap: 1,
-          mt: 2,
-          pt: 1.75,
-          borderTop: 1,
-          borderColor: "divider",
-        }}
-      >
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={saving || loading || !isDirty}
-          sx={{
-            minWidth: 112,
-            minHeight: 36,
-          }}
-        >
-          {saving ? "در حال ذخیره..." : "ذخیره حساب"}
-        </Button>
-
-        {isDirty && (
-          <Button
-            variant="outlined"
-            color="inherit"
-            onClick={() => {
-              if (!confirmDiscard()) return;
-
-              setAccount({ ...original });
-              setTouched({});
-            }}
-            disabled={saving}
-            sx={{
-              minHeight: 36,
-              borderColor: "divider",
-              color: "text.secondary",
-            }}
-          >
-            انصراف از تغییرات
-          </Button>
-        )}
-      </Box>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        anchorOrigin={{
-          vertical: "top",
-          horizontal: "center",
-        }}
-        onClose={() =>
-          setSnackbar((previous) => ({
-            ...previous,
-            open: false,
-          }))
-        }
-      >
-        <Alert
-          variant="filled"
-          severity={snackbar.severity}
-          onClose={() =>
-            setSnackbar((previous) => ({
-              ...previous,
-              open: false,
-            }))
-          }
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
-  );
-};
-
-export default Account;
 </file>
 
 <file path="src/pages/Financial/Account/FourStateCheckbox.jsx">
@@ -2493,6 +1257,173 @@ const resetToDefault = useCallback(() => {
 }
 </file>
 
+<file path="src/components/common/Pickers/AccountCodeField.jsx">
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { TextField, InputAdornment, IconButton } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import useEntityPicker from "./useEntityPicker";
+import EntityPickerModal from "./EntityPickerModal";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import { fieldProps } from "../../../theme/Theme";
+
+// فیلد ورودی کد حساب، با دقیقاً همون رفتار سلول کد حساب توی سند:
+// تایپ حرف -> تب سرچ باز می‌شه، Enter روی خالی -> تب درخت با فوکوس ریشه،
+// تایپ کد کامل یک والد -> مسیر درخت خودکار باز می‌شه، انتخاب برگ -> مقدار ست می‌شه
+const AccountCodeField = ({ value, onChange, onSelect, onMismatch, allowAnyLevel = false, label = "کد حساب", disabled, sx }) => {
+    const [localValue, setLocalValue] = useState(value || "");
+    const picker = useEntityPicker("Account");
+
+    // اگر مقدار از بیرون عوض شد (مثلاً فرم ریست شد)، مقدار محلی هم هماهنگ بشه
+    const [prevValue, setPrevValue] = useState(value);
+    if (value !== prevValue) {
+        setPrevValue(value);
+        setLocalValue(value || "");
+    }
+
+    // در حالت allowAnyLevel، همزمان با توقف تایپ (بدون نیاز به Enter)، کد با سرور چک می‌شود
+    // و اگر دقیقاً یک حساب موجود بود (چه والد چه برگ)، فرم زنده پر می‌شود؛ وگرنه onMismatch خبر می‌دهد
+    useEffect(() => {
+        if (!allowAnyLevel) return;
+
+        const typed = localValue?.trim();
+        if (!typed) {
+            onMismatch?.();
+            return;
+        }
+
+        let cancelled = false;
+        const timer = setTimeout(async () => {
+            try {
+                const res = await axios.post("http://ecipc107:8049/api/Account/SearchTreeView", { code: typed });
+                const node = (res.data || []).find((item) => String(item.code).trim() === typed);
+                if (cancelled) return;
+                if (node) {
+                    onSelect?.(node);
+                } else {
+                    onMismatch?.();
+                }
+            } catch (error) {
+                console.error("خطا در بررسی زنده‌ی کد حساب:", error);
+            }
+        }, 350);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [localValue, allowAnyLevel]);
+
+    const handleSelect = (node) => {
+        setLocalValue(node.code);
+        onChange?.(node.code);
+        onSelect?.(node);
+    };
+
+    const commitTypedCode = async (typedValue) => {
+        if (allowAnyLevel) {
+            // اینجا محدودیت «فقط برگ» وجود ندارد؛ هر کد معتبر (والد یا برگ) پذیرفته می‌شود
+            try {
+                const res = await axios.post("http://ecipc107:8049/api/Account/SearchTreeView", { code: typedValue });
+                const node = (res.data || []).find((item) => String(item.code).trim() === typedValue);
+                if (node) handleSelect(node);
+            } catch (error) {
+                console.error("خطا در بررسی کد حساب:", error);
+            }
+            return;
+        }
+
+        const result = await picker.resolveTypedCode(typedValue, null);
+        if (result.status === "leaf") {
+            handleSelect(result.node);
+        }
+    };
+
+    const onKeyDownHandler = (e) => {
+        const ignoredKeys = [
+            "Escape", "Tab", "Shift", "Control", "Alt", "Meta",
+            "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+            "Backspace", "Delete", "CapsLock",
+        ];
+
+        if (e.key === "Enter") {
+            const typedValue = localValue?.trim();
+
+            if (!typedValue) {
+                e.preventDefault();
+                picker.open(null, "", true);
+                return;
+            }
+
+            e.preventDefault();
+            commitTypedCode(typedValue);
+            return;
+        }
+
+        if (!ignoredKeys.includes(e.key)) {
+            const isNumber = /^[0-9]$/.test(e.key);
+            if (isNumber) return;
+
+            e.preventDefault();
+            picker.open(null, e.key);
+        }
+    };
+
+    return (
+        <>
+            <TextField
+                {...fieldProps(label, {
+                    endAdornment: (
+                        <InputAdornment position="end">
+                            <IconButton
+                                size="small"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => picker.open(null, "", true)}
+                                title="ساختار درختی"
+                            >
+                                <AccountTreeIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                            </IconButton>
+                            <IconButton
+                                size="small"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => picker.open(null, localValue, false)}
+                                title="جستجو"
+                            >
+                                <SearchIcon fontSize="small" sx={{ color: "primary.main" }} />
+                            </IconButton>
+                        </InputAdornment>
+                    ),
+                })}
+                disabled={disabled}
+                sx={sx}
+                value={localValue}
+                onChange={(e) => {
+                    setLocalValue(e.target.value);
+                    onChange?.(e.target.value);
+                }}
+                onKeyDown={onKeyDownHandler}
+                onBlur={() => {
+                    const typedValue = localValue?.trim();
+                    if (typedValue && typedValue !== value) {
+                        commitTypedCode(typedValue);
+                    }
+                }}
+            />
+
+            <EntityPickerModal
+                title="انتخاب حساب"
+                picker={picker}
+                onSelect={handleSelect}
+                allowAnyLevel={allowAnyLevel}
+            />
+        </>
+    );
+};
+
+export default AccountCodeField;
+</file>
+
 <file path="src/components/common/Pickers/EntityPickerModal.module.css">
 .ModalTitle {
   font-family: 'Vazir', 'Tahoma', sans-serif !important;
@@ -3219,6 +2150,448 @@ const useTabs = () => { return useContext(TabContext); };
 export default useTabs;
 </file>
 
+<file path="src/pages/Financial/Account/Account.jsx">
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import axios from "axios";
+import {
+  Box, TextField, MenuItem, Button, Accordion, AccordionSummary, AccordionDetails,
+  Typography, Snackbar, Alert, Tooltip,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import TuneIcon from "@mui/icons-material/TuneOutlined";
+import ContactPhoneIcon from "@mui/icons-material/ContactPhoneOutlined";
+import PlaceIcon from "@mui/icons-material/PlaceOutlined";
+import BadgeIcon from "@mui/icons-material/BadgeOutlined";
+import AccountCodeField from "../../../components/common/Pickers/AccountCodeField";
+import FourStateCheckbox from "./FourStateCheckbox";
+import { fieldProps } from "../../../theme/Theme";
+import useTabs from "../../../context/useTabs";
+
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL ?? "http://ecipc107:8049/api" });
+
+const TICK_GROUPS = [
+  { title: "کالا و مراکز", items: [
+    ["tickHesabiForGood", "کالا"], ["tickHesabiForMarkaz1", "مرکز ۱"], ["tickHesabiForMarkaz2", "مرکز ۲"],
+    ["tickHesabiForMarkaz3", "مرکز ۳"], ["tickHesabiForMarkaz4", "مرکز ۴"],
+  ]},
+  { title: "چک", items: [["tickHesabiForDateCheq", "تاریخ چک"], ["tickHesabiForNumCheq", "شماره چک"]] },
+  { title: "تعداد", items: [["tickHesabiForTedad1", "تعداد ۱"], ["tickHesabiForTedad2", "تعداد ۲"], ["tickHesabiForTedad3", "تعداد ۳"]] },
+  { title: "ارز", items: [["tickHesabiForCurrencyCode", "کد ارز"], ["tickHesabiForCurrencyFee", "نرخ ارز"], ["tickHesabiForCurrencyTedad", "مقدار ارز"]] },
+];
+const TICK_FIELDS = TICK_GROUPS.flatMap((g) => g.items.map(([f]) => f));
+
+const SECTIONS = [
+  { id: "contact", title: "اطلاعات تماس", subtitle: "موبایل، تلفن، ایمیل و افراد رابط", icon: ContactPhoneIcon, fields: [
+    { name: "mobile1", label: "موبایل ۱", ltr: true }, { name: "mobile2", label: "موبایل ۲", ltr: true },
+    { name: "mobile3", label: "موبایل ۳", ltr: true }, { name: "tel1", label: "تلفن ۱", ltr: true },
+    { name: "tel2", label: "تلفن ۲", ltr: true }, { name: "tel3", label: "تلفن ۳", ltr: true },
+    { name: "email", label: "ایمیل", ltr: true }, { name: "addressInternet", label: "وب‌سایت", ltr: true },
+    { name: "nameMasool", label: "نام مسئول" }, { name: "nameRabet", label: "نام رابط" },
+  ]},
+  { id: "address", title: "آدرس", subtitle: "استان، شهر، کد پستی و نشانی", icon: PlaceIcon, fields: [
+    { name: "ostan", label: "استان" }, { name: "shahrestan", label: "شهرستان" },
+    { name: "shahr", label: "شهر" }, { name: "codeShahr", label: "کد شهر", ltr: true },
+    { name: "codePosti", label: "کد پستی", ltr: true },
+    { name: "address1", label: "آدرس اصلی", multiline: true, full: true },
+    { name: "address2", label: "آدرس دوم", multiline: true, full: true },
+  ]},
+];
+
+const VALIDATORS = {
+  code: (v) => (!v ? "کد حساب الزامی است" : ""),
+  name: (v) => (!v?.trim() ? "نام حساب الزامی است" : ""),
+  email: (v) => (v && !/^\S+@\S+\.\S+$/.test(v) ? "ایمیل نامعتبر است" : ""),
+  mobile1: (v) => (v && !/^09\d{9}$/.test(v) ? "موبایل باید ۱۱ رقم و با ۰۹ شروع شود" : ""),
+  codePosti: (v) => (v && !/^\d{10}$/.test(v) ? "کد پستی باید ۱۰ رقم باشد" : ""),
+  nationalCode: (v) => (v && !/^\d{10,11}$/.test(v) ? "کد/شناسه ملی نامعتبر است" : ""),
+};
+
+const emptyAccount = {
+  code: "", name: "", accountType: 0, accountNature: 0, noeShakhs: 0, mahiatShakhs: 0,
+  codeShahr: "", ostan: "", shahr: "", shahrestan: "",
+  tel1: "", tel2: "", tel3: "", mobile1: "", mobile2: "", mobile3: "",
+  address1: "", address2: "", address3: "", address4: "",
+  codePosti: "", nameMasool: "", email: "", shomareSabt: "", codeEghtesadi: "",
+  nationalCode: "", faaliat: "", nameRabet: "", addressInternet: "", birthDate: "",
+  ...Object.fromEntries(TICK_FIELDS.map((f) => [f, 0])),
+};
+
+const normalize = (acc) =>
+  Object.fromEntries(Object.keys(emptyAccount).map((k) => [k, acc?.[k] ?? emptyAccount[k]]));
+
+const compactGridSx = {
+  display: "grid",
+  gap: 1.5,
+  gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+};
+
+const legalGridSx = {
+  display: "grid",
+  gap: 1.5,
+  gridTemplateColumns: {
+    xs: "1fr",
+    sm: "repeat(2, minmax(0, 1fr))",
+  },
+};
+
+const accordionSx = {
+  mb: 1.5,
+  "&.Mui-expanded": { mb: 1.5 },
+  "&.Mui-expanded:first-of-type": { mt: 0 },
+};
+
+const detailsSx = { p: 2 };
+const compactDetailsSx = { p: 1.5 };
+// فیلدهای ردیف اصلی: بلندتر؛ کد و نام بولد (هم‌وزن عنوان‌های بخش‌ها)
+const mainFieldSx = {
+  "& .MuiFilledInput-root": { minHeight: 48 },
+  "& .MuiFilledInput-input": { fontSize: 14, fontWeight: 700 },
+};
+const mainSelectSx = { "& .MuiFilledInput-root": { minHeight: 48 } };
+
+const SectionSummary = ({ title }) => (
+  <AccordionSummary
+    expandIcon={<ExpandMoreIcon />}
+    sx={{ px: 2, "& .MuiAccordionSummary-content": { my: 0.75, alignItems: "center", minWidth: 0 } }}
+  >
+    <TuneIcon sx={{ fontSize: 20, ml: "12px", flexShrink: 0, color: "primary.main" }} />
+    <Typography component="span" sx={{ fontSize: 14, fontWeight: 700, flex: 1 }}>{title}</Typography>
+  </AccordionSummary>
+);
+
+const CompactSectionSummary = ({ title, icon: IconComp, hasError }) => {
+  const IconToRender = IconComp || PlaceIcon;
+  return (
+    <AccordionSummary
+      expandIcon={<ExpandMoreIcon sx={{ fontSize: 18 }} />}
+      sx={{
+        px: 2,
+        minHeight: 40,
+        bgcolor: (t) => alpha(t.palette.action.hover, 0.4),
+        "&.Mui-expanded": { minHeight: 40 },
+        "& .MuiAccordionSummary-content": { my: 0.5, alignItems: "center", minWidth: 0 },
+      }}
+    >
+      <IconToRender sx={{ fontSize: 18, ml: "10px", flexShrink: 0, color: hasError ? "error.main" : "primary.main" }} />
+      <Typography component="span" sx={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{title}</Typography>
+    </AccordionSummary>
+  );
+};
+
+const LockedHint = ({ locked, children }) =>
+  locked ? (
+    <Tooltip arrow title="به دلیل وجود سند یا زیرحساب، این فیلد قابل تغییر نیست">
+      <Box component="span" sx={{ display: "block" }}>{children}</Box>
+    </Tooltip>
+  ) : (
+    children
+  );
+
+const Account = ({ tab, onClose, onTabClose, closeTab: propCloseTab }) => {
+  const [account, setAccount] = useState(emptyAccount);
+  const [original, setOriginal] = useState(emptyAccount);
+  const [ticksExpanded, setTicksExpanded] = useState(true);
+  const [expandedSection, setExpandedSection] = useState(false);
+  const [fieldLocks, setFieldLocks] = useState({ accountType: false, accountNature: false });
+  const [saving, setSaving] = useState(false);
+  const [touched, setTouched] = useState({});
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+
+  const { updateTab, closeTab: contextCloseTab, openTab } = useTabs();
+
+  const isDirty = useMemo(() => JSON.stringify(account) !== JSON.stringify(original), [account, original]);
+  
+  const errors = useMemo(
+    () => Object.fromEntries(Object.entries(VALIDATORS).map(([k, fn]) => [k, fn(account[k])]).filter(([, e]) => e)),
+    [account]
+  );
+
+  const notify = (message, severity = "success") => setSnackbar({ open: true, message, severity });
+  const handleChange = (field, value) => setAccount((prev) => ({ ...prev, [field]: value }));
+
+  const handleSave = useCallback(async () => {
+    if (Object.keys(errors).length) {
+      setTouched(Object.fromEntries(Object.keys(errors).map((k) => [k, true])));
+      const sectionWithError = SECTIONS.find((s) => s.fields.some((f) => errors[f.name]));
+      if (sectionWithError) setExpandedSection(sectionWithError.id);
+      if (errors.nationalCode) setExpandedSection("legal");
+      notify("لطفاً خطاهای فرم را برطرف کنید.", "warning");
+      return false;
+    }
+    
+    setSaving(true);
+    try {
+      const { data } = await api.post("/Account/Save", account);
+      if (data?.isSuccess) {
+        setOriginal(account);
+        notify("حساب با موفقیت ذخیره شد.");
+        return true;
+      } else {
+        notify(data?.message || "ذخیره با خطا مواجه شد.", "error");
+        return false;
+      }
+    } catch {
+      notify("خطا در ارتباط با سرور.", "error");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }, [account, errors]);
+
+  // ریف برای نگهداری آخرین نسخه متد ذخیره جهت جلوگیری از لوپ و رندرهای اضافی
+  const handleSaveRef = useRef();
+  useEffect(() => {
+    handleSaveRef.current = handleSave;
+  }, [handleSave]);
+
+  const tabId = tab?.id;
+  const stableOnSave = useCallback((...args) => handleSaveRef.current?.(...args), []);
+
+  useEffect(() => {
+    if (tabId) updateTab(tabId, { isDirty, onSave: stableOnSave });
+  }, [tabId, isDirty, updateTab, stableOnSave]);
+  
+
+
+const handleNew = () => {
+    if (isDirty) {
+      // اگر تغییرات ذخیره نشده دارد، اجازه می‌دهیم سیستم تب‌ها مودال هشدار را بیاورد
+      // با این تفاوت که بعد از بسته شدن این تب، می‌خواهیم یک تب حساب جدید هم باز شود
+      // اما برای سادگی و اینکه دقیقاً همان مودال شما باز شود:
+      contextCloseTab(tabId);
+      
+      // بلافاصله یک تب جدید هم باز می‌کنیم تا کاربر معطل نشود
+      openTab({
+        title: "ساختار حساب",
+        path: "/Account", // یا مسیر فرم حساب شما
+        pageType: "account",
+        closable: true,
+      });
+    } else {
+      // اگر تغییری نداشت، همین فرم را خالی و ریست می‌کنیم
+      setAccount(emptyAccount);
+      setOriginal(emptyAccount);
+      setTouched({});
+      setFieldLocks({ accountType: false, accountNature: false });
+    }
+  };
+
+  const handleCancelTab = () => {
+    if (tabId) {
+      contextCloseTab(tabId);
+    } else {
+      if (typeof onClose === "function") onClose();
+      else if (typeof onTabClose === "function") onTabClose();
+      else if (typeof propCloseTab === "function") propCloseTab();
+      else {
+        try { window.close(); } catch { window.history.back(); }
+      }
+    }
+  };
+
+  const handleSelectExisting = async (node) => {
+    try {
+      const { data } = await api.post("/Account/GetByCode", { code: node.code });
+      const next = normalize(data);
+      setAccount(next); setOriginal(next); setTouched({});
+      setFieldLocks({
+        accountType: data.enableAccountType === false,
+        accountNature: data.enableAccountNature === false,
+      });
+    } catch {
+      notify("خطا در دریافت جزئیات حساب.", "error");
+    }
+  };
+
+// مدیریت کلید میانبر Ctrl+S
+useEffect(() => {
+  const onKey = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+      e.preventDefault();
+      handleSaveRef.current?.();
+    }
+  };
+
+  window.addEventListener("keydown", onKey);
+
+  return () => {
+    window.removeEventListener("keydown", onKey);
+  };
+}, []);
+
+  const renderField = ({ name, label, ltr, multiline, full, sx }) => {
+    const base = fieldProps(label);
+    return (
+      <TextField
+        key={name}
+        {...base}
+        slotProps={{
+          ...base.slotProps,
+          htmlInput: { ...base.slotProps.htmlInput, ...(ltr && { dir: "ltr", style: { textAlign: "left" } }) },
+        }}
+        value={account[name]}
+        onChange={(e) => handleChange(name, e.target.value)}
+        onBlur={() => setTouched((t) => ({ ...t, [name]: true }))}
+        error={touched[name] && !!errors[name]}
+        helperText={touched[name] && errors[name]}
+        multiline={multiline}
+        minRows={multiline ? 1.5 : undefined}
+        sx={full ? { gridColumn: "1 / -1" } : sx}
+      />
+    );
+  };
+
+  const isLegalPerson = account.noeShakhs === 1;
+  const legalFields = isLegalPerson
+    ? [{ name: "shomareSabt", label: "شماره ثبت", ltr: true }, { name: "codeEghtesadi", label: "کد اقتصادی", ltr: true },
+       { name: "nationalCode", label: "شناسه ملی", ltr: true }, { name: "faaliat", label: "نوع فعالیت" }]
+    : [{ name: "nationalCode", label: "کد ملی", ltr: true }, { name: "birthDate", label: "تاریخ تولد", ltr: true },
+       { name: "codeEghtesadi", label: "کد اقتصادی", ltr: true }, { name: "faaliat", label: "شغل / فعالیت" }];
+
+  return (
+    <Box dir="rtl" sx={{ px: { xs: 2, md: 3 }, py: 2, maxWidth: 1080, mx: "auto" }}>
+
+      {/* Main info */}
+      <Box
+        component="section"
+        aria-label="اطلاعات اصلی"
+        sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 2.5, p: 2, mb: 1.5 }}
+      >
+        <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "240px 1fr 170px 170px" } }}>
+          <AccountCodeField
+            value={account.code}
+            onChange={(code) => handleChange("code", code)}
+            onSelect={handleSelectExisting}
+            onMismatch={() => { setAccount((p) => ({ ...emptyAccount, code: p.code })); }}
+            allowAnyLevel
+            sx={mainFieldSx}
+          />
+          {renderField({ name: "name", label: "نام حساب", sx: mainFieldSx })}
+          <LockedHint locked={fieldLocks.accountType}>
+            <TextField select {...fieldProps("نوع حساب")} value={account.accountType}
+              disabled={fieldLocks.accountType} sx={mainSelectSx}
+              onChange={(e) => handleChange("accountType", Number(e.target.value))}>
+              <MenuItem value={0}>کل</MenuItem><MenuItem value={1}>معین</MenuItem><MenuItem value={2}>تفصیلی</MenuItem>
+            </TextField>
+          </LockedHint>
+          <LockedHint locked={fieldLocks.accountNature}>
+            <TextField select {...fieldProps("ماهیت حساب")} value={account.accountNature}
+              disabled={fieldLocks.accountNature} sx={mainSelectSx}
+              onChange={(e) => handleChange("accountNature", Number(e.target.value))}>
+              <MenuItem value={0}>بدهکار</MenuItem><MenuItem value={1}>بستانکار</MenuItem>
+            </TextField>
+          </LockedHint>
+        </Box>
+      </Box>
+
+      {/* Ticks */}
+      <Accordion expanded={ticksExpanded} onChange={(_, exp) => setTicksExpanded(exp)} disableGutters sx={accordionSx}>
+        <SectionSummary title="قابلیت‌های حساب" />
+        <AccordionDetails sx={detailsSx}>
+          <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(4, 1fr)" } }}>
+            {TICK_GROUPS.map((g) => {
+              const active = g.items.filter(([f]) => account[f]).length;
+              return (
+                <Box key={g.title} sx={{
+                  p: 1.5, borderRadius: 2, border: 1,
+                  borderColor: active ? "primary.main" : "divider",
+                  bgcolor: active ? (t) => alpha(t.palette.primary.main, 0.04) : "background.default",
+                }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                    <Typography sx={{ fontSize: 13, fontWeight: 700, color: "text.primary" }}>{g.title}</Typography>
+                  </Box>
+
+                  {g.title === "کالا و مراکز" ? (
+                    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 0.5 }}>
+                      <Box sx={{ gridColumn: "span 2" }}>
+                        <FourStateCheckbox label="کالا" value={account["tickHesabiForGood"]}
+                          onChange={(val) => handleChange("tickHesabiForGood", val)} />
+                      </Box>
+                      <Box><FourStateCheckbox label="مرکز ۱" value={account["tickHesabiForMarkaz1"]} onChange={(val) => handleChange("tickHesabiForMarkaz1", val)} /></Box>
+                      <Box><FourStateCheckbox label="مرکز ۲" value={account["tickHesabiForMarkaz2"]} onChange={(val) => handleChange("tickHesabiForMarkaz2", val)} /></Box>
+                      <Box><FourStateCheckbox label="مرکز ۳" value={account["tickHesabiForMarkaz3"]} onChange={(val) => handleChange("tickHesabiForMarkaz3", val)} /></Box>
+                      <Box><FourStateCheckbox label="مرکز ۴" value={account["tickHesabiForMarkaz4"]} onChange={(val) => handleChange("tickHesabiForMarkaz4", val)} /></Box>
+                    </Box>
+                  ) : (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                      {g.items.map(([field, label]) => (
+                        <Box key={field} sx={{ width: g.items.length > 2 ? "48%" : "100%", minWidth: "110px" }}>
+                          <FourStateCheckbox label={label} value={account[field]}
+                            onChange={(val) => handleChange(field, val)} />
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+
+                </Box>
+              );
+            })}
+          </Box>
+        </AccordionDetails>
+      </Accordion>
+
+      {/* Contact / Address */}
+      {SECTIONS.map((s) => (
+        <Accordion
+          key={s.id}
+          expanded={expandedSection === s.id}
+          onChange={(_, isExpanded) => setExpandedSection(isExpanded ? s.id : false)}
+          disableGutters
+          sx={accordionSx}
+        >
+          <CompactSectionSummary title={s.title} icon={s.icon}
+            hasError={s.fields.some((f) => touched[f.name] && errors[f.name])} />
+          <AccordionDetails sx={{ ...compactDetailsSx, ...compactGridSx }}>{s.fields.map(renderField)}</AccordionDetails>
+        </Accordion>
+      ))}
+
+      {/* Legal */}
+      <Accordion
+        expanded={expandedSection === "legal"}
+        onChange={(_, isExpanded) => setExpandedSection(isExpanded ? "legal" : false)}
+        disableGutters
+        sx={accordionSx}
+      >
+        <CompactSectionSummary title="اطلاعات ثبتی و حقوقی" icon={BadgeIcon}
+          hasError={touched.nationalCode && !!errors.nationalCode} />
+        <AccordionDetails sx={{ ...compactDetailsSx, ...legalGridSx }}>
+          <TextField select {...fieldProps("نوع شخص")} value={account.noeShakhs}
+                     sx={{ width: 180, maxWidth: "100%",}} 
+            onChange={(e) => handleChange("noeShakhs", Number(e.target.value))}>
+            <MenuItem value={0}>حقیقی</MenuItem><MenuItem value={1}>حقوقی</MenuItem>
+          </TextField>
+          <TextField select {...fieldProps("ماهیت شخص")} value={account.mahiatShakhs} 
+                     sx={{ width: 180, maxWidth: "100%",}} 
+            onChange={(e) => handleChange("mahiatShakhs", Number(e.target.value))}>
+            <MenuItem value={0}>مشتری</MenuItem><MenuItem value={1}>تامین‌کننده</MenuItem>
+          </TextField>
+          {legalFields.map(renderField)}
+        </AccordionDetails>
+      </Accordion>
+
+      {/* Actions */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 2, flexWrap: "wrap" }}>
+        <Button variant="contained" onClick={handleSave} disabled={saving} sx={{ minWidth: 120 }}>
+          {saving ? "در حال ذخیره..." : "ذخیره حساب"}
+        </Button>
+        <Button variant="outlined" onClick={handleNew}>حساب جدید</Button>
+        <Button variant="outlined" color="inherit" onClick={handleCancelTab} disabled={saving}>
+          انصراف
+        </Button>
+      </Box>
+
+      <Snackbar open={snackbar.open} autoHideDuration={4000} anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}>
+        <Alert variant="filled" severity={snackbar.severity}>{snackbar.message}</Alert>
+      </Snackbar>
+    </Box>
+  );
+};
+
+export default Account;
+</file>
+
 <file path="src/pages/Login/Login.jsx">
 import React, { useState } from "react";
 import styles from "./Login.module.css";
@@ -3296,588 +2669,6 @@ export const loginUser = (username , password)=>{
 
     return api.post("/auth/login",{username,password});
 };//ای پی آی نباشه تو یو آی و در صورت تغییر دنبالش نگردیم سرویسی باشه
-</file>
-
-<file path="src/theme/Theme.jsx">
-import { createTheme, alpha } from "@mui/material/styles";
-import { InputAdornment } from "@mui/material";
-
-
-const colors = {
-  primary: "#4F46E5",
-  primaryHover: "#4338CA",
-  primaryLight: "#818CF8",
-  primarySelected: "#EEF2FF",
-
-  sidebar: "#20212B",
-  sidebarSurface: "#292B38",
-
-  background: "#F8FAFC",
-  paper: "#FFFFFF",
-
-  textPrimary: "#1F2937",
-  textSecondary: "#64748B",
-  textDisabled: "#94A3B8",
-
-  border: "#E2E8F0",
-
-  error: "#EF4444",
-  warning: "#F59E0B",
-  success: "#10B981",
-};
-
-
-// props مشترک همه‌ی فیلدهای یکدست: کپشن ثابت کنار مقدار (مثل «شماره سند» بالای سند)
-// ظاهرش کامل از theme.fieldBox و MuiFilledInput پایین همین فایل می‌آید
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const fieldProps = (label, inputExtra = {}) => ({
-  variant: "filled",
-  hiddenLabel: true,
-  size: "small",
-  fullWidth: true,
-  slotProps: {
-    htmlInput: { "aria-label": label },
-    input: {
-      disableUnderline: true,
-      startAdornment: <InputAdornment position="start">{label}</InputAdornment>,
-      ...inputExtra,
-    },
-  },
-});
-
-
-export const Theme = createTheme({
-  direction: "rtl",
-
-  palette: {
-    primary: {
-      main: '#4F46E5',         // Primary انتخابی شما
-      light: '#E0E7FF',        // Selected انتخابی شما
-      dark: '#3730A3',         // برای حالت Hover و متن‌های روی Selected
-      contrastText: '#FFFFFF',
-    },
-    background: {
-      default: '#F9FAFB',      // Background اصلی صفحه
-      paper: '#FFFFFF',        // بدنه کارت‌ها و DataGrid
-    },
-    text: {
-      primary: '#111827',
-      secondary: '#6B7280',
-    },
-    divider: '#E5E7EB',        // کادرها و جداکننده‌ها
-    action: {
-      hover: '#F8FAFC',        // رنگ موس روی سطرهای جدول
-      selected: '#E0E7FF',     // رنگ سطر انتخاب‌شده
-    },
-    // رنگ‌های اختصاصی سایدبار و سیستم مالی
-    sidebar: {
-      bg: "#181824",         // Charcoal تیره برای پس‌زمینه سایدبار
-      surface: "#222232",    // پس‌زمینه منوهای والد
-      activeBg: "#4F46E5",   // Electric Indigo برای آیتم فعال
-      text: "#94A3B8",
-      activeText: "#FFFFFF",
-    },
-    financial: {
-      debit: '#10B981',        // سبز بدهکار
-      credit: '#EF4444',       // قرمز بستانکار
-    },
-  },
-
-
-
-    // توکن‌های ظاهری فیلدهای یکدست (AppTextField / AppSelect) — با تغییر اینجا، همه‌ی فیلدهای برنامه عوض می‌شن
-  fieldBox: {
-    height: 38,
-    radius: 8,
-    background: "#f5f6fa",
-    hoverBackground: "#edeff5",
-    focusBackground: "#ffffff",
-    disabledBackground: "#eef0f4",
-    labelColor: "#515355",
-    labelFontSize: 12,
-    fontSize: 13,
-  },
-
-  typography: {
-    fontFamily: '"IRANSansX", "Tahoma", "Arial", sans-serif',
-    fontSize: 13,
-    h1: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
-    h2: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
-    h3: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
-    h4: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
-    h5: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 600 },
-    h6: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 600 },
-    subtitle1: { fontFamily: '"IRANSansX", sans-serif' },
-    subtitle2: { fontFamily: '"IRANSansX", sans-serif' },
-    body1: { fontFamily: '"IRANSansX", sans-serif', fontSize: "0.875rem" },
-    body2: { fontFamily: '"IRANSansX", sans-serif', fontSize: "0.8125rem" },
-    button: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 600, textTransform: "none" },
-    caption: { fontFamily: '"IRANSansX", sans-serif' },
-    overline: { fontFamily: '"IRANSansX", sans-serif' },
-  },
-
-  shape: {
-    borderRadius: 8,
-  },
-
-  components: {
-    // تنظیمات جهانی پایه
-
-MuiCssBaseline: {
-  styleOverrides: {
-    ":root": {
-      "--color-primary": colors.primary,
-      "--color-primary-hover": colors.primaryHover,
-      "--color-primary-light": colors.primaryLight,
-      "--color-primary-selected": colors.primarySelected,
-
-/* اصلاح دقیق نام متغیرهایی که در Sidebar.module.css خوانده می‌شوند */
-      "--sidebar-bg": colors.sidebar,             /* #20212B */
-      "--sidebar-surface": colors.sidebarSurface, /* #2D2E3A */
-      "--sidebar-surface-hover": "#383948",
-      "--sidebar-text": "#9CA3AF",                /* رنگ متن آیتم‌های معمولی */
-      "--sidebar-text-hover": "#FFFFFF",
-      "--sidebar-active": colors.primary,         /* #4F46E5 */
-
-      "--color-background": colors.background,
-      "--color-paper": colors.paper,
-
-      "--color-text-primary": colors.textPrimary,
-      "--color-text-secondary": colors.textSecondary,
-      "--color-text-disabled": colors.textDisabled,
-
-      "--color-border": colors.border,
-
-      "--color-error": colors.error,
-      "--color-warning": colors.warning,
-      "--color-success": colors.success,
-    },
-
-    body: {
-      fontFamily: '"IRANSansX", sans-serif',
-      backgroundColor: colors.background,
-      direction: "rtl",
-    },
-  },
-},
-
-
-    // دکمه‌ها
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          borderRadius: 6,
-          boxShadow: "none",
-          "&:hover": {
-            boxShadow: "none",
-          },
-        },
-      },
-    },
-
-    // فیلدهای ورودی (TextField / Input)
-    MuiInputBase: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          fontSize: "13px",
-          minHeight: 36,
-        },
-        input: {
-          fontFamily: '"IRANSansX", sans-serif',
-          textAlign:"right",
-          padding: "8px 10px",
-        },
-      },
-    },
-    MuiInputLabel: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          fontSize: "13px",
-          right: 14,
-          left: "auto",
-          transformOrigin: "top right",
-          "&.MuiInputLabel-shrink": {
-            transform: "translate(0, -9px) scale(0.75)",
-            backgroundColor: "#ffffff",
-            padding: "0 4px",
-      },
-        },
-      },
-    },
-    MuiOutlinedInput: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          fontSize: "0.875rem",
-          borderRadius: 8,
-          backgroundColor: "#ffffff",
-
-          "&:hover .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#94a3b8",
-          },
-
-          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#2563eb",
-            borderWidth: "1px",
-          },
-        },
-
-          notchedOutline: {
-            borderColor: "#cbd5e1",
-            textAlign: "right",
-          },
-          input: {
-            fontFamily: '"IRANSansX", sans-serif',
-            padding: "8.5px 12px",
-          },
-      },
-    },
-
-    MuiFormLabel: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif"',
-          fontSize: "0.8125rem",
-
-          "&.Mui-focused": {
-            color: "#2563eb",
-          },
-        },
-      },
-    },
-
-MuiSelect: {
-  styleOverrides: {
-    select: {
-      paddingLeft: "32px !important", // ایجاد فضای کافی برای متن تا زیر فلش نرود
-      display: "flex",
-      alignItems: "center",
-    },
-    icon: {
-      left: "6px !important",
-      right: "auto !important",
-    },
-  },
-},
-
-        // فیلد یکدست برنامه (variant="filled" + fieldProps) — تنها منبع ظاهر فیلدها
-    MuiFilledInput: {
-      styleOverrides: {
-        root: ({ theme }) => {
-          const f = theme.fieldBox;
-          return {
-            minHeight: f.height,
-            padding: "0 5px",
-            gap: 10,
-            borderRadius: f.radius,
-            backgroundColor: f.background,
-            transition: "background-color 0.15s ease, box-shadow 0.15s ease",
-            "&:hover": { backgroundColor: f.hoverBackground },
-            "&.Mui-focused": {
-              backgroundColor: f.focusBackground,
-              boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.16)}`,
-            },
-            "&.Mui-disabled": { backgroundColor: f.disabledBackground, opacity: 0.6 },
-
-            // کپشن (startAdornment)
-            "& .MuiInputAdornment-positionStart": {
-              margin: 0,
-              height: "auto",
-              maxHeight: "none",
-              whiteSpace: "nowrap",
-              fontSize: f.labelFontSize,
-              color: f.labelColor,
-              "& .MuiTypography-root": { fontSize: "inherit", color: "inherit", fontFamily: "inherit" },
-            },
-            "&.Mui-focused .MuiInputAdornment-positionStart": { color: theme.palette.primary.main },
-            "& .MuiInputAdornment-positionEnd": { margin: 0 ,
-                         "& .MuiIconButton-root": {
-                             padding: "2px !important", // کاهش پدینگ آیکون‌های داخل فیلد
-                                                   }, },
-            // سلکت: جای فلش کنار لبه‌ی چپ، متن هرگز زیر آن نمی‌رود
-            "& .MuiSelect-select": {
-              padding: "0 15px 0 0 !important",
-              minHeight: "auto",
-              textAlign: "right",
-            },
-            "& .MuiSelect-icon": { left: "1px !important", right: "auto !important", fontSize: 18 },
-          };
-        },
-        input: { padding: "0 !important", textAlign: "right", fontSize: 13 },
-      },
-    },
-
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          "&.MuiAutocomplete-paper": {
-            marginTop: 4,
-            borderRadius: 8,
-          },
-        },
-      },
-    },
-
-    MuiMenuItem: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          fontSize: "13px",
-          justifyContent: "center",
-          textAlign: "center",
-
-
-          "&.Mui-selected": {
-            backgroundColor: "#eff6ff",
-          },
-
-          "&.Mui-selected:hover": {
-            backgroundColor: "#dbeafe",
-          },
-        },
-      },
-   },
-      MuiAccordion: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          border: "1px solid #e2e8f0",
-          borderRadius: 10,
-          boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)",
-          backgroundColor: "#ffffff",
-
-          "&:before": {
-            display: "none",
-          },
-
-          "&:first-of-type": {
-            borderTopLeftRadius: 8,
-            borderTopRightRadius: 8,
-          },
-
-          "&:last-of-type": {
-            borderBottomLeftRadius: 8,
-            borderBottomRightRadius: 8,
-          },
-        },
-      },
-    },
-
-    MuiAccordionSummary: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif"',
-          minHeight: 42,
-          padding: "0 12px",
-
-          "&.Mui-expanded": {
-            minHeight: 42,
-          },
-        },
-
-        content: {
-          margin: "8px 0",
-
-          "&.Mui-expanded": {
-            margin: "8px 0",
-          },
-        },
-      },
-    },
-
-    MuiAccordionDetails: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          padding: "12px",
-          borderTop: "1px solid #e2e8f0",
-        },
-      },
-    },
-
-    
-
-    // دیالوگ‌ها و مودال‌ها (مثل EntityPickerModal)
-    MuiDialogTitle: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          fontWeight: 700,
-          fontSize: "1rem",
-          textAlign: "right",
-        },
-      },
-    },
-    MuiDialogContent: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-        },
-      },
-    },
-
-    // تب‌ها (Tabs / Tab)
-    MuiTab: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          fontWeight: 600,
-          fontSize: "0.8125rem",
-        },
-      },
-    },
-
-    // استایل‌های عمومی جداول DataGridPro
-    MuiDataGrid: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"IRANSansX", sans-serif',
-          direction: "rtl",
-          border: "1px solid #cbd5e1",
-          borderRadius: 8,
-
-
-    // ۱. استایل کلی نوار هدر
-        '& .MuiDataGrid-columnHeaders': {
-          backgroundColor: "#e7edf3 !important", // پس‌زمینه نوار اصلی هدر
-          borderBottom: "2px solid #94a3b8 !important",
-          color: "#0f172a !important",
-          fontWeight: "700 !important",
-          paddingY: '3px',
-        },
-
-        // ۲. تبدیل هر هدر به یک کارت شیشه‌ای با لبه‌های گرد و سایه ملایم
-        '& .MuiDataGrid-columnHeader': {
-          position: 'relative',
-          backgroundColor: '#e7edf3', // سفید شفاف/شیک
-          marginRight: '2px', // فاصله نازک بین کارت‌ها (برای RTL به marginLeft تغییر دهید در صورت لزوم)
-          marginLeft: '2px',
-          borderRadius: '6px', // لبه‌های گرد برای حالت سه بعدی کارت
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)', // سایه ملایم زیر هر کارت هدر
-          border: '1px solid #989ca0',
-          transition: 'background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-
-          // افکت هوور روی کل کارت هدر
-          '&:hover': {
-            backgroundColor: '#cacbe9',
-            borderColor: '#94a3b8',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
-          },
-        },
-
-        // ۳. بازطراحی کامل columnSeparator به دستگیره جادویی و حرفه‌ای
-        '& .MuiDataGrid-columnSeparator': {
-          width: '18px', // پهنای عالی برای راحتی دراگ کردن با ماوس
-          justifyContent: 'center',
-          left: -8, // قرارگیری دقیق روی مرز جداکننده در RTL
-          right: 'auto',
-          zIndex: 10,
-
-          // حذف آیکون خطی معمولی پیش‌فرض MUI
-          '& .MuiDataGrid-iconSeparator': {
-            display: 'none', // ❌ حذف آیکون پیش‌فرض
-          },
-
-          // ساخت دستگیره دراگ به شکل ۳ نقطه نازک مدرن (Grip Dots)
-          '&::after': {
-            content: '""',
-            width: '4px',
-            height: '14px',
-            borderRadius: '2px',
-            // ایجاد حالت ۳ نقطه جداکننده سنتی ابزارها با استفاده از radial-gradient
-            backgroundColor: '#cbd5e1',
-            boxShadow: '0 -5px 0 #cbd5e1, 0 5px 0 #cbd5e1', // ایجاد دو نقطه در بالا و پایین نقطه وسط
-            transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          },
-
-          // افکت فوق‌العاده جذاب هنگام هوور روی جداکننده جهت تغییر عرض ستون
-          '&:hover::after': {
-            backgroundColor: '#0284c7', // تغییر رنگ نقطه مرکزی به آبی درخشان
-            boxShadow: '0 -6px 0 #0284c7, 0 6px 0 #0284c7, 0 0 10px rgba(2, 132, 199, 0.6)', // درخشش ۳ نقطه
-            transform: 'scale(1.25)', // بزرگ‌نمایی حالت اکشن
-          },
-          },
-              
-          "& .MuiDataGrid-columnHeaderTitleContainer": {
-            justifyContent: "flex-end !important",
-          },
-
-          "& .MuiDataGrid-columnHeaderTitleContainerContent": { 
-            width: "100% !important", 
-            display: "block !important", 
-          },
-          
-          "& .MuiDataGrid-columnHeaderTitle": { 
-            width: "100%",
-            fontFamily: '"IRANSansX", sans-serif',
-            fontWeight: 700,
-            fontSize: "0.8125rem", 
-            textAlign:"center"
-          },
-
-          "& .MuiDataGrid-iconButtonContainer": {
-            display: "none !important",
-          },
-
-          "& .MuiDataGrid-sortIcon": {
-            opacity: 0,
-            transition: "opacity 0.15s ease",
-          },
-
-          "& .MuiDataGrid-columnHeader:hover .MuiDataGrid-sortIcon": {
-            opacity: 1,
-          },
-
-          
-          "& .MuiDataGrid-cell": {
-            fontFamily: '"IRANSansX", sans-serif',
-            borderLeft: "1px solid #e2e8f0",
-            fontSize: "0.85rem",
-
-          },
-
-          // زیر اسکرول نیفته متن
-          "& .MuiDataGrid-cell--textRight": {
-            paddingRight: "22px",
-          },
-
-                    //  رنگ یکی درمیون ردیف‌ها (زبرا)
-          "& .MuiDataGrid-row:nth-of-type(even)": {
-            backgroundColor: "#f5f7f8",
-          },
-          
-          "& .MuiDataGrid-row.Mui-selected": {
-            backgroundColor: "#e5e5ff !important",
-          },
-
-          // "& .MuiDataGrid-row.Mui-selected:hover": {
-          //   backgroundColor: "#90caf9 !important",
-          // },
-
-          //  هاور ملایم روی ردیف زیر ماوس
-          "& .MuiDataGrid-row:hover": {
-            backgroundColor: "#f2f2fd !important",
-          },
-
-          //  کوچیک‌کردن نوار ابزار بالای گرید (سرچ/فیلتر/ستون‌ها)
-          "& .MuiDataGrid-toolbar": {
-            minHeight: "30px",
-            // borderBottom: "2px solid #dce4f0 !important",         
-           },
-
-          //  "& .MuiInputBase-input-MuiOutlinedInput-input":{
-
-          //   textAlign:"center"
-          //  }
-        },
-      },
-    },
-  },
-});
 </file>
 
 <file path="index.html">
@@ -4541,263 +3332,793 @@ export default menuConfig;
 
 <file path="src/layout/Sidebar/Sidebar.module.css">
 .sidebar {
+    width: 260px;
+    height: 100vh;
+    padding: 18px 12px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
 
-    width:260px;
+    background-color: var(--sidebar-bg);
+    color: #F8FAFC;
 
-    height:100vh;
-
-    padding:15px;
-
-    background-color: var(--sidebar-bg); /* حتماً background-color بگذارید */
-
-    color:white;
-
-    overflow-y:auto;
-
-    box-sizing:border-box;
-
-    flex-shrink:0;
-
+    direction: rtl;
 }
 
-
-.logo {
-
-    text-align:center;
-    margin-bottom:25px;
-    font-size:22px;
-
+/* ساختار کلی منو */
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
-
-
-/* سطح اول */
+/* منوی سطح اول؛ مثل مالی */
 .menuParent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+    padding: 12px 14px;
+    margin-bottom: 7px;
 
-    padding:12px 14px;
+    border-radius: 9px;
+    cursor: pointer;
 
-    margin-bottom:6px;
+    background: var(--sidebar-surface);
+    color: #F8FAFC;
 
-    border-radius:8px;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.7;
 
-    cursor:pointer;
-
-    background: var(--sidebar-surface); /* استفاده از متغیر تم */
-
-    color:#f8fafc;
-
-    font-weight:600;
-
-    transition:0.2s;
-
+    transition: background-color 0.2s ease,
+                color 0.2s ease;
 }
-
 
 .menuParent:hover {
-
-    background: var(--sidebar-surface-hover); /* استفاده از متغیر تم */
-
+    background: var(--sidebar-surface-hover);
 }
 
-
-
-/* زیر منوها */
-
+/* زیرمنوها */
 .subMenu {
+    margin-right: 13px;
+    padding-right: 10px;
+    margin-bottom: 8px;
 
-    margin-right:15px;
-
-    border-right:2px solid #475569;
-
-    padding-right:10px;
-
+    border-right: 1px solid rgba(148, 163, 184, 0.25);
 }
 
-
-
-/* لینک‌های نهایی */
-
-.link {
-
-    display:flex;
-
-    align-items:center;
-
-    width:100%;
-
-    box-sizing:border-box;
-
-    padding:10px 14px;
-
-    margin:4px 0;
-
-    border-radius:8px;
-
-    color: var(--sidebar-text); /* افزودن رنگ متن واضح برای زیرمنوها */
-
-    text-decoration:none;
-
-    transition:all .2s ease;
-
-}
-
-
-.link:hover {
-
-    background: var(--sidebar-surface); /* استفاده از متغیر تم */
-
-    color:white;
-
-}
-
-
-.link:hover {
-
-    background:#1e293b;
-
-    color:white;
-
-}
-
-.link:hover {
-
-    background:#334155;
-
-    color:white;
-
-}
-
-
-
-.active {
-
-    display:flex;
-
-    align-items:center;
-
-    width:100%;
-
-    box-sizing:border-box;
-
-    padding:10px 14px;
-
-    margin:4px 0;
-
-    border-radius:8px;
-
-    background: var(--sidebar-active); /* استفاده از متغیر اصلی تم (Primary) */
-
-    color:white;
-
-    font-weight:600;
-
-    text-decoration:none;
-
-    box-shadow:
-        0 3px 10px rgba(79,70,229,0.35);
-
-}
-
-/* .active::before {
-
-    content:"";
-
-    position:absolute;
-
-    right:0;
-
-    top:0;
-
-    height:100%;
-
-    width:4px;
-
-    background:#93c5fd;
-
-} */
-
-.subMenu {
-
-    margin-right:12px;
-
-    padding-right:10px;
-
-    border-right:1px solid rgba(148,163,184,0.25);
-
-}
-
-
+/* عنوان زیرمنو؛ مثل اسناد */
 .subMenu .menuParent {
+    padding: 9px 12px;
+    margin-bottom: 5px;
 
-    background:transparent;
+    background: transparent;
+    color: #E2E8F0;
 
-    color:#e2e8f0;
-
-    font-size:14px;
-
-    padding:9px 12px;
-
+    font-size: 14px;
+    font-weight: 600;
 }
-
 
 .subMenu .menuParent:hover {
-
-    background:#1e293b;
-
+    background: var(--sidebar-surface);
+    color: #FFFFFF;
 }
 
+/* لینک‌های نهایی؛ مثل ثبت سند و ساختار حساب */
+.link {
+    display: flex;
+    align-items: center;
 
-.subMenu .link {
+    width: 100%;
+    box-sizing: border-box;
 
-    background:#172554;
+    padding: 10px 13px;
+    margin: 4px 0;
 
-    font-size:13px;
+    border-radius: 8px;
 
-    width:100%;
+    background: transparent;
+    color: var(--sidebar-text);
 
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.7;
+
+    text-decoration: none;
+
+    transition: all 0.2s ease;
 }
 
-
-
-.subMenu .subMenu .link:hover {
-
-    background:#64748b;
-
+.link:hover {
+    background: var(--sidebar-surface);
+    color: #FFFFFF;
 }
 
-.menuParent {
+/* آیتم انتخاب‌شده */
+.active {
+    display: flex;
+    align-items: center;
 
-    background:#1e293b;
+    width: 100%;
+    box-sizing: border-box;
 
-    border-radius:8px;
+    padding: 10px 13px;
+    margin: 4px 0;
 
-    padding:11px 14px;
+    border-radius: 8px;
 
-    margin-bottom:5px;
+    background: var(--sidebar-active);
+    color: #FFFFFF;
 
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.7;
+
+    text-decoration: none;
+
+    box-shadow: 0 2px 7px rgba(79, 70, 229, 0.22);
+
+    transition: background-color 0.2s ease,
+                box-shadow 0.2s ease;
 }
 
-
-.subMenu .menuParent {
-
-    background:#172554;
-
-    font-size:14px;
-
+.active:hover {
+    background: var(--primary-hover, #4338CA);
+    color: #FFFFFF;
+    box-shadow: 0 3px 10px rgba(79, 70, 229, 0.3);
 }
 
-
-.subMenu .link {
-
-    background:transparent;
-
-    font-size:13px;
-
+/* زیرمنوهای چندسطحی */
+.subMenu .subMenu {
+    margin-right: 10px;
+    padding-right: 9px;
 }
+
+/* دسترسی با کیبورد */
+.link:focus-visible,
+.active:focus-visible,
+.menuParent:focus-visible {
+    outline: 2px solid #A5B4FC;
+    outline-offset: 2px;
+}
+</file>
+
+<file path="src/theme/Theme.jsx">
+import { createTheme, alpha } from "@mui/material/styles";
+import { InputAdornment } from "@mui/material";
+
+
+const colors = {
+  primary: "#4F46E5",
+  primaryHover: "#4338CA",
+  primaryLight: "#818CF8",
+  primarySelected: "#EEF2FF",
+
+  sidebar: "#20212B",
+  sidebarSurface: "#292B38",
+
+  background: "#F8FAFC",
+  paper: "#FFFFFF",
+
+  textPrimary: "#1F2937",
+  textSecondary: "#64748B",
+  textDisabled: "#94A3B8",
+
+  border: "#E2E8F0",
+
+  error: "#EF4444",
+  warning: "#F59E0B",
+  success: "#10B981",
+};
+
+
+// props مشترک همه‌ی فیلدهای یکدست: کپشن ثابت کنار مقدار (مثل «شماره سند» بالای سند)
+// ظاهرش کامل از theme.fieldBox و MuiFilledInput پایین همین فایل می‌آید
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const fieldProps = (label, inputExtra = {}, options = {}) => ({
+  variant: "filled",
+  hiddenLabel: true,
+  size: "small",
+  fullWidth: true,
+
+  slotProps: {
+    htmlInput: {
+      "aria-label": label,
+    },
+    input: {
+      disableUnderline: true,
+      startAdornment: (
+        <InputAdornment position="start">{label}</InputAdornment>
+      ),
+      ...inputExtra,
+    },
+  },
+
+  // برای فیلدهایی مثل شرح و توضیحات:
+  // در حالت عادی وسط‌چین و هنگام تایپ راست‌چین
+  ...(options.alignTextOnFocus && {
+    sx: {
+      "& .MuiFilledInput-input": {
+        direction: "rtl",
+        textAlign: "center",
+      },
+      "& .MuiFilledInput-root.Mui-focused .MuiFilledInput-input": {
+        textAlign: "right",
+      },
+    },
+  }),
+});
+
+
+export const Theme = createTheme({
+  direction: "rtl",
+
+  palette: {
+    primary: {
+      main: '#4F46E5',         // Primary انتخابی شما
+      light: '#E0E7FF',        // Selected انتخابی شما
+      dark: '#3730A3',         // برای حالت Hover و متن‌های روی Selected
+      contrastText: '#FFFFFF',
+    },
+    background: {
+      default: '#F9FAFB',      // Background اصلی صفحه
+      paper: '#FFFFFF',        // بدنه کارت‌ها و DataGrid
+    },
+    text: {
+      primary: '#111827',
+      secondary: '#6B7280',
+    },
+    divider: '#E5E7EB',        // کادرها و جداکننده‌ها
+    action: {
+      hover: '#F8FAFC',        // رنگ موس روی سطرهای جدول
+      selected: '#E0E7FF',     // رنگ سطر انتخاب‌شده
+    },
+    // رنگ‌های اختصاصی سایدبار و سیستم مالی
+    sidebar: {
+      bg: "#181824",         // Charcoal تیره برای پس‌زمینه سایدبار
+      surface: "#222232",    // پس‌زمینه منوهای والد
+      activeBg: "#4F46E5",   // Electric Indigo برای آیتم فعال
+      text: "#94A3B8",
+      activeText: "#FFFFFF",
+    },
+    financial: {
+      debit: '#10B981',        // سبز بدهکار
+      credit: '#EF4444',       // قرمز بستانکار
+    },
+  },
+
+
+
+    // توکن‌های ظاهری فیلدهای یکدست (AppTextField / AppSelect) — با تغییر اینجا، همه‌ی فیلدهای برنامه عوض می‌شن
+  fieldBox: {
+    borderColor: "#D9DEE8",
+    hoverBorderColor: "#A5B4FC",
+    height: 38,
+    radius: 8,
+    background: "#f5f6fa",
+    hoverBackground: "#edeff5",
+    focusBackground: "#ffffff",
+    disabledBackground: "#eef0f4",
+    labelColor: "#515355",
+    labelFontSize: 12,
+    fontSize: 13,
+  },
+
+  typography: {
+    fontFamily: '"IRANSansX", "Tahoma", "Arial", sans-serif',
+    fontSize: 13,
+    h1: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
+    h2: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
+    h3: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
+    h4: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 700 },
+    h5: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 600 },
+    h6: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 600 },
+    subtitle1: { fontFamily: '"IRANSansX", sans-serif' },
+    subtitle2: { fontFamily: '"IRANSansX", sans-serif' },
+    body1: { fontFamily: '"IRANSansX", sans-serif', fontSize: "0.875rem" },
+    body2: { fontFamily: '"IRANSansX", sans-serif', fontSize: "0.8125rem" },
+    button: { fontFamily: '"IRANSansX", sans-serif', fontWeight: 600, textTransform: "none" },
+    caption: { fontFamily: '"IRANSansX", sans-serif' },
+    overline: { fontFamily: '"IRANSansX", sans-serif' },
+  },
+
+  shape: {
+    borderRadius: 8,
+  },
+
+  components: {
+    // تنظیمات جهانی پایه
+
+MuiCssBaseline: {
+  styleOverrides: {
+    ":root": {
+      "--color-primary": colors.primary,
+      "--color-primary-hover": colors.primaryHover,
+      "--color-primary-light": colors.primaryLight,
+      "--color-primary-selected": colors.primarySelected,
+
+/* اصلاح دقیق نام متغیرهایی که در Sidebar.module.css خوانده می‌شوند */
+      "--sidebar-bg": colors.sidebar,             /* #20212B */
+      "--sidebar-surface": colors.sidebarSurface, /* #2D2E3A */
+      "--sidebar-surface-hover": "#383948",
+      "--sidebar-text": "#9CA3AF",                /* رنگ متن آیتم‌های معمولی */
+      "--sidebar-text-hover": "#FFFFFF",
+      "--sidebar-active": colors.primary,         /* #4F46E5 */
+
+      "--color-background": colors.background,
+      "--color-paper": colors.paper,
+
+      "--color-text-primary": colors.textPrimary,
+      "--color-text-secondary": colors.textSecondary,
+      "--color-text-disabled": colors.textDisabled,
+
+      "--color-border": colors.border,
+
+      "--color-error": colors.error,
+      "--color-warning": colors.warning,
+      "--color-success": colors.success,
+    },
+
+    body: {
+      fontFamily: '"IRANSansX", sans-serif',
+      backgroundColor: colors.background,
+      direction: "rtl",
+    },
+  },
+},
+
+
+    // دکمه‌ها
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          borderRadius: 6,
+          boxShadow: "none",
+          "&:hover": {
+            boxShadow: "none",
+          },
+        },
+      },
+    },
+
+    // فیلدهای ورودی (TextField / Input)
+    MuiInputBase: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          fontSize: "13px",
+          minHeight: 36,
+        },
+        input: {
+          fontFamily: '"IRANSansX", sans-serif',
+          textAlign:"right",
+          padding: "8px 10px",
+          borderColor:"black"
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          fontSize: "13px",
+          right: 14,
+          left: "auto",
+          transformOrigin: "top right",
+          "&.MuiInputLabel-shrink": {
+            transform: "translate(0, -9px) scale(0.75)",
+            backgroundColor: "#ffffff",
+            padding: "0 4px",
+      },
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          fontSize: "0.875rem",
+          borderRadius: 8,
+          backgroundColor: "#ffffff",
+
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#94a3b8",
+          },
+
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#2563eb",
+            borderWidth: "1px",
+          },
+        },
+
+          notchedOutline: {
+            borderColor: "#cbd5e1",
+            textAlign: "right",
+          },
+          input: {
+            fontFamily: '"IRANSansX", sans-serif',
+            padding: "8.5px 12px",
+          },
+      },
+    },
+
+    MuiFormLabel: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif"',
+          fontSize: "0.8125rem",
+
+          "&.Mui-focused": {
+            color: "#2563eb",
+          },
+        },
+      },
+    },
+
+MuiSelect: {
+  styleOverrides: {
+    select: {
+      paddingLeft: "15px !important", // ایجاد فضای کافی برای متن تا زیر فلش نرود
+      display: "flex",
+      alignItems: "center",
+    },
+    icon: {
+      left: "6px !important",
+      right: "auto !important",
+    },
+  },
+},
+
+        // فیلد یکدست برنامه (variant="filled" + fieldProps) — تنها منبع ظاهر فیلدها
+    MuiFilledInput: {
+      styleOverrides: {
+        root: ({ theme }) => {
+          const f = theme.fieldBox;
+      return {
+        minHeight: f.height,
+        padding: "0 5px",
+        gap: 10,
+        border: `1px solid ${f.borderColor}`,
+        boxSizing: "border-box",
+        borderRadius: f.radius,
+        backgroundColor: f.background,
+
+        transition: "background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease",
+
+        "&:hover:not(.Mui-disabled)": {
+          backgroundColor: f.hoverBackground,
+          borderColor: f.hoverBorderColor,
+        },
+
+        "&.Mui-focused": {
+          backgroundColor: f.focusBackground,
+          borderColor: theme.palette.primary.main,
+          boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.16)}`,
+        },
+
+        "&.Mui-disabled": {
+          backgroundColor: f.disabledBackground,
+          borderColor: f.borderColor,
+          opacity: 0.6,
+        },
+
+        // کپشن داخل فیلد
+        "& .MuiInputAdornment-positionStart": {
+          margin: 0,
+          marginInlineEnd: "8px",
+          height: "auto",
+          maxHeight: "none",
+          whiteSpace: "nowrap",
+          fontSize: f.labelFontSize,
+          color: f.labelColor,
+
+          "& .MuiTypography-root": {
+            fontSize: "inherit",
+            color: "inherit",
+            fontFamily: "inherit",
+          },
+        },
+
+        "&.Mui-focused .MuiInputAdornment-positionStart": {
+          color: theme.palette.primary.main,
+        },
+
+        "& .MuiInputAdornment-positionEnd": {
+          margin: 0,
+          "& .MuiIconButton-root": {
+            padding: "2px !important",
+          },
+        },
+
+        // سلکت
+        "& .MuiSelect-select": {
+          padding: "0 0 0 0 !important",
+          minHeight: "auto",
+          textAlign: "center",
+        },
+
+        "& .MuiSelect-icon": {
+          left: "1px !important",
+          right: "auto !important",
+          fontSize: 18,
+        },
+      };
+        },
+        input: { padding: "0 !important", textAlign: "center", fontSize: 13 },
+      },
+    },
+
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          "&.MuiAutocomplete-paper": {
+            marginTop: 4,
+            borderRadius: 8,
+          },
+        },
+      },
+    },
+
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          fontSize: "13px",
+          justifyContent: "center",
+          textAlign: "center",
+
+
+          "&.Mui-selected": {
+            backgroundColor: "#eff6ff",
+          },
+
+          "&.Mui-selected:hover": {
+            backgroundColor: "#dbeafe",
+          },
+        },
+      },
+   },
+      MuiAccordion: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          border: "1px solid #e2e8f0",
+          borderRadius: 10,
+          boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)",
+          backgroundColor: "#ffffff",
+
+          "&:before": {
+            display: "none",
+          },
+
+          "&:first-of-type": {
+            borderTopLeftRadius: 8,
+            borderTopRightRadius: 8,
+          },
+
+          "&:last-of-type": {
+            borderBottomLeftRadius: 8,
+            borderBottomRightRadius: 8,
+          },
+        },
+      },
+    },
+
+    MuiAccordionSummary: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif"',
+          minHeight: 42,
+          padding: "0 12px",
+
+          "&.Mui-expanded": {
+            minHeight: 42,
+          },
+        },
+
+        content: {
+          margin: "8px 0",
+
+          "&.Mui-expanded": {
+            margin: "8px 0",
+          },
+        },
+      },
+    },
+
+    MuiAccordionDetails: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          padding: "12px",
+          borderTop: "1px solid #e2e8f0",
+        },
+      },
+    },
+
+    
+
+    // دیالوگ‌ها و مودال‌ها (مثل EntityPickerModal)
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          fontWeight: 700,
+          fontSize: "1rem",
+          textAlign: "right",
+        },
+      },
+    },
+    MuiDialogContent: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+        },
+      },
+    },
+
+    // تب‌ها (Tabs / Tab)
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          fontWeight: 600,
+          fontSize: "0.8125rem",
+        },
+      },
+    },
+
+    // استایل‌های عمومی جداول DataGridPro
+    MuiDataGrid: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"IRANSansX", sans-serif',
+          direction: "rtl",
+          border: "1px solid #cbd5e1",
+          borderRadius: 8,
+
+
+    // ۱. استایل کلی نوار هدر
+        '& .MuiDataGrid-columnHeaders': {
+          backgroundColor: "#e7edf3 !important", // پس‌زمینه نوار اصلی هدر
+          borderBottom: "2px solid #94a3b8 !important",
+          color: "#0f172a !important",
+          fontWeight: "700 !important",
+          paddingY: '3px',
+        },
+
+        // ۲. تبدیل هر هدر به یک کارت شیشه‌ای با لبه‌های گرد و سایه ملایم
+        '& .MuiDataGrid-columnHeader': {
+          position: 'relative',
+          backgroundColor: '#e7edf3', // سفید شفاف/شیک
+          marginRight: '2px', // فاصله نازک بین کارت‌ها (برای RTL به marginLeft تغییر دهید در صورت لزوم)
+          marginLeft: '2px',
+          borderRadius: '6px', // لبه‌های گرد برای حالت سه بعدی کارت
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)', // سایه ملایم زیر هر کارت هدر
+          border: '1px solid #989ca0',
+          transition: 'background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+
+          // افکت هوور روی کل کارت هدر
+          '&:hover': {
+            backgroundColor: '#cacbe9',
+            borderColor: '#94a3b8',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
+          },
+        },
+
+        // ۳. بازطراحی کامل columnSeparator به دستگیره جادویی و حرفه‌ای
+        '& .MuiDataGrid-columnSeparator': {
+          width: '18px', // پهنای عالی برای راحتی دراگ کردن با ماوس
+          justifyContent: 'center',
+          left: -8, // قرارگیری دقیق روی مرز جداکننده در RTL
+          right: 'auto',
+          zIndex: 10,
+
+          // حذف آیکون خطی معمولی پیش‌فرض MUI
+          '& .MuiDataGrid-iconSeparator': {
+            display: 'none', // ❌ حذف آیکون پیش‌فرض
+          },
+
+          // ساخت دستگیره دراگ به شکل ۳ نقطه نازک مدرن (Grip Dots)
+          '&::after': {
+            content: '""',
+            width: '4px',
+            height: '14px',
+            borderRadius: '2px',
+            // ایجاد حالت ۳ نقطه جداکننده سنتی ابزارها با استفاده از radial-gradient
+            backgroundColor: '#cbd5e1',
+            boxShadow: '0 -5px 0 #cbd5e1, 0 5px 0 #cbd5e1', // ایجاد دو نقطه در بالا و پایین نقطه وسط
+            transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          },
+
+          // افکت فوق‌العاده جذاب هنگام هوور روی جداکننده جهت تغییر عرض ستون
+          '&:hover::after': {
+            backgroundColor: '#0284c7', // تغییر رنگ نقطه مرکزی به آبی درخشان
+            boxShadow: '0 -6px 0 #0284c7, 0 6px 0 #0284c7, 0 0 10px rgba(2, 132, 199, 0.6)', // درخشش ۳ نقطه
+            transform: 'scale(1.25)', // بزرگ‌نمایی حالت اکشن
+          },
+          },
+              
+          "& .MuiDataGrid-columnHeaderTitleContainer": {
+            justifyContent: "flex-end !important",
+          },
+
+          "& .MuiDataGrid-columnHeaderTitleContainerContent": { 
+            width: "100% !important", 
+            display: "block !important", 
+          },
+          
+          "& .MuiDataGrid-columnHeaderTitle": { 
+            width: "100%",
+            fontFamily: '"IRANSansX", sans-serif',
+            fontWeight: 700,
+            fontSize: "0.8125rem", 
+            textAlign:"center"
+          },
+
+          "& .MuiDataGrid-iconButtonContainer": {
+            display: "none !important",
+          },
+
+          "& .MuiDataGrid-sortIcon": {
+            opacity: 0,
+            transition: "opacity 0.15s ease",
+          },
+
+          "& .MuiDataGrid-columnHeader:hover .MuiDataGrid-sortIcon": {
+            opacity: 1,
+          },
+
+          
+          "& .MuiDataGrid-cell": {
+            fontFamily: '"IRANSansX", sans-serif',
+            borderLeft: "1px solid #e2e8f0",
+            fontSize: "0.85rem",
+
+          },
+
+          // زیر اسکرول نیفته متن
+          "& .MuiDataGrid-cell--textRight": {
+            paddingRight: "22px",
+          },
+
+                    //  رنگ یکی درمیون ردیف‌ها (زبرا)
+          "& .MuiDataGrid-row:nth-of-type(even)": {
+            backgroundColor: "#f5f7f8",
+          },
+          
+          "& .MuiDataGrid-row.Mui-selected": {
+            backgroundColor: "#e5e5ff !important",
+          },
+
+          // "& .MuiDataGrid-row.Mui-selected:hover": {
+          //   backgroundColor: "#90caf9 !important",
+          // },
+
+          //  هاور ملایم روی ردیف زیر ماوس
+          "& .MuiDataGrid-row:hover": {
+            backgroundColor: "#f2f2fd !important",
+          },
+
+          //  کوچیک‌کردن نوار ابزار بالای گرید (سرچ/فیلتر/ستون‌ها)
+          "& .MuiDataGrid-toolbar": {
+            minHeight: "30px",
+            // borderBottom: "2px solid #dce4f0 !important",         
+           },
+
+          //  "& .MuiInputBase-input-MuiOutlinedInput-input":{
+
+          //   textAlign:"center"
+          //  }
+        },
+      },
+    },
+  },
+});
 </file>
 
 <file path="src/utils/formatter.js">
@@ -5089,7 +4410,7 @@ export default AccountHierarchySummary;
 </file>
 
 <file path="src/context/TabProvider.jsx">
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import TabContext from "./TabContext";
 
 const TabProvider = ({ children }) => {
@@ -5223,7 +4544,7 @@ const closeTab = (id, force = false) => {
     }
   };
 
-const updateTab = (id, updates) => {
+const updateTab = useCallback((id, updates) => {
   setTabs((prevTabs) =>
     prevTabs.map((tab) =>
       tab.id === id
@@ -5231,7 +4552,7 @@ const updateTab = (id, updates) => {
         : tab
     )
   );
-};
+}, []);
 
 
   return (
@@ -5377,7 +4698,6 @@ import TabContent from "../../components/Tabs/TabContent";
 import { useEffect } from "react";
 import useTabs from "../../context/useTabs";
 import styles from "./MainLayout.module.css";
-import CloseUnsavedModal from "../../components/tabs/CloseUnsavedModal"; //  این  اضافه شد
 
 const MainLayout = () => {
 
@@ -5436,7 +4756,7 @@ return (
         </div>
 
       </div>
-      <CloseUnsavedModal />
+    
 
     </div>
   );
@@ -5745,105 +5065,106 @@ export default Sidebar;
 
 <file path="src/pages/Financial/Vouchers/VoucherNew/VoucherHeader.jsx">
 import { useEffect, useRef } from "react";
-import { InputBase, Select, MenuItem } from "@mui/material";
+import { TextField, MenuItem } from "@mui/material";
 import DatePicker from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
 import { toEnglishDigits } from "../../../../utils/formatter";
+import { fieldProps } from "../../../../theme/Theme";
 import styles from "./VoucherNew.module.css";
 import Toolbar from "react-multi-date-picker/plugins/toolbar";
 
 const VoucherHeader = ({ voucher, setVoucher, onDescriptionEnter }) => {
+  const handleChange = (field, value) => {
+    setVoucher({
+      ...voucher,
+      [field]: value,
+    });
+  };
 
-    const handleChange = (field, value) => {
-        setVoucher({
-            ...voucher,
-            [field]: value,
-        });
-    };
+  const dateInputRef = useRef(null);
+  const sharhInputRef = useRef(null);
+  const tozihatInputRef = useRef(null);
 
-    const dateInputRef = useRef(null);
-    const sharhInputRef = useRef(null);
-    const tozihatInputRef = useRef(null);
+  // فوکوس خودکار روی تاریخ هنگام باز شدن تب
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      dateInputRef.current?.focus();
+    }, 100);
 
-    // فوکوس خودکار روی تاریخ، همون لحظه‌ی باز شدن تب - بدون نیاز به کلیک موس
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            dateInputRef.current?.focus();
-        }, 100);
-        return () => clearTimeout(timer);
-    }, []);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const subNumberProps = fieldProps("شماره فرعی");
 
   return (
-  <div className={styles.HeaderForm}>
-
-    <div className={styles.HeaderRow}>
-
-      {/* شماره سند توسط Backend تولید می‌شود */}
-      <div className={styles.FieldBox}>
-        <span className={styles.FieldLabel}>شماره سند :</span>
-        <InputBase
-          className={styles.FieldInput}
+    <div className={styles.HeaderForm}>
+      <div className={styles.HeaderRow}>
+        {/* شماره سند توسط Backend تولید می‌شود */}
+        <TextField
+          {...fieldProps("شماره سند")}
           value={voucher.number || ""}
           disabled
         />
-      </div>
 
-      <div className={styles.FieldBox}>
-        <span className={styles.FieldLabel}>شماره فرعی :</span>
-        <InputBase
-          className={styles.FieldInput}
+        <TextField
+          {...subNumberProps}
+          slotProps={{
+            ...subNumberProps.slotProps,
+            htmlInput: {
+              ...subNumberProps.slotProps.htmlInput,
+              min: 0,
+            },
+          }}
           type="number"
           value={voucher.subNumber ?? ""}
           onChange={(e) => handleChange("subNumber", e.target.value)}
-          inputProps={{ min: 0 }}
         />
-      </div>
 
-      <div className={styles.FieldBox}>
-        <span className={styles.FieldLabel}>وضعیت سند :</span>
-        <Select
-          className={styles.FieldInput}
-          variant="standard"
-          disableUnderline
+        <TextField
+          select
+          {...fieldProps("وضعیت سند")}
           value={voucher.state ?? 0}
-          onChange={(e) => handleChange("state", Number(e.target.value))}
+          onChange={(e) =>
+            handleChange("state", Number(e.target.value))
+          }
         >
-          <MenuItem value={0}>پیش‌نویس</MenuItem>
+          <MenuItem value={0}>پیش نویس</MenuItem>
           <MenuItem value={1}>موقت</MenuItem>
           <MenuItem value={2}>دائم</MenuItem>
-        </Select>
-      </div>
+        </TextField>
 
-      <DatePicker
-        calendar={persian}
-        locale={persian_fa}
-        value={voucher.date || ""}
-        format="YYYY/MM/DD"
-        calendarPosition="bottom-right"
-        plugins={[
-          <Toolbar
-            key="toolbar"
-            position="bottom"
-            names={{
-              today: "امروز",
-              deselect: "پاک کردن",
-              close: "بستن",
-            }}
-          />
+        <DatePicker
+          calendar={persian}
+          locale={persian_fa}
+          value={voucher.date || ""}
+          format="YYYY/MM/DD"
+          calendarPosition="bottom-right"
+          plugins={[
+            <Toolbar
+              key="toolbar"
+              position="bottom"
+              names={{
+                today: "امروز",
+                deselect: "پاک کردن",
+                close: "بستن",
+              }}
+            />,
           ]}
-        onChange={(dateObject) => {
-          if (dateObject) {
-            handleChange("date", toEnglishDigits(dateObject.format("YYYY/MM/DD")));
-          }
-        }}
-        render={(value, openCalendar, handleValueChange) => (
-          <div className={styles.FieldBox} onClick={openCalendar}>
-            <span className={styles.FieldLabel}>تاریخ :</span>
-            <InputBase
-              className={styles.FieldInput}
+          onChange={(dateObject) => {
+            if (dateObject) {
+              handleChange(
+                "date",
+                toEnglishDigits(dateObject.format("YYYY/MM/DD"))
+              );
+            }
+          }}
+          render={(value, openCalendar, handleValueChange) => (
+            <TextField
+              {...fieldProps("تاریخ")}
               inputRef={dateInputRef}
               value={value}
+              onClick={openCalendar}
               onChange={handleValueChange}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -5853,18 +5174,15 @@ const VoucherHeader = ({ voucher, setVoucher, onDescriptionEnter }) => {
               }}
               placeholder="1404/01/01"
             />
-          </div>
-        )}
-      />
-    </div>
+          )}
+        />
+      </div>
 
-    <div className={styles.HeaderRow2}>
-      <div className={styles.FieldBox}>
-        <span className={styles.FieldLabel}>شرح : </span>
-        <InputBase
-          className={styles.FieldInput2}
-          inputRef={sharhInputRef}
+      <div className={styles.HeaderRow2}>
+        <TextField
+          {...fieldProps("شرح", {}, { alignTextOnFocus: true })}
           value={voucher.sharh || ""}
+          inputRef={sharhInputRef}
           onChange={(e) => handleChange("sharh", e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -5873,14 +5191,11 @@ const VoucherHeader = ({ voucher, setVoucher, onDescriptionEnter }) => {
             }
           }}
         />
-      </div>
 
-      <div className={styles.FieldBox}>
-        <span className={styles.FieldLabel}>توضیحات : </span>
-        <InputBase
-          className={styles.FieldInput2}
-          inputRef={tozihatInputRef}
+        <TextField
+          {...fieldProps("توضیحات", {}, { alignTextOnFocus: true })}
           value={voucher.tozihat || ""}
+          inputRef={tozihatInputRef}
           onChange={(e) => handleChange("tozihat", e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -5891,7 +5206,6 @@ const VoucherHeader = ({ voucher, setVoucher, onDescriptionEnter }) => {
         />
       </div>
     </div>
-  </div>
   );
 };
 
@@ -6626,9 +5940,16 @@ export default CustomDataGrid;
   margin-bottom: 8px;
 }
 
-.HeaderRow > .FieldBox,
+/* سه فیلد اول و فیلد تاریخ */
+.HeaderRow > :global(.MuiFormControl-root),
 .HeaderRow > :global(.rmdp-container) {
-  flex: 0 0 160px;
+  flex: 0 0 170px;
+  width: 160px;
+  min-width: 0;
+}
+
+/* خود TextField داخل DatePicker */
+.HeaderRow :global(.rmdp-container .MuiFormControl-root) {
   width: 100%;
 }
 
@@ -6637,160 +5958,20 @@ export default CustomDataGrid;
   gap: 10px;
 }
 
-.HeaderRow2 > .FieldBox {
+.HeaderRow2 > :global(.MuiFormControl-root) {
   flex: 1 1 0;
-}
-
-.FieldBox {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 36px;
-  width: 100%;
-  background-color: #f5f6fa;
-  border-radius: 8px;
-  padding: 0 10px;
-  box-sizing: border-box;
-  cursor: text;
-  /* transition: background-color 0.15s ease, box-shadow 0.15s ease; */
-  position: relative;
-  gap: 8px;
-}
-
-.FieldBox:hover {
-  background-color: #edeff5;
-}
-
-.FieldBox:focus-within {
-  background-color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.16);
-}
-
-/* اصلاح اختصاصی برای MuiSelect درون هدر سند */
-.FieldBox :global(.MuiSelect-select) {
-  text-align: left !important; /* مقدار انتخابی سمت چپ برود تا با لیبل سمت راست تداخل نکند */
-  padding-left: 20px !important;
-  padding-right: 0 !important;
-  display: flex;
-  align-items: center;
-}
-
-.FieldBox :global(.MuiSelect-icon) {
-  left: 0 !important;
-  right: auto !important;
-}
-
-.FieldBox:focus-within .FieldLabel {
-  color: #1976d2;
-}
-
-.FieldLabel {
-  font-size: 12px;
-  font-family: iransansx;
-  color: #515355;
-  white-space: nowrap;
-  flex-shrink: 0;
-  margin-left: 8px;
-}
-
-.FieldInput {
-  flex: 1;
   min-width: 0;
+}
+
+/* تنظیم مقدار ورودی‌ها */
+.HeaderRow :global(.MuiInputBase-input),
+.HeaderRow2 :global(.MuiInputBase-input) {
   font-size: 13px;
-  width: 100%;
 }
 
-.FieldInput2 {
-  flex: 1;
-  min-width: 0;
-  font-size: 13px;
-  width: 100%;
-  text-align: right;
-}
-
-.FieldInput :global(.MuiSelect-select) {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  line-height: 36px;
-}
-
-.FieldInput :global(.MuiInputBase-input) {
+/* وضعیت سند */
+.HeaderRow :global(.MuiSelect-select) {
   text-align: center;
-  padding: 0 !important;
-  font-size: 13px;
-}
-
-.FieldBoxClickable {
-  cursor: pointer;
-}
-
-.FieldValueText {
-  flex: 1;
-  min-width: 0;
-  font-size: 11px;
-  text-align: left;
-  color: #1a1a1a;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.FieldCaret {
-  font-size: 12px;
-  color: #8a8f98;
-  flex-shrink: 0;
-}
-
-.TitleRow{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:15px;
-    direction: rtl;
-    height: 41px;
-}
-
-
-.SavedBadge{
-    background:#2e7d32;
-    color:white;
-    padding:5px 15px;
-    border-radius:20px;
-    font-size:14px;
-    font-weight:bold;
-    margin-bottom: 14px;
-    margin-top: -15px;
-}
-
-
-.Footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  margin-top: 5px;
-  margin-bottom: 5px;
-  padding: 10px 10px;
-
-  border: 1px solid #ddd;
-  border-radius: 6px;
-
-  background-color: #fafafa;
-
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.Footer span {
-  min-width: 180px;
-}
-
-.Balanced {
-  color: #2e7d32;
-}
-
-.NotBalanced {
-  color: #d32f2f;
 }
 </file>
 

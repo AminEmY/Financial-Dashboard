@@ -11,9 +11,16 @@
   margin-bottom: 8px;
 }
 
-.HeaderRow > .FieldBox,
+/* سه فیلد اول و فیلد تاریخ */
+.HeaderRow > :global(.MuiFormControl-root),
 .HeaderRow > :global(.rmdp-container) {
-  flex: 0 0 160px;
+  flex: 0 0 170px;
+  width: 160px;
+  min-width: 0;
+}
+
+/* خود TextField داخل DatePicker */
+.HeaderRow :global(.rmdp-container .MuiFormControl-root) {
   width: 100%;
 }
 
@@ -22,159 +29,18 @@
   gap: 10px;
 }
 
-.HeaderRow2 > .FieldBox {
+.HeaderRow2 > :global(.MuiFormControl-root) {
   flex: 1 1 0;
-}
-
-.FieldBox {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 36px;
-  width: 100%;
-  background-color: #f5f6fa;
-  border-radius: 8px;
-  padding: 0 10px;
-  box-sizing: border-box;
-  cursor: text;
-  /* transition: background-color 0.15s ease, box-shadow 0.15s ease; */
-  position: relative;
-  gap: 8px;
-}
-
-.FieldBox:hover {
-  background-color: #edeff5;
-}
-
-.FieldBox:focus-within {
-  background-color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.16);
-}
-
-/* اصلاح اختصاصی برای MuiSelect درون هدر سند */
-.FieldBox :global(.MuiSelect-select) {
-  text-align: left !important; /* مقدار انتخابی سمت چپ برود تا با لیبل سمت راست تداخل نکند */
-  padding-left: 20px !important;
-  padding-right: 0 !important;
-  display: flex;
-  align-items: center;
-}
-
-.FieldBox :global(.MuiSelect-icon) {
-  left: 0 !important;
-  right: auto !important;
-}
-
-.FieldBox:focus-within .FieldLabel {
-  color: #1976d2;
-}
-
-.FieldLabel {
-  font-size: 12px;
-  font-family: iransansx;
-  color: #515355;
-  white-space: nowrap;
-  flex-shrink: 0;
-  margin-left: 8px;
-}
-
-.FieldInput {
-  flex: 1;
   min-width: 0;
+}
+
+/* تنظیم مقدار ورودی‌ها */
+.HeaderRow :global(.MuiInputBase-input),
+.HeaderRow2 :global(.MuiInputBase-input) {
   font-size: 13px;
-  width: 100%;
 }
 
-.FieldInput2 {
-  flex: 1;
-  min-width: 0;
-  font-size: 13px;
-  width: 100%;
-  text-align: right;
-}
-
-.FieldInput :global(.MuiSelect-select) {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  line-height: 36px;
-}
-
-.FieldInput :global(.MuiInputBase-input) {
+/* وضعیت سند */
+.HeaderRow :global(.MuiSelect-select) {
   text-align: center;
-  padding: 0 !important;
-  font-size: 13px;
 }
-
-.FieldBoxClickable {
-  cursor: pointer;
-}
-
-.FieldValueText {
-  flex: 1;
-  min-width: 0;
-  font-size: 11px;
-  text-align: left;
-  color: #1a1a1a;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.FieldCaret {
-  font-size: 12px;
-  color: #8a8f98;
-  flex-shrink: 0;
-}
-
-.TitleRow{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:15px;
-    direction: rtl;
-    height: 41px;
-}
-
-
-.SavedBadge{
-    background:#2e7d32;
-    color:white;
-    padding:5px 15px;
-    border-radius:20px;
-    font-size:14px;
-    font-weight:bold;
-    margin-bottom: 14px;
-    margin-top: -15px;
-}
-
-
-.Footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  margin-top: 5px;
-  margin-bottom: 5px;
-  padding: 10px 10px;
-
-  border: 1px solid #ddd;
-  border-radius: 6px;
-
-  background-color: #fafafa;
-
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.Footer span {
-  min-width: 180px;
-}
-
-.Balanced {
-  color: #2e7d32;
-}
-
-.NotBalanced {
-  color: #d32f2f;
-}
-

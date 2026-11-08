@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import TabContext from "./TabContext";
 
 const TabProvider = ({ children }) => {
@@ -132,7 +132,7 @@ const closeTab = (id, force = false) => {
     }
   };
 
-const updateTab = (id, updates) => {
+const updateTab = useCallback((id, updates) => {
   setTabs((prevTabs) =>
     prevTabs.map((tab) =>
       tab.id === id
@@ -140,7 +140,7 @@ const updateTab = (id, updates) => {
         : tab
     )
   );
-};
+}, []);
 
 
   return (
